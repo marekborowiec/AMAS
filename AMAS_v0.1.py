@@ -38,6 +38,7 @@ class FileParser:
     def fasta_parse(self):
         matches = re.finditer(r"^>(.*[^$])([^>]*)", self.in_file_lines, re.MULTILINE)
         records = {}
+        
         for match in matches:
             name_match = match.group(1).replace("\n","")
             seq_match = match.group(2).replace("\n","").upper()
@@ -48,6 +49,7 @@ class FileParser:
     def phylip_parse(self):
         matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Za-z*?-]+)", self.in_file_lines, re.MULTILINE)
         records = {}
+        
         for match in matches:
             name_match = match.group(2).replace("\n","")
             seq_match = match.group(3).replace("\n","").upper()
@@ -58,16 +60,20 @@ class FileParser:
     def nexus_parse(self):
         matches = re.finditer(r"(\s+)?(MATRIX)(.*?;)", self.in_file_lines, re.DOTALL)
         records = {}
+        
         for match in matches:
             matrix_match = match.group(3)
             #print(matrix_match)
-            seq_matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Za-z*?{}-]+)", matrix_match, re.MULTILINE)
+            seq_matches = \
+            re.finditer(r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?{}-]+)", \
+            matrix_match, re.MULTILINE)
+            
             for match in seq_matches:
                 name_match = match.group(2).replace("\n","")
                 seq_match = match.group(3).replace("\n","").upper()
                 seq_match = self.translate_ambiguous(seq_match)
                 records[name_match] = seq_match
-        #print(records)
+        #print(records.keys())
         return records
         
     def translate_ambiguous(self, seq):
@@ -111,6 +117,7 @@ class Alignment:
     def get_freq_summary(self):
         characters = []
         frequencies = []
+        
         for item in self.get_frequencies():
             for char, freq in item.items():
                 characters.append(str(char))
@@ -120,6 +127,7 @@ class Alignment:
     def matrix_creator(self):	           
        self.matrix = []
        self.new = []
+       
        for sequence in self.list_of_seqs:
            for character in sequence:
                self.new.append(character)
@@ -157,6 +165,7 @@ class Alignment:
     
     def get_frequencies(self):
         frequencies = []
+        
         for char in self.alphabet:
             count = sum(seq.count(char) for seq in self.list_of_seqs) \
              / self.all_matrix_cells
