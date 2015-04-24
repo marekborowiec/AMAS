@@ -11,8 +11,10 @@ Current statistics include the number of taxa, alignment length, total number
 of matrix cells, overall number of undetermined characters, percent of missing 
 data, AT and GC contents (for DNA alignments), and relative proportions of all
 characters relative to matrix size.
+"""
 
-Usage: AMAS.py <input_file> <format> <alphabet>
+Usage = """
+Usage: AMAS_v0.1.py <input_file> <format> <alphabet>
 
 Supported formats: "fasta", "phylip", "nexus"
 Supported alphabets: "aa", "dna"
@@ -38,7 +40,7 @@ class FileParser:
         records = {}
         for match in matches:
             name_match = match.group(1).replace("\n","")
-            seq_match = match.group(2).replace("\n","")
+            seq_match = match.group(2).replace("\n","").upper()
             records[name_match] = seq_match
         #print(records)
         return records
@@ -48,7 +50,7 @@ class FileParser:
         records = {}
         for match in matches:
             name_match = match.group(2).replace("\n","")
-            seq_match = match.group(3).replace("\n","")
+            seq_match = match.group(3).replace("\n","").upper()
             records[name_match] = seq_match
         #print(records)
         return records
@@ -63,7 +65,7 @@ class FileParser:
             seq_matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Z*?-]+)", matrix_match, re.MULTILINE)
             for match in seq_matches:
                 name_match = match.group(2).replace("\n","")
-                seq_match = match.group(3).replace("\n","")
+                seq_match = match.group(3).replace("\n","").upper()
                 records[name_match] = seq_match
         #print(records)
         return records
@@ -219,11 +221,9 @@ class DNAAlignment(Alignment):
         return atgc_content
         
 
-Usage = """This program produces summaries for multiple sequence alignments.
-You need to supply it with filename, input format (fasta) and data type (aa/dna).
-e.g.:
-match2.py matrix.fasta fasta aa"""
-         
+if len(argv) is not 4:
+    print(Usage)
+
 script, in_file, in_format, data_type = argv
 
 aln_input = FileParser(in_file)
@@ -244,4 +244,4 @@ elif data_type == "dna":
 else:
     print(Usage)
    
-aln.get_summary()
+#aln.get_summary()
