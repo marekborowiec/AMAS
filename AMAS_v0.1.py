@@ -46,7 +46,7 @@ class FileParser:
         return records
     
     def phylip_parse(self):
-        matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Z*?-]+)", self.in_file_lines, re.MULTILINE)
+        matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Za-z*?-]+)", self.in_file_lines, re.MULTILINE)
         records = {}
         for match in matches:
             name_match = match.group(2).replace("\n","")
@@ -60,29 +60,29 @@ class FileParser:
         records = {}
         for match in matches:
             matrix_match = match.group(3)
-            matrix_match = self.translate_ambiguous(matrix_match)
             #print(matrix_match)
-            seq_matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Z*?-]+)", matrix_match, re.MULTILINE)
+            seq_matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Za-z*?{}-]+)", matrix_match, re.MULTILINE)
             for match in seq_matches:
                 name_match = match.group(2).replace("\n","")
                 seq_match = match.group(3).replace("\n","").upper()
+                seq_match = self.translate_ambiguous(seq_match)
                 records[name_match] = seq_match
         #print(records)
         return records
         
-    def translate_ambiguous(self, matrix):
-        matrix = matrix.replace("{GT}","K")
-        matrix = matrix.replace("{AC}","M")
-        matrix = matrix.replace("{AG}","R")
-        matrix = matrix.replace("{CT}","Y")
-        matrix = matrix.replace("{CG}","S")
-        matrix = matrix.replace("{AT}","W")
-        matrix = matrix.replace("{CGT}","B")
-        matrix = matrix.replace("{ACG}","V")
-        matrix = matrix.replace("{ACT}","H")
-        matrix = matrix.replace("{AGT}","D")
-        matrix = matrix.replace("{GATC}","N")
-        return matrix
+    def translate_ambiguous(self, seq):
+        seq = seq.replace("{GT}","K")
+        seq = seq.replace("{AC}","M")
+        seq = seq.replace("{AG}","R")
+        seq = seq.replace("{CT}","Y")
+        seq = seq.replace("{CG}","S")
+        seq = seq.replace("{AT}","W")
+        seq = seq.replace("{CGT}","B")
+        seq = seq.replace("{ACG}","V")
+        seq = seq.replace("{ACT}","H")
+        seq = seq.replace("{AGT}","D")
+        seq = seq.replace("{GATC}","N")
+        return seq
                
 class Alignment:
     """Gets in parsed sequences as input and summarizes their stats"""
@@ -244,4 +244,4 @@ elif data_type == "dna":
 else:
     print(Usage)
    
-#aln.get_summary()
+aln.get_summary()
