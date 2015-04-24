@@ -42,17 +42,19 @@ class FileParser:
         for match in matches:
             name_match = match.group(1).replace("\n","")
             seq_match = match.group(2).replace("\n","").upper()
+            seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
         #print(records)
         return records
     
     def phylip_parse(self):
-        matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Za-z*?-]+)", self.in_file_lines, re.MULTILINE)
+        matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Za-z*?{}-]+)", self.in_file_lines, re.MULTILINE)
         records = {}
         
         for match in matches:
             name_match = match.group(2).replace("\n","")
             seq_match = match.group(3).replace("\n","").upper()
+            seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
         #print(records)
         return records
