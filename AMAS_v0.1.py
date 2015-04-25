@@ -56,7 +56,7 @@ class FileParser:
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
-        print(records)
+        #print(records)
         return records
         
     def nexus_parse(self):
