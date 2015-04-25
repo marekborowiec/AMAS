@@ -56,18 +56,19 @@ class FileParser:
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
-        #print(records)
+        print(records)
         return records
         
     def nexus_parse(self):
-        matches = re.finditer(r"(\s+)?(MATRIX)(.*?;)", self.in_file_lines, re.DOTALL)
+        matches = re.finditer(r"(\s+)?(MATRIX\n|matrix\n|MATRIX\r\n|matrix\r\n)(.*?;)", \
+        self.in_file_lines, re.DOTALL)
         records = {}
         
         for match in matches:
             matrix_match = match.group(3)
             #print(matrix_match)
             seq_matches = \
-            re.finditer(r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?{}-]+)", \
+            re.finditer(r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?{}-]+)($|\s+\[[0-9]+\]$)", \
             matrix_match, re.MULTILINE)
             
             for match in seq_matches:
