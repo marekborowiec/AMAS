@@ -76,7 +76,7 @@ class FileParser:
             #print(matrix_match)
             seq_matches = \
              re.finditer(r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?{}-]+)($|\s+\[[0-9]+\]$)", \
-             matrix_match, re.MULTILINE)
+              matrix_match, re.MULTILINE)
             
             for match in seq_matches:
                 name_match = match.group(2).replace("\n","")
@@ -108,22 +108,19 @@ class Alignment:
     def __init__(self, parsed_records, aln_name):
     
     # initialize alignment class with parsed records and alignment name as arguments,
-    # create empty lists for list of sequences, character matrix, sites without
-    # ambiguous or missing characters, and initialize variables for the number
-    # of variable sites and parsimony informative sites 
+    # create empty lists for list of sequences, sites without
+    # ambiguous or missing characters, and initialize variable for the number
+    # of parsimony informative sites 
     
         self.parsed_records = parsed_records
         self.aln_name = aln_name
-       
         self.list_of_seqs = []
-        self.matrix = []
         self.no_missing_ambiguous_sites = []
-        self.variable = 0
         self.parsimony_informative = 0
         
     def __str__(self):
         return self.get_name
-            
+    
     def summarize_alignment(self):
     # call methods to create sequences list, matrix, sites without ambiguous or
     # missing characters; get and summarize alignment statistics
@@ -158,22 +155,22 @@ class Alignment:
         
     def seq_grabber(self):
     # create a list of sequences from parsed dictionary of names and seqs 
-        for name, seq in self.parsed_records.items():
-            self.list_of_seqs.append(seq)
+        self.list_of_seqs = [seq for name, seq in self.parsed_records.items()]
         return self.list_of_seqs
                
     def matrix_creator(self):
     # decompose character matrix into a two-dimensional list
-        self.matrix = [[character for character in sequence] for sequence in self.list_of_seqs]
+        self.matrix = [[character for character in sequence] \
+         for sequence in self.list_of_seqs]
         return self.matrix
 
     def get_column(self, i):
     # get site from the character matrix
         return [row[i] for row in self.matrix]
         
-    def all_same(self, items):
-    # check if all elements of a list are the same
-        return all(x == items[0] for x in items)
+    def all_same(self, site):
+    # check if all elements of a site are the same
+        return all(base == site[0] for base in site)
         
     def get_sites_no_missing_ambiguous(self):
     # get each site without missing or ambiguous characters  
@@ -186,11 +183,8 @@ class Alignment:
     def get_variable(self):
     # if all elements of a site without missing or ambiguous characters 
     # are not the same, consider it variable
-        for site in self.no_missing_ambiguous_sites:
-            if not self.all_same(site):
-                #print(site)
-                self.variable += 1
-        
+        self.variable = len([site for site in self.no_missing_ambiguous_sites \
+         if not self.all_same(site)])      
         return self.variable
     
     def get_parsimony_informative(self):
@@ -198,18 +192,13 @@ class Alignment:
     # and there are at least two such characters in a site without missing
     # or ambiguous characters, consider it parsimony informative 
         for site in self.no_missing_ambiguous_sites:
-            pattern = []
             unique_chars = set(site)
             
-            for base in unique_chars:
-                freq = site.count(base)
-                if freq >= 2:
-                    pattern.append(base)
-
+            pattern = [base for base in unique_chars if site.count(base) >= 2]
             no_patterns = len(pattern)
+            
             if no_patterns >= 2:
                 self.parsimony_informative += 1
-
         return self.parsimony_informative
     
     def get_prop_variable(self):
