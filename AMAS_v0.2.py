@@ -21,9 +21,9 @@ Supported formats: "fasta", "phylip", "nexus"
 Supported alphabets: "aa", "dna"
 """
 
+
 from sys import argv
 import re
-
 
 class FileParser:
     """Parse file contents and return sequences and sequence names"""
@@ -164,13 +164,7 @@ class Alignment:
                
     def matrix_creator(self):
     # decompose character matrix into a two-dimensional list
-        new = []
-       
-        for sequence in self.list_of_seqs:
-            for character in sequence:
-                new.append(character)
-            self.matrix.append(new)
-            new = []
+        self.matrix = [[character for character in sequence] for sequence in self.list_of_seqs]
         return self.matrix
 
     def get_column(self, i):
@@ -181,16 +175,11 @@ class Alignment:
     # check if all elements of a list are the same
         return all(x == items[0] for x in items)
         
-    def not_missing_ambiguous(self, character):
-    # check if character is not missing or ambiguous
-        if character not in self.missing_ambiguous_chars:
-            return True
-            
     def get_sites_no_missing_ambiguous(self):
     # get each site without missing or ambiguous characters  
         for column in range(self.get_alignment_length()):
             site = self.get_column(column)
-            site = list(char for char in site if self.not_missing_ambiguous(char))
+            site = list(char for char in site if char not in self.missing_ambiguous_chars)
             self.no_missing_ambiguous_sites.append(site)
         return self.no_missing_ambiguous_sites
         
