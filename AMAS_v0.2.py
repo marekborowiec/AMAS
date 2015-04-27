@@ -176,7 +176,7 @@ class Alignment:
     # get each site without missing or ambiguous characters  
         for column in range(self.get_alignment_length()):
             site = self.get_column(column)
-            site = list(char for char in site if char not in self.missing_ambiguous_chars)
+            site = [char for char in site if char not in self.missing_ambiguous_chars]
             self.no_missing_ambiguous_sites.append(site)
         return self.no_missing_ambiguous_sites
         
