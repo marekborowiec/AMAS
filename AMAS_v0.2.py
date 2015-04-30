@@ -11,7 +11,7 @@ Current statistics include the number of taxa, alignment length, total number
 of matrix cells, overall number of undetermined characters, percent of missing 
 data, AT and GC contents (for DNA alignments), number and proportion of 
 variable sites, number and proportion of parsimony informative sites,
-and relative proportions of all characters relative to matrix size.
+and proportions of all characters relative to matrix size.
 """
 
 Usage = """
@@ -25,28 +25,42 @@ Supported alphabets: "aa", "dna"
 from sys import argv
 import re
 
-class FileParser:
-    """Parse file contents and return sequences and sequence names"""
+class FileHandler:
+    """Define file handle that closes when out of scope"""
 
     def __init__(self, file_name):
-    # initialize file parser with file name and read in file contents
         self.file_name = file_name
-        self.in_file = open(file_name, "r")
-        self.in_file_lines = self.in_file.read().rstrip("\r\n")
+
+    def __enter__(self):
+        self.in_file = open(self.file_name, "r")
+        return self.in_file
+
+    def __exit__(self, *args):
+        self.in_file.close()
     
     def get_file_name(self):
         return self.file_name
 
+        
+class FileParser:
+    """Parse file contents and return sequences and sequence names"""
+    
+    def __init__(self, in_file):
+        self.in_file = in_file
+        with FileHandler(in_file) as handle:
+            self.in_file_lines = handle.read().rstrip("\r\n")
+    
     def fasta_parse(self):
     # use regex to parse names and sequences in sequential fasta files
         matches = re.finditer(r"^>(.*[^$])([^>]*)", self.in_file_lines, re.MULTILINE)
         records = {}
-        
+ 
         for match in matches:
             name_match = match.group(1).replace("\n","")
             seq_match = match.group(2).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
+
         #print(records)
         return records
     
@@ -54,7 +68,7 @@ class FileParser:
     # use regex to parse names and sequences in sequential phylip files
         matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Za-z*?{}-]+)", self.in_file_lines, re.MULTILINE)
         records = {}
-        
+
         for match in matches:
             name_match = match.group(2).replace("\n","")
             seq_match = match.group(3).replace("\n","").upper()
@@ -65,24 +79,25 @@ class FileParser:
         
     def nexus_parse(self):
     # use regex to parse names and sequences in sequential nexus files
-        # find the matrix block
+    # find the matrix block
         matches = re.finditer(r"(\s+)?(MATRIX\n|matrix\n|MATRIX\r\n|matrix\r\n)(.*?;)", \
          self.in_file_lines, re.DOTALL)
         records = {}
-        
         # get names and sequences from the matrix block
+
         for match in matches:
             matrix_match = match.group(3)
             #print(matrix_match)
             seq_matches = \
              re.finditer(r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?{}-]+)($|\s+\[[0-9]+\]$)", \
               matrix_match, re.MULTILINE)
-            
+
             for match in seq_matches:
                 name_match = match.group(2).replace("\n","")
                 seq_match = match.group(3).replace("\n","").upper()
                 seq_match = self.translate_ambiguous(seq_match)
                 records[name_match] = seq_match
+
         #print(records.keys())
         return records
         
@@ -101,26 +116,47 @@ class FileParser:
         seq = seq.replace("{AGT}","D")
         seq = seq.replace("{GATC}","N")
         return seq
-               
+
+ 
 class Alignment:
     """Gets in parsed sequences as input and summarizes their stats"""
     
-    def __init__(self, parsed_records, aln_name):
+    def __init__(self, in_file, in_format, data_type):
     
     # initialize alignment class with parsed records and alignment name as arguments,
     # create empty lists for list of sequences, sites without
     # ambiguous or missing characters, and initialize variable for the number
-    # of parsimony informative sites 
-    
-        self.parsed_records = parsed_records
-        self.aln_name = aln_name
+    # of parsimony informative sites
+
+        self.in_file = in_file
+        self.in_format = in_format
+        self.data_type = data_type
         self.list_of_seqs = []
         self.no_missing_ambiguous_sites = []
         self.parsimony_informative = 0
         
     def __str__(self):
         return self.get_name
-    
+
+    def get_aln_input(self):
+        # open and parse input file
+        aln_input = FileParser(self.in_file)
+        return aln_input
+
+    def get_parsed_aln(self):
+    # parse according to the given format
+        aln_input = self.get_aln_input()
+        if self.in_format == "fasta":
+            parsed_aln = aln_input.fasta_parse()
+        elif self.in_format == "phylip":
+            parsed_aln = aln_input.phylip_parse()
+        elif self.in_format == "nexus":
+            parsed_aln = aln_input.nexus_parse()
+        else:
+            print(Usage)
+
+        return parsed_aln
+
     def summarize_alignment(self):
     # call methods to create sequences list, matrix, sites without ambiguous or
     # missing characters; get and summarize alignment statistics
@@ -155,7 +191,8 @@ class Alignment:
         
     def seq_grabber(self):
     # create a list of sequences from parsed dictionary of names and seqs 
-        self.list_of_seqs = [seq for name, seq in self.parsed_records.items()]
+        parsed_aln = self.get_parsed_aln()
+        self.list_of_seqs = [seq for name, seq in parsed_aln.items()]
         return self.list_of_seqs
                
     def matrix_creator(self):
@@ -212,7 +249,7 @@ class Alignment:
         return round(prop_parsimony, 3)
 
     def get_name(self):
-        return self.aln_name
+        return self.in_file
         
     def get_taxa_no(self):
         return len(self.list_of_seqs)
@@ -243,7 +280,7 @@ class Alignment:
              / self.all_matrix_cells
             frequencies.append({char : round(count, 3)})
         return frequencies
-            
+
 
 class AminoAcidAlignment(Alignment):
     """Summary specific to aa alignments"""
@@ -315,24 +352,11 @@ if len(argv) is not 4:
 # define variables from arguments given
 script, in_file, in_format, data_type = argv
 
-# open and parse input file
-aln_input = FileParser(in_file)
-
-# parse according to the given format
-if in_format == "fasta":
-    parsed_aln = aln_input.fasta_parse()
-elif in_format == "phylip":
-    parsed_aln = aln_input.phylip_parse()
-elif in_format == "nexus":
-    parsed_aln = aln_input.nexus_parse()
-else:
-    print(Usage)
-
 # parse according to the given alphabet
 if data_type == "aa":
-    aln = AminoAcidAlignment(parsed_aln, in_file)
+    aln = AminoAcidAlignment(in_file, in_format, data_type)
 elif data_type == "dna":
-    aln = DNAAlignment(parsed_aln, in_file)
+    aln = DNAAlignment(in_file, in_format, data_type)
 else:
     print(Usage)
 
