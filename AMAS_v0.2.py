@@ -1,8 +1,23 @@
 #! /usr/bin/env python3
 
-"""
-AMAS_v0.2.py Copyright (C) 2015 Marek Borowiec
+#   Program to calculate various statistics on a multiple sequence alignment
 
+#   Copyright (C) 2015 Marek Borowiec
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+  
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
 This stand-alone program calculates various statistics on a multiple sequence
 alignment. It supports sequential FASTA, PHYLIP, and NEXUS formats for DNA and 
 amino acid sequences.
@@ -12,17 +27,6 @@ of matrix cells, overall number of undetermined characters, percent of missing
 data, AT and GC contents (for DNA alignments), number and proportion of 
 variable sites, number and proportion of parsimony informative sites,
 and proportions of all characters relative to matrix size.
-
-This program is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation, either version 3 of the License, or (at your
-option) any later version.
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details. You should have received a copy
-of the GNU General Public License along with this program.  If not, see
-<http://www.gnu.org/licenses/>.
 """
 
 Usage = """
