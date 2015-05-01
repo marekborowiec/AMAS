@@ -19,8 +19,8 @@
 
 """
 This stand-alone program calculates various statistics on a multiple sequence
-alignment. It supports sequential FASTA, PHYLIP, and NEXUS formats for DNA and 
-amino acid sequences.
+alignment. It supports sequential FASTA, PHYLIP, NEXUS, and interleaved PHYLIP 
+formats for DNA and aino acid sequences.
 
 Current statistics include the number of taxa, alignment length, total number
 of matrix cells, overall number of undetermined characters, percent of missing 
@@ -29,16 +29,16 @@ variable sites, number and proportion of parsimony informative sites,
 and proportions of all characters relative to matrix size.
 """
 
+from sys import argv
+import re
+
 Usage = """
 Usage: AMAS_v0.2.py <input_file> <format> <alphabet>
 
-Supported formats: "fasta", "phylip", "nexus"
+Supported formats: "fasta", "phylip", "phylip-int", "nexus"
 Supported alphabets: "aa", "dna"
 """
 
-
-from sys import argv
-import re
 
 class FileHandler:
     """Define file handle that closes when out of scope"""
@@ -76,12 +76,12 @@ class FileParser:
             seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
 
-        #print(records)
         return records
     
     def phylip_parse(self):
     # use regex to parse names and sequences in sequential phylip files
-        matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Za-z*?{}-]+)", self.in_file_lines, re.MULTILINE)
+        matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Za-z*?.{}-]+)", \
+         self.in_file_lines, re.MULTILINE)
         records = {}
 
         for match in matches:
@@ -89,8 +89,42 @@ class FileParser:
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
-        #print(records)
+        return records    
+
+    def phylip_interleaved_parse(self):
+    # use regex to parse names and sequences in interleaved phylip files
+        name_matches = re.finditer(r"^(\s+)?(\S+)[ \t]+[A-Za-z*?.{}-]+", \
+          self.in_file_lines, re.MULTILINE)
+        seq_matches = re.finditer(r"(^(\s+)?\S+[ \t]+|^)([A-Za-z*?.{}-]+)$", \
+         self.in_file_lines, re.MULTILINE)
+        # initiate lists for taxa names and sequence strings on separate lines
+        taxa = []
+        sequences = []
+        # initiate a dictionary for the name:sequence records
+        records = {}
+        # initiate a counter to keep track of sequences strung together
+        # from separate lines
+        counter = 0
+        
+        for match in name_matches:
+            name_match = match.group(2).replace("\n","")
+            taxa.append(name_match)
+
+        for match in seq_matches:
+            seq_match = match.group(3).replace("\n","").upper()
+            sequences.append(seq_match)
+
+        for taxon_no in range(len(taxa)):
+            sequence = ""
+
+            for index in range(counter,len(sequences),len(taxa)):
+                sequence += sequences[index] 
+           
+            records[taxa[taxon_no]] = sequence
+            counter += 1 
+
         return records
+
         
     def nexus_parse(self):
     # use regex to parse names and sequences in sequential nexus files
@@ -102,9 +136,8 @@ class FileParser:
 
         for match in matches:
             matrix_match = match.group(3)
-            #print(matrix_match)
             seq_matches = \
-             re.finditer(r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?{}-]+)($|\s+\[[0-9]+\]$)", \
+             re.finditer(r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?.{}-]+)($|\s+\[[0-9]+\]$)", \
               matrix_match, re.MULTILINE)
 
             for match in seq_matches:
@@ -113,7 +146,6 @@ class FileParser:
                 seq_match = self.translate_ambiguous(seq_match)
                 records[name_match] = seq_match
 
-        #print(records.keys())
         return records
         
     def translate_ambiguous(self, seq):
@@ -165,6 +197,8 @@ class Alignment:
             parsed_aln = aln_input.fasta_parse()
         elif self.in_format == "phylip":
             parsed_aln = aln_input.phylip_parse()
+        elif self.in_format == "phylip-int":
+            parsed_aln = aln_input.phylip_interleaved_parse()
         elif self.in_format == "nexus":
             parsed_aln = aln_input.nexus_parse()
         else:
