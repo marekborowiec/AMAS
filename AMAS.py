@@ -396,21 +396,27 @@ class DNAAlignment(Alignment):
         
         atgc_content.extend((at_content, gc_content))
         return atgc_content
-        
-# print usage instructions if number of agruments given is incorrect
-if len(argv) is not 4:
-    print(Usage)
 
-# define variables from arguments given
-script, in_file, in_format, data_type = argv
 
-# parse according to the given alphabet
-if data_type == "aa":
-    aln = AminoAcidAlignment(in_file, in_format, data_type)
-elif data_type == "dna":
-    aln = DNAAlignment(in_file, in_format, data_type)
-else:
-    print(Usage)
+def main():
+    # print usage instructions if number of agruments given is incorrect
+    if len(argv) is not 4:
+        print(Usage)
 
-# get alignment summary
-aln.get_summary()
+    # define variables from arguments given
+    script, in_file, in_format, data_type = argv
+
+    # parse according to the given alphabet
+    if data_type == "aa":
+        aln = AminoAcidAlignment(in_file, in_format, data_type)
+    elif data_type == "dna":
+        aln = DNAAlignment(in_file, in_format, data_type)
+    else:
+        print(Usage)
+
+    # get alignment summary
+    aln.get_summary()
+
+
+if __name__ == '__main__':
+    main()
