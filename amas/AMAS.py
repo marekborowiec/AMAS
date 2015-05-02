@@ -41,9 +41,6 @@ Supported alphabets: "aa", "dna"
 """
 
 
-__version__ = '0.2'
-
-
 class FileHandler:
     """Define file handle that closes when out of scope"""
 
