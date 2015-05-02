@@ -8,7 +8,7 @@ AMAS can be run from the command line:
 python AMAS.py <input_file> <format> <alphabet>
 ```
 
-Alos, AMAS can be imported from other Python modules:
+Also, AMAS can be imported from other Python modules:
 
 ```python
 >>> from amas import AMAS
