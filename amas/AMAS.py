@@ -29,6 +29,7 @@ variable sites, number and proportion of parsimony informative sites,
 and proportions of all characters relative to matrix size.
 """
 
+import sys
 from sys import argv
 import re
 
@@ -442,9 +443,10 @@ class DNAAlignment(Alignment):
 
 
 def main():
-    # print usage instructions if number of agruments given is incorrect
+    # print usage instructions if number of arguments given is incorrect
     if len(argv) is not 4:
         print(Usage)
+        sys.exit()
 
     # define variables from arguments given
     script, in_file, in_format, data_type = argv
