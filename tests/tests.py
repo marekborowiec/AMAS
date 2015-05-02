@@ -1,6 +1,6 @@
 import unittest
 
-from AMAS import DNAAlignment
+from amas import AMAS
 
 
 class TestAMAS(unittest.TestCase):
@@ -11,6 +11,6 @@ class TestAMAS(unittest.TestCase):
 
         expected = ['10', '100', '1000', '1', '0.1', '2', '0.02', '1', '0.01']
 
-        aln = DNAAlignment(in_file, in_format, data_type).summarize_alignment()
+        aln = AMAS.DNAAlignment(in_file, in_format, data_type).summarize_alignment()
         result = aln[1:]
         self.assertEqual(expected, result)
