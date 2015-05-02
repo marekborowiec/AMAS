@@ -20,7 +20,7 @@
 """
 This stand-alone program calculates various statistics on a multiple sequence
 alignment. It supports sequential FASTA, PHYLIP, NEXUS, and interleaved PHYLIP 
-formats for DNA and aino acid sequences.
+and NEXUS formats for DNA and aino acid sequences.
 
 Current statistics include the number of taxa, alignment length, total number
 of matrix cells, overall number of undetermined characters, percent of missing 
@@ -33,9 +33,9 @@ from sys import argv
 import re
 
 Usage = """
-Usage: AMAS_v0.2.py <input_file> <format> <alphabet>
+Usage: AMAS.py <input_file> <format> <alphabet>
 
-Supported formats: "fasta", "phylip", "phylip-int", "nexus"
+Supported formats: "fasta", "phylip", "nexus", "phylip-int", "nexus-int"
 Supported alphabets: "aa", "dna"
 """
 
@@ -115,6 +115,7 @@ class FileParser:
 
         for match in seq_matches:
             seq_match = match.group(3).replace("\n","").upper()
+            seq_match = self.translate_ambiguous(seq_match)
             sequences.append(seq_match)
 
         for taxon_no in range(len(taxa)):
@@ -151,6 +152,46 @@ class FileParser:
 
         return records
         
+    def nexus_interleaved_parse(self):
+    # use regex to parse names and sequences in sequential nexus files
+    # find the matrix block
+        matches = re.finditer(r"(\s+)?(MATRIX\n|matrix\n|MATRIX\r\n|matrix\r\n)(.*?;)", \
+         self.in_file_lines, re.DOTALL)
+        # initiate lists for taxa names and sequence strings on separate lines
+        taxa = []
+        sequences = []
+        # initiate a dictionary for the name:sequence records
+        records = {}
+        # initiate a counter to keep track of sequences strung together
+        # from separate lines
+        counter = 0
+
+        for match in matches:
+            matrix_match = match.group(3)
+            # get names and sequences from the matrix block
+            seq_matches = \
+             re.finditer(r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?.{}-]+)($|\s+\[[0-9]+\]$)", \
+              matrix_match, re.MULTILINE)
+
+            for match in seq_matches:
+                name_match = match.group(2).replace("\n","")
+                if name_match not in taxa:
+                    taxa.append(name_match)
+                seq_match = match.group(3).replace("\n","").upper()
+                seq_match = self.translate_ambiguous(seq_match)
+                sequences.append(seq_match)
+
+        for taxon_no in range(len(taxa)):
+
+            full_length_sequence = ""
+            for index in range(counter,len(sequences),len(taxa)):
+                full_length_sequence += sequences[index]
+            
+            counter += 1 
+            records[taxa[taxon_no]] = full_length_sequence
+
+        return records
+
     def translate_ambiguous(self, seq):
     # translate ambiguous characters from curly bracket format
     # to single letter format 
@@ -204,6 +245,8 @@ class Alignment:
             parsed_aln = aln_input.phylip_interleaved_parse()
         elif self.in_format == "nexus":
             parsed_aln = aln_input.nexus_parse()
+        elif self.in_format == "nexus-int":
+            parsed_aln = aln_input.nexus_interleaved_parse()
         else:
             print(Usage)
 
