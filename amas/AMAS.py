@@ -29,6 +29,7 @@ variable sites, number and proportion of parsimony informative sites,
 and proportions of all characters relative to matrix size.
 """
 
+import sys
 from sys import argv
 import re
 
@@ -38,9 +39,6 @@ Usage: AMAS.py <input_file> <format> <alphabet>
 Supported formats: "fasta", "phylip", "nexus", "phylip-int", "nexus-int"
 Supported alphabets: "aa", "dna"
 """
-
-
-__version__ = '0.2'
 
 
 class FileHandler:
@@ -442,9 +440,10 @@ class DNAAlignment(Alignment):
 
 
 def main():
-    # print usage instructions if number of agruments given is incorrect
+    # print usage instructions if number of arguments given is incorrect
     if len(argv) is not 4:
         print(Usage)
+        sys.exit()
 
     # define variables from arguments given
     script, in_file, in_format, data_type = argv
