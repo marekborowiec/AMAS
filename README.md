@@ -7,6 +7,7 @@ AMAS can be run from the command line:
 ```shell
 python AMAS.py <input_file> <format> <alphabet>
 ```
+The supported formats are `fasta`, `phylip`, `nexus`, `phylip-int`, and `nexus-int`. The alphabets are `aa` or `dna`.
 
 Also, AMAS can be imported from other Python modules:
 
