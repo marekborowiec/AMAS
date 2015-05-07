@@ -5,9 +5,23 @@ Calculate various summary statistics on a multiple sequence alignment
 AMAS can be run from the command line:
 
 ```shell
-python AMAS.py <input_file> <format> <alphabet>
+usage: AMAS.py [-h] --in-file [IN_FILE [IN_FILE ...]] --in-format
+               {fasta,phylip,nexus,phylip-int,nexus-int} --data-type {aa,dna}
+
+Calculate various statistics on a multiple sequence alignment
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+required named arguments:
+  --in-file [IN_FILE [IN_FILE ...]]
+                        Alignment files to be taken as input. You can specify
+                        multiple input files using wildcards (e.g. --in-file
+                        *fasta)
+  --in-format {fasta,phylip,nexus,phylip-int,nexus-int}
+                        The input alignment format
+  --data-type {aa,dna}  Type of data
 ```
-The supported formats are `fasta`, `phylip`, `nexus`, `phylip-int`, and `nexus-int`. The alphabets are `aa` or `dna`.
 
 Also, AMAS can be imported from other Python modules:
 
