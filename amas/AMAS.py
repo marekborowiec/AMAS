@@ -29,16 +29,42 @@ variable sites, number and proportion of parsimony informative sites,
 and proportions of all characters relative to matrix size.
 """
 
-import sys
-from sys import argv
-import re
+import argparse, re
+from os import path
 
-Usage = """
-Usage: AMAS.py <input_file> <format> <alphabet>
+def get_args():
+    # parse arguments from the command line
+    parser = argparse.ArgumentParser(
+        description="Calculate various statistics on a multiple sequence alignment"
+    )
+    # create new group of 'required named arguments' to override
+    # argparse default behavior of classifying required flags as optional 
+    required_named = parser.add_argument_group('required named arguments')
+    required_named.add_argument(
+        "--in-file",
+        nargs = "*",
+        type = str,
+        dest = "in_file",
+        required = True,
+        help = """Alignment files to be taken as input.
+        You can specify multiple input files using wildcards (e.g. --in-file *fasta)"""
+    )
+    required_named.add_argument(
+        "--in-format",
+        dest = "in_format",
+        required = True,
+        choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+        help="The input alignment format"
+    )
+    required_named.add_argument(
+        "--data-type",
+        dest = "data_type",
+        required = True,
+        choices = ["aa", "dna"],
+        help = "Type of data"
+    )
 
-Supported formats: "fasta", "phylip", "nexus", "phylip-int", "nexus-int"
-Supported alphabets: "aa", "dna"
-"""
+    return parser.parse_args()
 
 
 class FileHandler:
@@ -68,7 +94,11 @@ class FileParser:
     
     def fasta_parse(self):
     # use regex to parse names and sequences in sequential fasta files
-        matches = re.finditer(r"^>(.*[^$])([^>]*)", self.in_file_lines, re.MULTILINE)
+        matches = re.finditer(
+            r"^>(.*[^$])([^>]*)",
+            self.in_file_lines, re.MULTILINE
+        )
+
         records = {}
  
         for match in matches:
@@ -81,8 +111,11 @@ class FileParser:
     
     def phylip_parse(self):
     # use regex to parse names and sequences in sequential phylip files
-        matches = re.finditer(r"^(\s+)?(\S+)\s+([A-Za-z*?.{}-]+)", \
-         self.in_file_lines, re.MULTILINE)
+        matches = re.finditer(
+            r"^(\s+)?(\S+)\s+([A-Za-z*?.{}-]+)",
+            self.in_file_lines, re.MULTILINE
+        )
+
         records = {}
 
         for match in matches:
@@ -94,10 +127,14 @@ class FileParser:
 
     def phylip_interleaved_parse(self):
     # use regex to parse names and sequences in interleaved phylip files
-        name_matches = re.finditer(r"^(\s+)?(\S+)[ \t]+[A-Za-z*?.{}-]+", \
-          self.in_file_lines, re.MULTILINE)
-        seq_matches = re.finditer(r"(^(\s+)?\S+[ \t]+|^)([A-Za-z*?.{}-]+)$", \
-         self.in_file_lines, re.MULTILINE)
+        name_matches = re.finditer(
+            r"^(\s+)?(\S+)[ \t]+[A-Za-z*?.{}-]+",
+            self.in_file_lines, re.MULTILINE
+        )
+        seq_matches = re.finditer(
+            r"(^(\s+)?\S+[ \t]+|^)([A-Za-z*?.{}-]+)$",
+            self.in_file_lines, re.MULTILINE
+        )
         # initiate lists for taxa names and sequence strings on separate lines
         taxa = []
         sequences = []
@@ -131,16 +168,20 @@ class FileParser:
     def nexus_parse(self):
     # use regex to parse names and sequences in sequential nexus files
     # find the matrix block
-        matches = re.finditer(r"(\s+)?(MATRIX\n|matrix\n|MATRIX\r\n|matrix\r\n)(.*?;)", \
-         self.in_file_lines, re.DOTALL)
+        matches = re.finditer(
+            r"(\s+)?(MATRIX\n|matrix\n|MATRIX\r\n|matrix\r\n)(.*?;)",
+            self.in_file_lines, re.DOTALL
+        )
+        
         records = {}
         # get names and sequences from the matrix block
 
         for match in matches:
             matrix_match = match.group(3)
-            seq_matches = \
-             re.finditer(r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?.{}-]+)($|\s+\[[0-9]+\]$)", \
-              matrix_match, re.MULTILINE)
+            seq_matches = re.finditer(
+                 r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?.{}-]+)($|\s+\[[0-9]+\]$)",
+                 matrix_match, re.MULTILINE
+             )
 
             for match in seq_matches:
                 name_match = match.group(2).replace("\n","")
@@ -153,8 +194,10 @@ class FileParser:
     def nexus_interleaved_parse(self):
     # use regex to parse names and sequences in sequential nexus files
     # find the matrix block
-        matches = re.finditer(r"(\s+)?(MATRIX\n|matrix\n|MATRIX\r\n|matrix\r\n)(.*?;)", \
-         self.in_file_lines, re.DOTALL)
+        matches = re.finditer(
+            r"(\s+)?(MATRIX\n|matrix\n|MATRIX\r\n|matrix\r\n)(.*?;)",
+            self.in_file_lines, re.DOTALL
+        )
         # initiate lists for taxa names and sequence strings on separate lines
         taxa = []
         sequences = []
@@ -167,9 +210,10 @@ class FileParser:
         for match in matches:
             matrix_match = match.group(3)
             # get names and sequences from the matrix block
-            seq_matches = \
-             re.finditer(r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?.{}-]+)($|\s+\[[0-9]+\]$)", \
-              matrix_match, re.MULTILINE)
+            seq_matches = re.finditer(
+                r"^(\s+)?[']?(\S+\s\S+|\S+)[']?\s+([A-Za-z*?.{}-]+)($|\s+\[[0-9]+\]$)",
+                matrix_match, re.MULTILINE
+            )
 
             for match in seq_matches:
                 name_match = match.group(2).replace("\n","")
@@ -245,8 +289,6 @@ class Alignment:
             parsed_aln = aln_input.nexus_parse()
         elif self.in_format == "nexus-int":
             parsed_aln = aln_input.nexus_interleaved_parse()
-        else:
-            print(Usage)
 
         return parsed_aln
 
@@ -342,7 +384,8 @@ class Alignment:
         return round(prop_parsimony, 3)
 
     def get_name(self):
-        return self.in_file
+        in_filename = path.basename(self.in_file)
+        return in_filename
         
     def get_taxa_no(self):
         return len(self.list_of_seqs)
@@ -387,10 +430,18 @@ class AminoAcidAlignment(Alignment):
         data = self.summarize_alignment()
         new_data = data + list(self.get_freq_summary()[1])
         
-        header = ["Alignment_name", "No_of_taxa", "Alignment_length", \
-         "Total_matrix_cells", "Undetermined_characters", "Missing_percent", \
-          "No_variable_sites", "Proportion_variable_sites", \
-           "Parsimony_informative_sites", "Proportion_parsimony_informative"]
+        header = [
+            "Alignment_name",
+            "No_of_taxa",
+            "Alignment_length",
+            "Total_matrix_cells",
+            "Undetermined_characters",
+            "Missing_percent",
+            "No_variable_sites",
+            "Proportion_variable_sites",
+            "Parsimony_informative_sites",
+            "Proportion_parsimony_informative"
+        ]
         
         freq_header = list(self.get_freq_summary()[0])
         new_header = header + freq_header
@@ -412,10 +463,21 @@ class DNAAlignment(Alignment):
         
         new_data = data + self.get_atgc_content() \
          + list(self.get_freq_summary()[1])
-        header = ["Alignment_name", "No_of_taxa", "Alignment_length", \
-         "Total_matrix_cells", "Undetermined_characters", "Missing_percent", \
-          "No_variable_sites", "Proportion_variable_sites", "Parsimony_informative_sites", \
-            "Proportion_parsimony_informative", "AT_content", "GC_content"]
+
+        header = [
+            "Alignment_name",
+            "No_of_taxa",
+            "Alignment_length",
+            "Total_matrix_cells",
+            "Undetermined_characters",
+            "Missing_percent",
+            "No_variable_sites",
+            "Proportion_variable_sites",
+            "Parsimony_informative_sites",
+            "Proportion_parsimony_informative",
+            "AT_content",
+            "GC_content"
+        ]
         
         freq_header = list(self.get_freq_summary()[0])
         new_header = header + freq_header
@@ -440,25 +502,24 @@ class DNAAlignment(Alignment):
 
 
 def main():
-    # print usage instructions if number of arguments given is incorrect
-    if len(argv) is not 4:
-        print(Usage)
-        sys.exit()
+
+    # get arguments
+    args = get_args()
 
     # define variables from arguments given
-    script, in_file, in_format, data_type = argv
+    in_files = args.in_file
+    in_format = args.in_format
+    data_type = args.data_type
 
-    # parse according to the given alphabet
-    if data_type == "aa":
-        aln = AminoAcidAlignment(in_file, in_format, data_type)
-    elif data_type == "dna":
-        aln = DNAAlignment(in_file, in_format, data_type)
-    else:
-        print(Usage)
+    for alignment in in_files:
+        # parse according to the given alphabet
+        if data_type == "aa":
+            aln = AminoAcidAlignment(alignment, in_format, data_type)
+        elif data_type == "dna":
+            aln = DNAAlignment(alignment, in_format, data_type)
 
-    # get alignment summary
-    aln.get_summary()
-
+        # get alignment summary
+        aln.get_summary()    
 
 if __name__ == '__main__':
     main()
