@@ -521,7 +521,7 @@ def main():
             aln = DNAAlignment(alignment, in_format, data_type)
 
         # get alignment summary
-#        aln.get_summary()    
+        aln.get_summary()    
 
     def get_concatenated():
         alignments = []
@@ -553,7 +553,7 @@ def main():
             for taxon in alignment.keys():
                 if taxon not in all_taxa:
                     all_taxa.append(taxon) 
-        print(all_taxa)
+        #print(all_taxa)
 
         for alignment in alignments:
             # get empty sequence if there is missing taxon
@@ -572,7 +572,16 @@ def main():
             concatenated[taxon] = seqs    
         return concatenated
 
-    concat = get_concatenated()
+'''    concat = get_concatenated()
+
+    n = 80
+    for taxon, seq in concat.items():
+        seq = [seq[i:i+n] for i in range(0, len(seq), n)]
+        print(">" + taxon)
+        for element in seq:
+            print(element)
+'''
+ 
     #print(concat)
 if __name__ == '__main__':
     main()
