@@ -66,6 +66,40 @@ def get_args():
 
     return parser.parse_args()
 
+def get_concatenated():
+    alignments = []
+    for name in in_files:
+        alignments.append[FileParser(name)]
+    # create empty dictionary of lists
+    concatenated = defaultdict(list)
+
+    # first create list of taxa in all alignments
+    # you need this to insert empty seqs in
+    # the concatenated alignment
+    all_taxa = []
+
+    for alignment in alignments:
+        for taxon in alignment.keys():
+            if taxon not in all_taxa:
+                all_taxa.append(taxon) 
+    print(all_taxa)
+
+    for alignment in alignments:
+        # get empty sequence if there is missing taxon
+        # getting length from first element of list of keys
+        # created from the original dict for this alignment
+        empty_seq = '?' * len(alignment[list(alignment.keys())[0]])
+
+        for taxon in all_taxa:
+            if taxon not in alignment.keys():
+                concatenated[taxon].append(empty_seq)
+            else:
+                concatenated[taxon].append(alignment[taxon])
+
+    for taxon, seqs in concatenated.items():
+        seqs = ''.join(seqs)
+        concatenated[taxon] = seqs    
+    return concatenated
 
 class FileHandler:
     """Define file handle that closes when out of scope"""
@@ -510,6 +544,7 @@ def main():
     in_files = args.in_file
     in_format = args.in_format
     data_type = args.data_type
+
 
     for alignment in in_files:
         # parse according to the given alphabet
