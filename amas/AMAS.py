@@ -31,6 +31,7 @@ and proportions of all characters relative to matrix size.
 
 import argparse, re
 from os import path
+from collections import defaultdict
 
 def get_args():
     # parse arguments from the command line
@@ -66,40 +67,6 @@ def get_args():
 
     return parser.parse_args()
 
-def get_concatenated():
-    alignments = []
-    for name in in_files:
-        alignments.append[FileParser(name)]
-    # create empty dictionary of lists
-    concatenated = defaultdict(list)
-
-    # first create list of taxa in all alignments
-    # you need this to insert empty seqs in
-    # the concatenated alignment
-    all_taxa = []
-
-    for alignment in alignments:
-        for taxon in alignment.keys():
-            if taxon not in all_taxa:
-                all_taxa.append(taxon) 
-    print(all_taxa)
-
-    for alignment in alignments:
-        # get empty sequence if there is missing taxon
-        # getting length from first element of list of keys
-        # created from the original dict for this alignment
-        empty_seq = '?' * len(alignment[list(alignment.keys())[0]])
-
-        for taxon in all_taxa:
-            if taxon not in alignment.keys():
-                concatenated[taxon].append(empty_seq)
-            else:
-                concatenated[taxon].append(alignment[taxon])
-
-    for taxon, seqs in concatenated.items():
-        seqs = ''.join(seqs)
-        concatenated[taxon] = seqs    
-    return concatenated
 
 class FileHandler:
     """Define file handle that closes when out of scope"""
@@ -554,7 +521,58 @@ def main():
             aln = DNAAlignment(alignment, in_format, data_type)
 
         # get alignment summary
-        aln.get_summary()    
+#        aln.get_summary()    
 
+    def get_concatenated():
+        alignments = []
+
+        for name in in_files:
+            aln_input = FileParser(name)
+            if in_format == "fasta":
+                parsed_aln = aln_input.fasta_parse()
+            elif in_format == "phylip":
+                parsed_aln = aln_input.phylip_parse()
+            elif in_format == "phylip-int":
+                parsed_aln = aln_input.phylip_interleaved_parse()
+            elif in_format == "nexus":
+                parsed_aln = aln_input.nexus_parse()
+            elif in_format == "nexus-int":
+                parsed_aln = aln_input.nexus_interleaved_parse()
+
+            alignments.append(parsed_aln)
+            #alignments.append[seq_dict.copy()]
+        # create empty dictionary of lists
+        concatenated = defaultdict(list)
+
+        # first create list of taxa in all alignments
+        # you need this to insert empty seqs in
+        # the concatenated alignment
+        all_taxa = []
+
+        for alignment in alignments:
+            for taxon in alignment.keys():
+                if taxon not in all_taxa:
+                    all_taxa.append(taxon) 
+        print(all_taxa)
+
+        for alignment in alignments:
+            # get empty sequence if there is missing taxon
+            # getting length from first element of list of keys
+            # created from the original dict for this alignment
+            empty_seq = '?' * len(alignment[list(alignment.keys())[0]])
+
+            for taxon in all_taxa:
+                if taxon not in alignment.keys():
+                    concatenated[taxon].append(empty_seq)
+                else:
+                    concatenated[taxon].append(alignment[taxon])
+
+        for taxon, seqs in concatenated.items():
+            seqs = ''.join(seqs)
+            concatenated[taxon] = seqs    
+        return concatenated
+
+    concat = get_concatenated()
+    #print(concat)
 if __name__ == '__main__':
     main()
