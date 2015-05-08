@@ -29,7 +29,7 @@ variable sites, number and proportion of parsimony informative sites,
 and proportions of all characters relative to matrix size.
 """
 
-import argparse, re
+import argparse, pprint, re
 from os import path
 from collections import defaultdict
 
@@ -521,7 +521,7 @@ def main():
             aln = DNAAlignment(alignment, in_format, data_type)
 
         # get alignment summary
-        aln.get_summary()    
+#####        aln.get_summary()    
 
     def get_concatenated():
         alignments = []
@@ -540,7 +540,6 @@ def main():
                 parsed_aln = aln_input.nexus_interleaved_parse()
 
             alignments.append(parsed_aln)
-            #alignments.append[seq_dict.copy()]
         # create empty dictionary of lists
         concatenated = defaultdict(list)
 
@@ -555,24 +554,42 @@ def main():
                     all_taxa.append(taxon) 
         #print(all_taxa)
 
-        for alignment in alignments:
+        # start counters to keep track of partitions
+        partition_counter = 1
+        position_counter = 1
+        # get dict for alignment name and partition
+        partitions = {}
+
+        for alignment in alignments:        
+
+            partition_length = len(alignment[list(alignment.keys())[0]])
+            partition_name = "gene_" + str(partition_counter)
+            
+            start = position_counter
+            position_counter += partition_length
+            end = position_counter - 1
+            partitions[partition_name] = str(start) + "-" + str(end)
+ 
+            partition_counter += 1
+            
             # get empty sequence if there is missing taxon
             # getting length from first element of list of keys
             # created from the original dict for this alignment
-            empty_seq = '?' * len(alignment[list(alignment.keys())[0]])
+            empty_seq = '?' * partition_length
 
             for taxon in all_taxa:
                 if taxon not in alignment.keys():
                     concatenated[taxon].append(empty_seq)
                 else:
                     concatenated[taxon].append(alignment[taxon])
-
+        #pprint.pprint(partitions)
         for taxon, seqs in concatenated.items():
             seqs = ''.join(seqs)
             concatenated[taxon] = seqs    
+        
         return concatenated
 
-'''    concat = get_concatenated()
+    concat = get_concatenated()
 
     n = 80
     for taxon, seq in concat.items():
@@ -580,7 +597,7 @@ def main():
         print(">" + taxon)
         for element in seq:
             print(element)
-'''
+
  
     #print(concat)
 if __name__ == '__main__':
