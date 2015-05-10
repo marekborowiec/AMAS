@@ -33,50 +33,52 @@ import argparse, pprint, re
 from os import path
 from collections import defaultdict
 
-def get_args():
-    # parse arguments from the command line
-    parser = argparse.ArgumentParser(
-        description="Alignment manipulation and summary statistics"
-    )
-    # create new group of 'required named arguments' to override
-    # argparse default behavior of classifying required flags as optional
-    required_named = parser.add_argument_group('required named arguments')
-    required_named.add_argument(
-        "-i",
-        "--in-file",
-        nargs = "*",
-        type = str,
-        dest = "in_file",
-        required = True,
-        help = """Alignment files to be taken as input.
-        You can specify multiple files using wildcards (e.g. --in-file *fasta)"""
-    )
-    required_named.add_argument(
-        "-f",
-        "--in-format",
-        dest = "in_format",
-        required = True,
-        choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
-        help="The format of input alignment"
-    )
-    required_named.add_argument(
-        "-d",
-        "--data-type",
-        dest = "data_type",
-        required = True,
-        choices = ["aa", "dna"],
-        help = "Type of data"
-    )
-    parser.add_argument(
-        "-c",
-        "--concat",
-        dest = "concat",
-        action = "store_true",
-        help = "Concatenate input alignments"
-    ) 
+class ParsedArgs():
 
-    return parser.parse_args()
+    def get_args():
+        # parse arguments from the command line
+        parser = argparse.ArgumentParser(
+            description="Alignment manipulation and summary statistics"
+        )
+        # create new group of 'required named arguments' to override
+        # argparse default behavior of classifying required flags as optional
+        required_named = parser.add_argument_group('required named arguments')
+        required_named.add_argument(
+            "-i",
+            "--in-file",
+            nargs = "*",
+            type = str,
+            dest = "in_file",
+            required = True,
+            help = """Alignment files to be taken as input.
+            You can specify multiple files using wildcards (e.g. --in-file *fasta)"""
+        )
+        required_named.add_argument(
+            "-f",
+            "--in-format",
+            dest = "in_format",
+            required = True,
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            help="The format of input alignment"
+        )
+        required_named.add_argument(
+            "-d",
+            "--data-type",
+            dest = "data_type",
+            required = True,
+            choices = ["aa", "dna"],
+            help = "Type of data"
+        )
+        parser.add_argument(
+            "-c",
+            "--concat",
+            dest = "concat",
+            action = "store_true",
+            help = "Concatenate input alignments"
+        ) 
 
+        return parser.parse_args()
+    
 
 class FileHandler:
     """Define file handle that closes when out of scope"""
@@ -302,7 +304,7 @@ class Alignment:
             parsed_aln = aln_input.nexus_interleaved_parse()
 
         return parsed_aln
-
+        
     def summarize_alignment(self):
     # call methods to create sequences list, matrix, sites without ambiguous or
     # missing characters; get and summarize alignment statistics
@@ -334,7 +336,6 @@ class Alignment:
                 characters.append(str(char))
                 frequencies.append(str(freq))
         return characters, frequencies           
-        
     def seq_grabber(self):
     # create a list of sequences from parsed dictionary of names and seqs 
         parsed_aln = self.get_parsed_aln()
@@ -343,8 +344,7 @@ class Alignment:
                
     def matrix_creator(self):
     # decompose character matrix into a two-dimensional list
-        self.matrix = [[character for character in sequence] \
-         for sequence in self.list_of_seqs]
+        self.matrix = [list(sequence) for sequence in self.list_of_seqs]
         return self.matrix
 
     def get_column(self, i):
@@ -441,22 +441,6 @@ class AminoAcidAlignment(Alignment):
         data = self.summarize_alignment()
         new_data = data + list(self.get_freq_summary()[1])
         
-        header = [
-            "Alignment_name",
-            "No_of_taxa",
-            "Alignment_length",
-            "Total_matrix_cells",
-            "Undetermined_characters",
-            "Missing_percent",
-            "No_variable_sites",
-            "Proportion_variable_sites",
-            "Parsimony_informative_sites",
-            "Proportion_parsimony_informative"
-        ]
-        
-        freq_header = list(self.get_freq_summary()[0])
-        new_header = header + freq_header
-        print("\t".join(new_header))
         print("\t".join(new_data))
 
            
@@ -474,26 +458,7 @@ class DNAAlignment(Alignment):
         
         new_data = data + self.get_atgc_content() \
          + list(self.get_freq_summary()[1])
-
-        header = [
-            "Alignment_name",
-            "No_of_taxa",
-            "Alignment_length",
-            "Total_matrix_cells",
-            "Undetermined_characters",
-            "Missing_percent",
-            "No_variable_sites",
-            "Proportion_variable_sites",
-            "Parsimony_informative_sites",
-            "Proportion_parsimony_informative",
-            "AT_content",
-            "GC_content"
-        ]
         
-        freq_header = list(self.get_freq_summary()[0])
-        new_header = header + freq_header
-        
-        print("\t".join(new_header))
         print("\t".join(new_data))
         
     def get_atgc_content(self):
@@ -511,48 +476,85 @@ class DNAAlignment(Alignment):
         atgc_content.extend((at_content, gc_content))
         return atgc_content
 
-#class Summary():
+class MetaAlignment():
+ 
+    def __init__(self):
 
-
-
-def main():
-
-    # get arguments
-    args = get_args()
-
-    # define variables from arguments given
-    in_files = args.in_file
-    in_format = args.in_format
-    data_type = args.data_type
-
-
-    for alignment in in_files:
-        # parse according to the given alphabet
-        if data_type == "aa":
-            aln = AminoAcidAlignment(alignment, in_format, data_type)
-        elif data_type == "dna":
-            aln = DNAAlignment(alignment, in_format, data_type)
-
-        # get alignment summary
-        aln.get_summary()    
-
-    def get_concatenated():
+        self.args = ParsedArgs.get_args()
+        self.in_files = self.args.in_file
+        self.in_format = self.args.in_format
+        self.data_type = self.args.data_type
+        self.concat = self.args.concat
+        
+        self.alignments = self.get_alignment_objects()
+        self.parsed_alignments = self.get_parsed_alignments()
+    
+    def get_alignment_objects(self):
         alignments = []
+        for alignment in self.in_files:
+            # parse according to the given alphabet
+            if self.data_type == "aa":
+                aln = AminoAcidAlignment(alignment, self.in_format, self.data_type)
+            elif self.data_type == "dna":
+                aln = DNAAlignment(alignment, self.in_format, self.data_type)
+            alignments.append(aln)
+        return alignments
 
-        for name in in_files:
-            aln_input = FileParser(name)
-            if in_format == "fasta":
-                parsed_aln = aln_input.fasta_parse()
-            elif in_format == "phylip":
-                parsed_aln = aln_input.phylip_parse()
-            elif in_format == "phylip-int":
-                parsed_aln = aln_input.phylip_interleaved_parse()
-            elif in_format == "nexus":
-                parsed_aln = aln_input.nexus_parse()
-            elif in_format == "nexus-int":
-                parsed_aln = aln_input.nexus_interleaved_parse()
+    def get_parsed_alignments(self):
+       
+        parsed_alignments = []
+        for alignment in self.alignments:
+            parsed = alignment.get_parsed_aln()
+            parsed_alignments.append(parsed)
+    
+        return parsed_alignments
 
-            alignments.append(parsed_aln)
+    def get_summaries(self):
+
+        aa_header = [
+            "Alignment_name",
+            "No_of_taxa",
+            "Alignment_length",
+            "Total_matrix_cells",
+            "Undetermined_characters",
+            "Missing_percent",
+            "No_variable_sites",
+            "Proportion_variable_sites",
+            "Parsimony_informative_sites",
+            "Proportion_parsimony_informative"
+        ]
+
+        dna_header = [
+            "Alignment_name",
+            "No_of_taxa",
+            "Alignment_length",
+            "Total_matrix_cells",
+            "Undetermined_characters",
+            "Missing_percent",
+            "No_variable_sites",
+            "Proportion_variable_sites",
+            "Parsimony_informative_sites",
+            "Proportion_parsimony_informative",
+            "AT_content",
+            "GC_content"
+        ]
+
+        alignments = self.get_alignment_objects()
+        parsed_alignments = self.get_parsed_alignments()
+        freq_header = [char for char in alignments[0].alphabet]
+        
+        if self.data_type == "aa":
+            header = aa_header + freq_header
+        elif self.data_type == "dna":
+            header = dna_header + freq_header
+
+        print("\t".join(header))
+
+        summaries = [alignment.get_summary() for alignment in alignments]            
+
+
+    def get_concatenated(self):
+
         # create empty dictionary of lists
         concatenated = defaultdict(list)
 
@@ -561,10 +563,10 @@ def main():
         # the concatenated alignment
         all_taxa = []
 
-        for alignment in alignments:
+        for alignment in self.parsed_alignments:
             for taxon in alignment.keys():
                 if taxon not in all_taxa:
-                    all_taxa.append(taxon) 
+                    all_taxa.append(taxon)
         #print(all_taxa)
 
         # start counters to keep track of partitions
@@ -573,7 +575,7 @@ def main():
         # get dict for alignment name and partition
         partitions = {}
 
-        for alignment in alignments:        
+        for alignment in self.parsed_alignments:        
 
             partition_length = len(alignment[list(alignment.keys())[0]])
             partition_name = "gene_" + str(partition_counter)
@@ -589,7 +591,7 @@ def main():
             # getting length from first element of list of keys
             # created from the original dict for this alignment
             empty_seq = '?' * partition_length
-
+# HOW TO CONSTRUCT COMPREHENSION FOR THIS???
             for taxon in all_taxa:
                 if taxon not in alignment.keys():
                     concatenated[taxon].append(empty_seq)
@@ -602,14 +604,20 @@ def main():
         
         return concatenated
 
-    concat = get_concatenated()
 
-"""    n = 80
+def main():
+
+    meta_aln = MetaAlignment()
+    #meta_aln.get_summaries()
+
+    concat = meta_aln.get_concatenated()
+
+    n = 80
     for taxon, seq in concat.items():
         seq = [seq[i:i+n] for i in range(0, len(seq), n)]
         print(">" + taxon)
         for element in seq:
-            print(element)"""
+            print(element)
 
  
     #print(concat)
