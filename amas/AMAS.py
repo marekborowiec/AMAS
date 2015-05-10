@@ -36,34 +36,44 @@ from collections import defaultdict
 def get_args():
     # parse arguments from the command line
     parser = argparse.ArgumentParser(
-        description="Calculate various statistics on a multiple sequence alignment"
+        description="Alignment manipulation and summary statistics"
     )
     # create new group of 'required named arguments' to override
-    # argparse default behavior of classifying required flags as optional 
+    # argparse default behavior of classifying required flags as optional
     required_named = parser.add_argument_group('required named arguments')
     required_named.add_argument(
+        "-i",
         "--in-file",
         nargs = "*",
         type = str,
         dest = "in_file",
         required = True,
         help = """Alignment files to be taken as input.
-        You can specify multiple input files using wildcards (e.g. --in-file *fasta)"""
+        You can specify multiple files using wildcards (e.g. --in-file *fasta)"""
     )
     required_named.add_argument(
+        "-f",
         "--in-format",
         dest = "in_format",
         required = True,
         choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
-        help="The input alignment format"
+        help="The format of input alignment"
     )
     required_named.add_argument(
+        "-d",
         "--data-type",
         dest = "data_type",
         required = True,
         choices = ["aa", "dna"],
         help = "Type of data"
     )
+    parser.add_argument(
+        "-c",
+        "--concat",
+        dest = "concat",
+        action = "store_true",
+        help = "Concatenate input alignments"
+    ) 
 
     return parser.parse_args()
 
@@ -420,7 +430,7 @@ class Alignment:
 
 
 class AminoAcidAlignment(Alignment):
-    """Summary specific to aa alignments"""
+    """Alphabets specific to amino acid alignments"""
 
     alphabet = ["A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R", \
      "S","T","V","W","Y","B","J","Z","X",".","*","-","?"]
@@ -451,7 +461,7 @@ class AminoAcidAlignment(Alignment):
 
            
 class DNAAlignment(Alignment):
-    """Summary specific to DNA alignments"""
+    """Alphabets specific to DNA alignments"""
     
     alphabet = ["A","C","G","T","K","M","R","Y","S","W","B","V","H","D","X", \
      "N", "O", "-","?"]
@@ -501,6 +511,9 @@ class DNAAlignment(Alignment):
         atgc_content.extend((at_content, gc_content))
         return atgc_content
 
+#class Summary():
+
+
 
 def main():
 
@@ -521,7 +534,7 @@ def main():
             aln = DNAAlignment(alignment, in_format, data_type)
 
         # get alignment summary
-#####        aln.get_summary()    
+        aln.get_summary()    
 
     def get_concatenated():
         alignments = []
@@ -591,12 +604,12 @@ def main():
 
     concat = get_concatenated()
 
-    n = 80
+"""    n = 80
     for taxon, seq in concat.items():
         seq = [seq[i:i+n] for i in range(0, len(seq), n)]
         print(">" + taxon)
         for element in seq:
-            print(element)
+            print(element)"""
 
  
     #print(concat)
