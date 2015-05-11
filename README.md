@@ -11,12 +11,14 @@ pip install amas
 ```
 
 ## Usage
-AMAS can be run from the command line. Here is the general usage:
+AMAS can be run from the command line. Here is the general usage (you can print this with `python3 AMAS.py -h`):
 
-```shell
+```
 usage: AMAS.py [-h] -i [IN_FILE [IN_FILE ...]] -f
                {fasta,phylip,nexus,phylip-int,nexus-int} -d {aa,dna} [-c] [-s]
                [-p CONCAT_PART] [-t CONCAT_OUT] [-o SUMMARY_OUT]
+
+Alignment manipulation and summary statistics
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -27,7 +29,7 @@ optional arguments:
   -t CONCAT_OUT, --concat-out CONCAT_OUT
                         File name for the concatenated alignment
   -o SUMMARY_OUT, --summary-out SUMMARY_OUT
-                        File name for the concatenated alignment
+                        File name for the alignment summary
 
 required named arguments:
   -i [IN_FILE [IN_FILE ...]], --in-file [IN_FILE [IN_FILE ...]]
@@ -42,23 +44,23 @@ required named arguments:
 ## Examples
 
 You need to choose at least one action with `-c` (same as `--concat`) or `-s` (`--summary`) for the input to be processed. If you want to concatenate all DNA phylip files in a directory and all of them have the `.phy` extension, you can run:
-```shell
+```
 python3 AMAS.py --in-format phylip --data-type dna --in-file *phy --concat
 ```
 By default the output will be written to two file `partitions.txt`, containing partitions for your new alignment, and `concatenated-fasta.out` with the alignment itself in fasta format. You can change the default names for these files with `-p` (`--concat-part`) and `-t` (`--concat-out`), respectively, followed by the desired name.
 
 Below is the same command using short versions of options:
-```shell
+```
 python3 AMAS.py -f phylip -d dna -i *phy -c
 ```
 You can summarize a protein fasta alignment by running:
-```shell
+```
 python3 AMAS.py -f fasta -d aa -i my_alignment.nex -s
 ```
 By default AMAS will write a file with the summary of the alignment in `summary.txt`. You can change the name of this file with `-o` or `--summary-out`.
 
 You can perform concatenation and at the same time write summaries of the input alignments. Order in which options are supplied does not matter:
-```shell
+```
 python3 AMAS.py -s -c -t all_gene_matrix.fas -f nexus-int -d dna -i *.nex
 ``` 
 
