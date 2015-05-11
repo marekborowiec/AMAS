@@ -103,7 +103,7 @@ class ParsedArgs():
             "--summary-out",
             dest = "summary_out",
             default = "summary.txt",
-            help = "File name for the concatenated alignment"
+            help = "File name for the alignment summary"
         ) 
 
         return parser.parse_args()
