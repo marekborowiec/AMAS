@@ -95,7 +95,7 @@ class ParsedArgs():
             "-t",
             "--concat-out",
             dest = "concat_out",
-            default = "concatenated.fas",
+            default = "concatenated-fasta.out",
             help = "File name for the concatenated alignment"
         )
         parser.add_argument(
@@ -470,7 +470,7 @@ class AminoAcidAlignment(Alignment):
         data = self.summarize_alignment()
         new_data = data + list(self.get_freq_summary()[1])
         
-        print("\t".join(new_data))
+        return "\t".join(new_data)
 
            
 class DNAAlignment(Alignment):
@@ -488,7 +488,7 @@ class DNAAlignment(Alignment):
         new_data = data + self.get_atgc_content() \
          + list(self.get_freq_summary()[1])
         
-        print("\t".join(new_data))
+        return "\t".join(new_data)
         
     def get_atgc_content(self):
     # get AC and GC contents
@@ -577,15 +577,16 @@ class MetaAlignment():
             header = aa_header + freq_header
         elif self.data_type == "dna":
             header = dna_header + freq_header
-
-        print("\t".join(header))
-
+ 
         summaries = [alignment.get_summary() for alignment in alignments]            
+        return "\t".join(header), summaries
+
 
     def write_summaries(self, file_name):
 
         summary_file = open(file_name, "w")
-        summary_file.write(self.get_summaries())
+        summary_file.write(self.get_summaries()[0] + '\n')
+        summary_file.write('\n'.join(self.get_summaries()[1]))
         summary_file.close()
        
     def get_concatenated(self):
@@ -692,7 +693,7 @@ def main():
         print("\nYou need to specify action with -c (--concat) for concatenation,\n -s (--summary) for alignment summaries, or both\n")
     
     elif meta_aln.summary:
-        meta_aln.get_summaries(summary_out)
+        meta_aln.write_summaries(summary_out)
     elif meta_aln.concat:
         meta_aln.write_fasta_concat(concat_out)
         meta_aln.write_partitions(concat_part)
