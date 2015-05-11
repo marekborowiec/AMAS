@@ -29,7 +29,7 @@ variable sites, number and proportion of parsimony informative sites,
 and proportions of all characters relative to matrix size.
 """
 
-import argparse, pprint, re
+import argparse, re
 from os import path
 from collections import defaultdict
 
@@ -69,12 +69,41 @@ class ParsedArgs():
             choices = ["aa", "dna"],
             help = "Type of data"
         )
+
         parser.add_argument(
             "-c",
             "--concat",
             dest = "concat",
             action = "store_true",
             help = "Concatenate input alignments"
+        ) 
+        parser.add_argument(
+            "-s",
+            "--summary",
+            dest = "summary",
+            action = "store_true",
+            help = "Print alignment summary"
+        ) 
+        parser.add_argument(
+            "-p",
+            "--concat-part",
+            dest = "concat_part",
+            default = "partitions.txt",
+            help = "File name for the concatenated alignment partitions"
+        ) 
+        parser.add_argument(
+            "-t",
+            "--concat-out",
+            dest = "concat_out",
+            default = "concatenated.fas",
+            help = "File name for the concatenated alignment"
+        )
+        parser.add_argument(
+            "-o",
+            "--summary-out",
+            dest = "summary_out",
+            default = "summary.txt",
+            help = "File name for the concatenated alignment"
         ) 
 
         return parser.parse_args()
@@ -485,6 +514,7 @@ class MetaAlignment():
         self.in_format = self.args.in_format
         self.data_type = self.args.data_type
         self.concat = self.args.concat
+        self.summary = self.args.summary
         
         self.alignments = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()
@@ -552,7 +582,12 @@ class MetaAlignment():
 
         summaries = [alignment.get_summary() for alignment in alignments]            
 
+    def write_summaries(self, file_name):
 
+        summary_file = open(file_name, "w")
+        summary_file.write(self.get_summaries())
+        summary_file.close()
+       
     def get_concatenated(self):
 
         # create empty dictionary of lists
@@ -578,7 +613,8 @@ class MetaAlignment():
         for alignment in self.parsed_alignments:        
 
             partition_length = len(alignment[list(alignment.keys())[0]])
-            partition_name = "gene_" + str(partition_counter)
+            alignment_name = self.alignments[partition_counter - 1].get_name().split('.')[0]
+            partition_name = "p" + str(partition_counter) + "_" + alignment_name
             
             start = position_counter
             position_counter += partition_length
@@ -591,35 +627,76 @@ class MetaAlignment():
             # getting length from first element of list of keys
             # created from the original dict for this alignment
             empty_seq = '?' * partition_length
-# HOW TO CONSTRUCT COMPREHENSION FOR THIS???
+
             for taxon in all_taxa:
+
                 if taxon not in alignment.keys():
                     concatenated[taxon].append(empty_seq)
+  
                 else:
                     concatenated[taxon].append(alignment[taxon])
-        #pprint.pprint(partitions)
-        for taxon, seqs in concatenated.items():
-            seqs = ''.join(seqs)
-            concatenated[taxon] = seqs    
+        concatenated = {taxon:''.join(seqs) for taxon, seqs in concatenated.items()}
         
-        return concatenated
+        return concatenated, partitions
 
+    def print_fasta_concat(self):
+        concat_dict = self.get_concatenated()[0]
+        fasta_string = ""
+        n = 80
+        
+        for taxon, seq in sorted(concat_dict.items()):
+            seq = [seq[i:i+n] for i in range(0, len(seq), n)]
+            fasta_string += ">" + taxon + "\n"
+            for element in seq:
+                fasta_string += element + "\n"
+
+        return fasta_string
+
+    def natural_sort(self, list): 
+        convert = lambda text: int(text) if text.isdigit() else text.lower() 
+        alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+        return sorted(list, key = alphanum_key)
+
+    def print_partitions(self):
+        part_string = ""
+        part_dict = self.get_concatenated()[1]
+        part_list = self.natural_sort(part_dict.keys())
+        for key in part_list:
+            part_string += key + "=" + str(part_dict[key]) + "\n"
+
+        return part_string
+
+    def write_partitions(self, file_name):
+            
+         part_file = open(file_name, "w")
+         part_file.write(self.print_partitions())
+
+
+    def write_fasta_concat(self, file_name):
+
+        concat_file = open(file_name, "w")
+        concat_file.write(self.print_fasta_concat())
+        concat_file.close()
 
 def main():
 
     meta_aln = MetaAlignment()
-    #meta_aln.get_summaries()
+    args = ParsedArgs.get_args()
 
-    concat = meta_aln.get_concatenated()
+    concat_part = args.concat_part
+    concat_out = args.concat_out
+    summary_out = args.summary_out
 
-    n = 80
-    for taxon, seq in concat.items():
-        seq = [seq[i:i+n] for i in range(0, len(seq), n)]
-        print(">" + taxon)
-        for element in seq:
-            print(element)
 
- 
-    #print(concat)
+    if not meta_aln.summary and not meta_aln.concat:
+        print("\nYou need to specify action with -c (--concat) for concatenation,\n -s (--summary) for alignment summaries, or both\n")
+    
+    elif meta_aln.summary:
+        meta_aln.get_summaries(summary_out)
+    elif meta_aln.concat:
+        meta_aln.write_fasta_concat(concat_out)
+        meta_aln.write_partitions(concat_part)
+     
+
 if __name__ == '__main__':
     main()
