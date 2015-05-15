@@ -521,6 +521,7 @@ class DNAAlignment(Alignment):
         return atgc_content
 
 class MetaAlignment():
+    """Class of multiple sequence alignments"""
  
     def __init__(self):
 
@@ -789,6 +790,7 @@ class MetaAlignment():
             
          part_file = open(file_name, "w")
          part_file.write(self.print_partitions())
+         print("Wrote partitions for the concatenated file to '" + file_name + "'")
 
     def write_out(self, file_format):
  
@@ -808,6 +810,7 @@ class MetaAlignment():
             elif file_format == "nexus-int":
                 concatenated_file.write(self.print_nexus_int(concatenated_alignment))
             concatenated_file.close()
+            print("Wrote concatenated sequences to " + file_format + " file '" + file_name + "'")
 
         elif self.convert:
             
@@ -822,7 +825,7 @@ class MetaAlignment():
             file_counter = 0
     
             for alignment in self.parsed_alignments:
-                file_name = self.alignments[file_counter].get_name().split('.')[0] + extension
+                file_name = self.alignments[file_counter].get_name() + extension
                 converted_file = open(file_name, "w")
                 if file_format == "phylip":
                     converted_file.write(self.print_phylip(alignment))
@@ -836,6 +839,8 @@ class MetaAlignment():
                     converted_file.write(self.print_nexus_int(alignment))
                 converted_file.close()
                 file_counter += 1
+            
+            print("Converted " + str(file_counter + 1) + " files from " + self.in_format + " to " + file_format)
         
 def main():
 
