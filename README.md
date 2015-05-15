@@ -3,15 +3,15 @@ Alignment manipulation and summary statistics
 
 ## Installation
 
-You can download this depository zipped and use `AMAS.py` in the `amas` directory as a stand-alone program. If you have [git installed](http://git-scm.com/book/en/v2/Getting-Started-Installing-Git) on your system, you can also clone this repository.
+You can download this repository zipped (button on the right-hand of the screen) and use `AMAS.py` in the `amas` directory as a stand-alone program or clone it if you have [git installed](http://git-scm.com/book/en/v2/Getting-Started-Installing-Git) on your system.
 
-You can also download `AMAS` from the [Python Package Index](https://pypi.python.org/pypi/amas/) or install it with [pip](https://pip.pypa.io/en/latest/installing.html):
+To use `AMAS` as a Python package in your programs you can get it with [pip](https://pip.pypa.io/en/latest/installing.html) from the [Python Package Index](https://pypi.python.org/pypi/amas/):
 ```shell
 pip install amas
 ```
 
 ## Usage
-`AMAS` can be run from the command line. Here is the general usage (you can print this with `python3 AMAS.py -h`):
+`AMAS` can be run from the command line. Here is the general usage (you can view this in your command line with `python3 AMAS.py -h`):
 
 ```
 usage: AMAS.py [-h] -i [IN_FILE [IN_FILE ...]] -f
@@ -50,9 +50,13 @@ required named arguments:
 
 ## Examples
 For every `AMAS.py` run on the command line you need to provide:
+
 1) input file name(s) with `-i` (or in long version: `--in-file`),
+
 2) format with `-f` (`--in-format`),
+
 3) and data type with `-d` (`--data-type`). 
+
 The options available for the format are `fasta`, `phylip`, `nexus` (sequential), `phylip-int`, and `nexus-int` (interleaved). Data types are `aa` for protein alignments and `dna` for nucleotide alignments. 
 
 You also need to choose at least one action with `-c` (same as `--concat`), `-s` (`--summary`), or `-v` (`--convert`) for the input to be processed. The order in which arguments are given does not matter.
@@ -90,7 +94,7 @@ python3 AMAS.py -d dna -f fasta -i *fas
 You can get summary statistics of all input alignments, concatenate, and convert them in one go by simply combining actions:
 ```
 python3 AMAS.py -d aa -f fasta -i *fas -c -s -v -u phylip
-
+```
 ### AMAS as a Python package
 AMAS can be also imported to other Python modules:
 
