@@ -66,15 +66,15 @@ For example, if you want to concatenate all DNA phylip files in a directory and 
 ```
 python3 AMAS.py -f phylip -d dna -i *phy -c
 ```
-By default the output will be written to two files: `partitions.txt`, containing partitions from which your new alignment was onstructed, and `concatenated.out` with the alignment itself in fasta format. You can change the default names for these files with `-p` (`--concat-part`) and `-t` (`--concat-out`), respectively, followed by the desired name. The output format is specified by `-u` (`--out-format`) and can also be any of the following: `fasta`, `phylip`, `nexus` (sequential), `phylip-int`, and `nexus-int` (interleaved).
+By default the output will be written to two files: `partitions.txt`, containing partitions from which your new alignment was constructed, and `concatenated.out` with the alignment itself in the fasta format. You can change the default names for these files with `-p` (`--concat-part`) and `-t` (`--concat-out`), respectively, followed by the desired name. The output format is specified by `-u` (`--out-format`) and can also be any of the following: `fasta`, `phylip`, `nexus` (sequential), `phylip-int`, or `nexus-int` (interleaved).
 
 Below is a command specifying the concatenated file output format as nexus with `-u nexus`:
 ```
 python3 AMAS.py -f fasta -d aa -i *phy -c -u nexus
 ```
-Alignments to be concatenated need not have the identical sets of taxa before concatenation: the concatenated will be populated with missing data where a given locus is missing a taxon.
+Alignments to be concatenated need not have identical sets of taxa before processing: the concatenated alignment will be populated with missing data where a given locus is missing a taxon.
 
-Note that it takes `AMAS` about 10x longer to write an interleaved file than a sequential one, which may be a factor if you are concatenating to a large (>50MB) alignment on a laptop/desktop computer.
+Note that it takes `AMAS` about 10x longer to write an interleaved file than a sequential one, which may be a factor if you are concatenating to a large (>50MB) alignment on a laptop or an older desktop computer.
 
 ### Getting alignment statistics
 This is an example of how you can summarize two protein fasta alignments by running:
