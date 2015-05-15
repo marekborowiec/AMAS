@@ -85,6 +85,13 @@ class ParsedArgs():
             help = "Print alignment summary"
         ) 
         parser.add_argument(
+            "-v",
+            "--convert",
+            dest = "convert",
+            action = "store_true",
+            help = "Convert to other file format"
+        ) 
+        parser.add_argument(
             "-p",
             "--concat-part",
             dest = "concat_part",
@@ -522,6 +529,8 @@ class MetaAlignment():
         self.in_format = self.args.in_format
         self.data_type = self.args.data_type
         self.concat = self.args.concat
+        self.convert = self.args.convert
+        self.concat_out = self.args.concat_out
         self.summary = self.args.summary
         
         self.alignments = self.get_alignment_objects()
@@ -629,7 +638,6 @@ class MetaAlignment():
             position_counter += partition_length
             end = position_counter - 1
             partitions[partition_name] = str(start) + "-" + str(end)
- 
             partition_counter += 1
             
             # get empty sequence if there is missing taxon
@@ -648,12 +656,12 @@ class MetaAlignment():
         
         return concatenated, partitions
 
-    def print_fasta_concat(self):
-        concat_dict = self.get_concatenated()[0]
+    def print_fasta(self, source_dict):
+        
         fasta_string = ""
         n = 80
         
-        for taxon, seq in sorted(concat_dict.items()):
+        for taxon, seq in sorted(source_dict.items()):
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
             taxon = taxon.replace(" ","_")
             fasta_string += ">" + taxon + "\n"
@@ -662,83 +670,81 @@ class MetaAlignment():
 
         return fasta_string
 
-    def print_phylip_concat(self):
-        concat_dict = self.get_concatenated()[0]
-        taxa_list = list(concat_dict.keys())
+    def print_phylip(self, source_dict):
+        
+        taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
         pad_longest_name = len(max(taxa_list, key=len)) + 3
-        seq_length = len(next(iter(concat_dict.values())))
-        header = str(len(concat_dict)) + " " + str(seq_length)
+        seq_length = len(next(iter(source_dict.values())))
+        header = str(len(source_dict)) + " " + str(seq_length)
         phylip_string = header + "\n"
-        for taxon, seq in sorted(concat_dict.items()):
+        for taxon, seq in sorted(source_dict.items()):
             taxon = taxon.replace(" ","_")
             phylip_string += taxon.ljust(pad_longest_name, ' ') + seq + "\n"
  
         return phylip_string
 
-    def print_phylip_int_concat(self):
-        concat_dict = self.get_concatenated()[0]
-        taxa_list = list(concat_dict.keys())
+    def print_phylip_int(self, source_dict):
+        
+        taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
         pad_longest_name = len(max(taxa_list, key=len)) + 3
-        seq_length = len(next(iter(concat_dict.values())))
-        header = str(len(concat_dict)) + " " + str(seq_length)
+        seq_length = len(next(iter(source_dict.values())))
+        header = str(len(source_dict)) + " " + str(seq_length)
         phylip_int_string = header + "\n\n"
         seq = []
         
         n = 500
         
-        for taxon, seq in sorted(concat_dict.items()):
+        for taxon, seq in sorted(source_dict.items()):
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
             taxon = taxon.replace(" ","_")
             phylip_int_string += taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
-
         phylip_int_string += "\n"
 
         for element in range(len(seq[1:])):
-            for taxon, seq in sorted(concat_dict.items()):
+            for taxon, seq in sorted(source_dict.items()):
                 seq = [seq[i:i+n] for i in range(0, len(seq), n)]
                 phylip_int_string += seq[element + 1] + "\n"
             phylip_int_string += "\n"
 
         return phylip_int_string
 
-    def print_nexus_concat(self):
+    def print_nexus(self, source_dict):
 
         if self.data_type == "aa":
             data_type = "PROTEIN"
         elif self.data_type == "dna":
             data_type = "DNA"
-        concat_dict = self.get_concatenated()[0]
-        taxa_list = list(concat_dict.keys())
+        
+        taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
         pad_longest_name = len(max(taxa_list, key=len)) + 3
-        seq_length = len(next(iter(concat_dict.values())))
-        header = str(len(concat_dict)) + " " + str(seq_length)
+        seq_length = len(next(iter(source_dict.values())))
+        header = str(len(source_dict)) + " " + str(seq_length)
         nexus_string = "#NEXUS\n\nBEGIN DATA;\n\tDIMENSIONS  NTAX=" + str(no_taxa) +\
          " NCHAR=" + str(seq_length) + ";\n\tFORMAT DATATYPE=" + data_type +\
           "  GAP = - MISSING = ?;\n\tMATRIX\n"
 
-        for taxon, seq in sorted(concat_dict.items()):
+        for taxon, seq in sorted(source_dict.items()):
             taxon = taxon.replace(" ","_")
             nexus_string += "\t" + taxon.ljust(pad_longest_name, ' ') + seq + "\n"
- 
         nexus_string += "\n;\n\nEND;"
         
         return nexus_string
 
-    def print_nexus_int_concat(self):
+    def print_nexus_int(self, source_dict):
 
         if self.data_type == "aa":
             data_type = "PROTEIN"
         elif self.data_type == "dna":
             data_type = "DNA"
-        concat_dict = self.get_concatenated()[0]
-        taxa_list = list(concat_dict.keys())
+        
+        taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
         pad_longest_name = len(max(taxa_list, key=len)) + 3
-        seq_length = len(next(iter(concat_dict.values())))
-        header = str(len(concat_dict)) + " " + str(seq_length)
+        seq_length = len(next(iter(source_dict.values())))
+        header = str(len(source_dict)) + " " + str(seq_length)
         seq = []
         
         nexus_int_string = "#NEXUS\n\nBEGIN DATA;\n\tDIMENSIONS  NTAX=" +\
@@ -747,7 +753,7 @@ class MetaAlignment():
 
         n = 500
         
-        for taxon, seq in sorted(concat_dict.items()):
+        for taxon, seq in sorted(source_dict.items()):
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
             taxon = taxon.replace(" ","_")
             nexus_int_string += "\t" + taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
@@ -755,7 +761,7 @@ class MetaAlignment():
         nexus_int_string += "\n"
 
         for element in range(len(seq[1:])):
-            for taxon, seq in sorted(concat_dict.items()):
+            for taxon, seq in sorted(source_dict.items()):
                 seq = [seq[i:i+n] for i in range(0, len(seq), n)]
                 nexus_int_string += "\t" + taxon.ljust(pad_longest_name, ' ') +\
                  seq[element + 1] + "\n"
@@ -784,44 +790,73 @@ class MetaAlignment():
          part_file = open(file_name, "w")
          part_file.write(self.print_partitions())
 
+    def write_out(self, file_format):
+ 
+        if self.concat:
+            
+            concatenated_alignment = self.get_concatenated()[0]
+            file_name = self.concat_out
+            concatenated_file = open(file_name, "w")
+            if file_format == "phylip":
+                concatenated_file.write(self.print_phylip(concatenated_alignment))
+            elif file_format == "fasta":
+                concatenated_file.write(self.print_fasta(concatenated_alignment))
+            elif file_format == "phylip-int":
+                concatenated_file.write(self.print_phylip_int(concatenated_alignment))
+            elif file_format == "nexus":
+                concatenated_file.write(self.print_nexus(concatenated_alignment))
+            elif file_format == "nexus-int":
+                concatenated_file.write(self.print_nexus_int(concatenated_alignment))
+            concatenated_file.close()
 
-    def write_out(self, file_name, file_format):
-
-        concat_file = open(file_name, "w")
-        if file_format == "phylip":
-            concat_file.write(self.print_phylip_concat())
-        elif file_format == "fasta":
-            concat_file.write(self.print_fasta_concat())
-        elif file_format == "phylip-int":
-            concat_file.write(self.print_phylip_int_concat())
-        elif file_format == "nexus":
-            concat_file.write(self.print_nexus_concat())
-        elif file_format == "nexus-int":
-            concat_file.write(self.print_nexus_int_concat())
-
-        concat_file.close()
-
+        elif self.convert:
+            
+            if file_format == "phylip" or file_format == "phylip-int":
+                extension = "-out.phy"
+            elif file_format == "fasta":
+                extension = "-out.fas"
+            elif file_format == "nexus" or file_format == "nexus-int":
+                extension = "-out.nex"
+    
+            # start a counter to keep track of files to be converted
+            file_counter = 0
+    
+            for alignment in self.parsed_alignments:
+                file_name = self.alignments[file_counter].get_name().split('.')[0] + extension
+                converted_file = open(file_name, "w")
+                if file_format == "phylip":
+                    converted_file.write(self.print_phylip(alignment))
+                elif file_format == "fasta":
+                    converted_file.write(self.print_fasta(alignment))
+                elif file_format == "phylip-int":
+                    converted_file.write(self.print_phylip_int(alignment))
+                elif file_format == "nexus":
+                    converted_file.write(self.print_nexus(alignment))
+                elif file_format == "nexus-int":
+                    converted_file.write(self.print_nexus_int(alignment))
+                converted_file.close()
+                file_counter += 1
+        
 def main():
 
-    meta_aln = MetaAlignment()
     args = ParsedArgs.get_args()
+    meta_aln = MetaAlignment()
 
     concat_part = args.concat_part
     concat_out = args.concat_out
     summary_out = args.summary_out
     out_format = args.out_format
-
-
-    if not meta_aln.summary and not meta_aln.concat:
-        print("""You need to specify action with -c (--concat) for concatenation,
- -s (--summary) for alignment summaries, or both\n""")
     
-    elif meta_aln.summary:
+    if meta_aln.summary:
         meta_aln.write_summaries(summary_out)
+    elif meta_aln.convert:
+        meta_aln.write_out(out_format)
     elif meta_aln.concat:
-        meta_aln.write_out(concat_out, out_format)
+        meta_aln.write_out(out_format)
         meta_aln.write_partitions(concat_part)
-     
+    else:
+        print("""You need to specify at least one action with -v (--convert) for format converions,
+-c (--concat) for concatenation, or -s (--summary) for alignment summaries\n""")     
 
 if __name__ == '__main__':
     main()
