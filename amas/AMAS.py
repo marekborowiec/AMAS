@@ -539,6 +539,7 @@ class MetaAlignment():
         self.parsed_alignments = self.get_parsed_alignments()
     
     def get_alignment_objects(self):
+        # get alignment objects on which statistics can be computed
         alignments = []
         for alignment in self.in_files:
             # parse according to the given alphabet
@@ -547,10 +548,11 @@ class MetaAlignment():
             elif self.data_type == "dna":
                 aln = DNAAlignment(alignment, self.in_format, self.data_type)
             alignments.append(aln)
+        
         return alignments
 
     def get_parsed_alignments(self):
-       
+        # get parsed dictionaries with taxa and sequences
         parsed_alignments = []
         for alignment in self.alignments:
             parsed = alignment.get_parsed_aln()
@@ -559,7 +561,9 @@ class MetaAlignment():
         return parsed_alignments
 
     def get_summaries(self):
+        # get summaries for all alignment objects
 
+        # define different headers for aa and dna alignments
         aa_header = [
             "Alignment_name",
             "No_of_taxa",
@@ -602,7 +606,7 @@ class MetaAlignment():
 
 
     def write_summaries(self, file_name):
-
+        # write summaries to file
         summary_file = open(file_name, "w")
         summary_file.write(self.get_summaries()[0] + '\n')
         summary_file.write('\n'.join(self.get_summaries()[1]))
@@ -623,7 +627,6 @@ class MetaAlignment():
             for taxon in alignment.keys():
                 if taxon not in all_taxa:
                     all_taxa.append(taxon)
-        #print(all_taxa)
 
         # start counters to keep track of partitions
         partition_counter = 1
@@ -632,9 +635,13 @@ class MetaAlignment():
         partitions = {}
 
         for alignment in self.parsed_alignments:        
-
+            
+            # get alignment length from a random taxon
             partition_length = len(alignment[list(alignment.keys())[0]])
+            # get base name of each alignment for use when writing partitions file
+            # NOTE: the base name here is whatever comes before fist perion in the file name
             alignment_name = self.alignments[partition_counter - 1].get_name().split('.')[0]
+            # add a prefix to the partition names
             partition_name = "p" + str(partition_counter) + "_" + alignment_name
             
             start = position_counter
@@ -660,12 +667,16 @@ class MetaAlignment():
         return concatenated, partitions
 
     def print_fasta(self, source_dict):
+        # print fasta-formatted string from a dictionary
         
         fasta_string = ""
+        # each sequence line will have 80 characters 
         n = 80
         
         for taxon, seq in sorted(source_dict.items()):
+            # split dictionary values to a list of string, each n chars long
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
+            # in case there are unwanted spaces in taxon names
             taxon = taxon.replace(" ","_")
             fasta_string += ">" + taxon + "\n"
             for element in seq:
@@ -674,20 +685,25 @@ class MetaAlignment():
         return fasta_string
 
     def print_phylip(self, source_dict):
-        
+        # print phylip-formatted string from a dictionary
+
         taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
+        # figure out the max length of a taxon for nice padding of sequences
         pad_longest_name = len(max(taxa_list, key=len)) + 3
+        # get sequence length from a random value
         seq_length = len(next(iter(source_dict.values())))
         header = str(len(source_dict)) + " " + str(seq_length)
         phylip_string = header + "\n"
         for taxon, seq in sorted(source_dict.items()):
             taxon = taxon.replace(" ","_")
+            # left-justify taxon names relative to sequences
             phylip_string += taxon.ljust(pad_longest_name, ' ') + seq + "\n"
  
         return phylip_string
 
     def print_phylip_int(self, source_dict):
+        # print phylip interleaved-formatted string from a dictionary
         
         taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
@@ -697,6 +713,7 @@ class MetaAlignment():
         phylip_int_string = header + "\n\n"
         seq = []
         
+        # each sequence line will have 500 characters
         n = 500
         
         for taxon, seq in sorted(source_dict.items()):
@@ -714,7 +731,8 @@ class MetaAlignment():
         return phylip_int_string
 
     def print_nexus(self, source_dict):
-
+        # print nexus-formatted string from a dictionary
+        
         if self.data_type == "aa":
             data_type = "PROTEIN"
         elif self.data_type == "dna":
@@ -737,6 +755,7 @@ class MetaAlignment():
         return nexus_string
 
     def print_nexus_int(self, source_dict):
+        # print nexus interleaved-formatted string from a dictionary
 
         if self.data_type == "aa":
             data_type = "PROTEIN"
@@ -748,6 +767,7 @@ class MetaAlignment():
         pad_longest_name = len(max(taxa_list, key=len)) + 3
         seq_length = len(next(iter(source_dict.values())))
         header = str(len(source_dict)) + " " + str(seq_length)
+        # create empty list for seq fragments
         seq = []
         
         nexus_int_string = "#NEXUS\n\nBEGIN DATA;\n\tDIMENSIONS  NTAX=" +\
@@ -756,6 +776,7 @@ class MetaAlignment():
 
         n = 500
         
+        # first need to create list of seq strings chunks n characters-long
         for taxon, seq in sorted(source_dict.items()):
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
             taxon = taxon.replace(" ","_")
@@ -763,6 +784,8 @@ class MetaAlignment():
 
         nexus_int_string += "\n"
 
+        # now use the length of that initial seq list to loop over
+        # for each taxon and sequence
         for element in range(len(seq[1:])):
             for taxon, seq in sorted(source_dict.items()):
                 seq = [seq[i:i+n] for i in range(0, len(seq), n)]
@@ -774,12 +797,14 @@ class MetaAlignment():
         
         return nexus_int_string
 
-    def natural_sort(self, list): 
+    def natural_sort(self, a_list):
+        # create a function that does 'human sort' on a list
         convert = lambda text: int(text) if text.isdigit() else text.lower() 
         alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
-        return sorted(list, key = alphanum_key)
+        return sorted(a_list, key = alphanum_key)
 
     def print_partitions(self):
+        # print partitions for concatenated alignment
         part_string = ""
         part_dict = self.get_concatenated()[1]
         part_list = self.natural_sort(part_dict.keys())
@@ -789,13 +814,13 @@ class MetaAlignment():
         return part_string
 
     def write_partitions(self, file_name):
-            
+        # write partitions file for concatenated alignment
          part_file = open(file_name, "w")
          part_file.write(self.print_partitions())
          print("Wrote partitions for the concatenated file to '" + file_name + "'")
 
     def write_out(self, action, file_format):
- 
+        # write other output files depending on action 
         if action == "concat":
             
             concatenated_alignment = self.get_concatenated()[0]
@@ -845,7 +870,8 @@ class MetaAlignment():
             print("Converted " + str(file_counter) + " files from " + self.in_format + " to " + file_format)
         
 def main():
-
+    
+    # initialize parsed arguments and meta alignment objects
     args = ParsedArgs.get_args()
     meta_aln = MetaAlignment()
 
@@ -861,6 +887,7 @@ def main():
     if meta_aln.concat:
         meta_aln.write_out("concat", out_format)
         meta_aln.write_partitions(concat_part)
+    # print instructions when no action is specified
     if not meta_aln.summary and not meta_aln.convert and not meta_aln.concat:
         print("""You need to specify at least one action with -v (--convert) for format converions,
 -c (--concat) for concatenation, or -s (--summary) for alignment summaries\n""")     
