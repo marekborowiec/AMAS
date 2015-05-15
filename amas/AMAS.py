@@ -111,7 +111,7 @@ class ParsedArgs():
             dest = "out_format",
             choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
             default = "fasta",
-            help = "File format for the concatenated alignment"
+            help = "File format for the output alignment"
         ) 
 
         return parser.parse_args()
@@ -742,8 +742,8 @@ class MetaAlignment():
         seq = []
         
         nexus_int_string = "#NEXUS\n\nBEGIN DATA;\n\tDIMENSIONS  NTAX=" +\
-         str(no_taxa) + " NCHAR=" + str(seq_length) + ";\n\tFORMAT DATATYPE=" +\
-          data_type + "  GAP = - MISSING = ?;\n\tMATRIX\n"
+         str(no_taxa) + " NCHAR=" + str(seq_length) + ";\n\tFORMAT   INTERLEAVE" +\
+          "   DATATYPE=" + data_type + "  GAP = - MISSING = ?;\n\tMATRIX\n"
 
         n = 500
         
