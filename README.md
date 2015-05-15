@@ -91,7 +91,7 @@ To convert all nucleotide fasta files with a `.fas` extension in a directory to 
 python3 AMAS.py -d dna -f fasta -i *fas
 ```
 ### Combining options
-You can get summary statistics of all input alignments, concatenate, and convert them in one go by simply combining actions:
+You can get statistics for all input alignments, convert them to phylip, and concatenate (also to a phylip file) in one go by simply combining actions:
 ```
 python3 AMAS.py -d aa -f fasta -i *fas -c -s -v -u phylip
 ```
