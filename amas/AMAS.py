@@ -18,9 +18,10 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-This stand-alone program calculates various statistics on a multiple sequence
-alignment. It supports sequential FASTA, PHYLIP, NEXUS, and interleaved PHYLIP 
-and NEXUS formats for DNA and aino acid sequences.
+This stand-alone program allows manipulations of multiple sequence
+alignments. It supports sequential FASTA, PHYLIP, NEXUS, and interleaved PHYLIP 
+and NEXUS formats for DNA and aino acid sequences. It can print summary statistics,
+convert among formats, and concatenate alignments.
 
 Current statistics include the number of taxa, alignment length, total number
 of matrix cells, overall number of undetermined characters, percent of missing 
@@ -96,21 +97,21 @@ class ParsedArgs():
             "--concat-part",
             dest = "concat_part",
             default = "partitions.txt",
-            help = "File name for the concatenated alignment partitions"
+            help = "File name for the concatenated alignment partitions. Default: 'partitions.txt'"
         ) 
         parser.add_argument(
             "-t",
             "--concat-out",
             dest = "concat_out",
             default = "concatenated.out",
-            help = "File name for the concatenated alignment"
+            help = "File name for the concatenated alignment. Default: 'concatenated.out'"
         )
         parser.add_argument(
             "-o",
             "--summary-out",
             dest = "summary_out",
             default = "summary.txt",
-            help = "File name for the alignment summary"
+            help = "File name for the alignment summary. Default: 'summary.txt'"
         ) 
         parser.add_argument(
             "-u",
@@ -118,7 +119,7 @@ class ParsedArgs():
             dest = "out_format",
             choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
             default = "fasta",
-            help = "File format for the output alignment"
+            help = "File format for the output alignment. Default: fasta"
         ) 
 
         return parser.parse_args()
@@ -606,6 +607,7 @@ class MetaAlignment():
         summary_file.write(self.get_summaries()[0] + '\n')
         summary_file.write('\n'.join(self.get_summaries()[1]))
         summary_file.close()
+        print("Wrote summaries to file '" + file_name + "'") 
        
     def get_concatenated(self):
 
@@ -774,7 +776,7 @@ class MetaAlignment():
 
     def natural_sort(self, list): 
         convert = lambda text: int(text) if text.isdigit() else text.lower() 
-        alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+        alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
         return sorted(list, key = alphanum_key)
 
     def print_partitions(self):
@@ -792,9 +794,9 @@ class MetaAlignment():
          part_file.write(self.print_partitions())
          print("Wrote partitions for the concatenated file to '" + file_name + "'")
 
-    def write_out(self, file_format):
+    def write_out(self, action, file_format):
  
-        if self.concat:
+        if action == "concat":
             
             concatenated_alignment = self.get_concatenated()[0]
             file_name = self.concat_out
@@ -812,7 +814,7 @@ class MetaAlignment():
             concatenated_file.close()
             print("Wrote concatenated sequences to " + file_format + " file '" + file_name + "'")
 
-        elif self.convert:
+        elif action == "convert":
             
             if file_format == "phylip" or file_format == "phylip-int":
                 extension = "-out.phy"
@@ -840,7 +842,7 @@ class MetaAlignment():
                 converted_file.close()
                 file_counter += 1
             
-            print("Converted " + str(file_counter + 1) + " files from " + self.in_format + " to " + file_format)
+            print("Converted " + str(file_counter) + " files from " + self.in_format + " to " + file_format)
         
 def main():
 
@@ -854,12 +856,12 @@ def main():
     
     if meta_aln.summary:
         meta_aln.write_summaries(summary_out)
-    elif meta_aln.convert:
-        meta_aln.write_out(out_format)
-    elif meta_aln.concat:
-        meta_aln.write_out(out_format)
+    if meta_aln.convert:
+        meta_aln.write_out("convert", out_format)
+    if meta_aln.concat:
+        meta_aln.write_out("concat", out_format)
         meta_aln.write_partitions(concat_part)
-    else:
+    if not meta_aln.summary and not meta_aln.convert and not meta_aln.concat:
         print("""You need to specify at least one action with -v (--convert) for format converions,
 -c (--concat) for concatenation, or -s (--summary) for alignment summaries\n""")     
 
