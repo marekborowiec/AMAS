@@ -109,7 +109,7 @@ class ParsedArgs():
             "-u",
             "--out-format",
             dest = "out_format",
-            choices = ["fasta", "phylip", "phylip-int"],
+            choices = ["fasta", "phylip", "nexus", "phylip-int"],
             default = "fasta",
             help = "File format for the concatenated alignment"
         ) 
@@ -641,9 +641,9 @@ class MetaAlignment():
 
                 if taxon not in alignment.keys():
                     concatenated[taxon].append(empty_seq)
-  
                 else:
                     concatenated[taxon].append(alignment[taxon])
+ 
         concatenated = {taxon:''.join(seqs) for taxon, seqs in concatenated.items()}
         
         return concatenated, partitions
@@ -655,6 +655,7 @@ class MetaAlignment():
         
         for taxon, seq in sorted(concat_dict.items()):
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
+            taxon = taxon.replace(" ","_")
             fasta_string += ">" + taxon + "\n"
             for element in seq:
                 fasta_string += element + "\n"
@@ -670,7 +671,7 @@ class MetaAlignment():
         header = str(len(concat_dict)) + " " + str(seq_length)
         phylip_string = header + "\n"
         for taxon, seq in sorted(concat_dict.items()):
-            
+            taxon = taxon.replace(" ","_")
             phylip_string += taxon.ljust(pad_longest_name, ' ') + seq + "\n"
  
         return phylip_string
@@ -689,6 +690,7 @@ class MetaAlignment():
         
         for taxon, seq in sorted(concat_dict.items()):
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
+            taxon = taxon.replace(" ","_")
             phylip_int_string += taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
 
         phylip_int_string += "\n"
@@ -701,6 +703,29 @@ class MetaAlignment():
             phylip_int_string += "\n"
 
         return phylip_int_string
+
+    def print_nexus_concat(self):
+
+        if self.data_type == "aa":
+            data_type = "PROTEIN"
+        elif self.data_type == "dna":
+            data_type = "DNA"
+        concat_dict = self.get_concatenated()[0]
+        taxa_list = list(concat_dict.keys())
+        no_taxa = len(taxa_list)
+        pad_longest_name = len(max(taxa_list, key=len)) + 3
+        seq_length = len(next(iter(concat_dict.values())))
+        header = str(len(concat_dict)) + " " + str(seq_length)
+        nexus_string = "#NEXUS\n\nBEGIN DATA;\n\tDIMENSIONS  NTAX=" + str(no_taxa) +\
+         " NCHAR=" + str(seq_length) + ";\n\tFORMAT DATATYPE=" + data_type +\
+          "  GAP = - MISSING = ?;\n\tMATRIX\n"
+
+        for taxon, seq in sorted(concat_dict.items()):
+            taxon = taxon.replace(" ","_")
+            nexus_string += "\t" + taxon.ljust(pad_longest_name, ' ') + seq + "\n"
+ 
+        nexus_string += "\n;\n\nEND;"
+        return nexus_string
 
     def natural_sort(self, list): 
         convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -731,6 +756,8 @@ class MetaAlignment():
             concat_file.write(self.print_fasta_concat())
         elif file_format == "phylip-int":
             concat_file.write(self.print_phylip_int_concat())
+        elif file_format == "nexus":
+            concat_file.write(self.print_nexus_concat())
 
         concat_file.close()
 
