@@ -70,7 +70,7 @@ python3 AMAS.py -f fasta -d aa -i *phy -c -u nexus
 ```
 Alignments to be concatenated need not have the identical sets of taxa before concatenation: the concatenated will be populated with missing data where a given locus is missing a taxon.
 
-Note that interleaved formats take `AMAS` about 10x longer than sequential to write, which may be a factor if you are concatenating to a large (>50MB) alignment on a laptop/desktop computer.
+Note that it takes `AMAS` about 10x longer to write an interleaved file than a sequential one, which may be a factor if you are concatenating to a large (>50MB) alignment on a laptop/desktop computer.
 
 ### Getting alignment statistics
 This is an example of how you can summarize two protein fasta alignments by running:
