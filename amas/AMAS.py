@@ -105,6 +105,14 @@ class ParsedArgs():
             default = "summary.txt",
             help = "File name for the alignment summary"
         ) 
+        parser.add_argument(
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip"],
+            default = "fasta",
+            help = "File format for the concatenated alignment"
+        ) 
 
         return parser.parse_args()
     
@@ -653,6 +661,20 @@ class MetaAlignment():
 
         return fasta_string
 
+    def print_phylip_concat(self):
+        concat_dict = self.get_concatenated()[0]
+        taxa_list = list(concat_dict.keys())
+        no_taxa = len(taxa_list)
+        pad_longest_name = len(max(taxa_list, key=len)) + 1
+        seq_length = len(next(iter(concat_dict.values())))
+        header = str(len(concat_dict)) + " " + str(seq_length)
+        phylip_string = header + "\n"
+        for taxon, seq in sorted(concat_dict.items()):
+            
+            phylip_string += taxon.ljust(pad_longest_name, '  ') + seq + "\n"
+ 
+        return phylip_string
+
     def natural_sort(self, list): 
         convert = lambda text: int(text) if text.isdigit() else text.lower() 
         alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
@@ -673,10 +695,14 @@ class MetaAlignment():
          part_file.write(self.print_partitions())
 
 
-    def write_fasta_concat(self, file_name):
+    def write_out(self, file_name, file_format):
 
         concat_file = open(file_name, "w")
-        concat_file.write(self.print_fasta_concat())
+        if file_format == "phylip":
+            concat_file.write(self.print_phylip_concat())
+        elif file_format == "fasta":
+            concat_file.write(self.print_fasta_concat())
+
         concat_file.close()
 
 def main():
@@ -687,6 +713,7 @@ def main():
     concat_part = args.concat_part
     concat_out = args.concat_out
     summary_out = args.summary_out
+    out_format = args.out_format
 
 
     if not meta_aln.summary and not meta_aln.concat:
@@ -695,7 +722,7 @@ def main():
     elif meta_aln.summary:
         meta_aln.write_summaries(summary_out)
     elif meta_aln.concat:
-        meta_aln.write_fasta_concat(concat_out)
+        meta_aln.write_out(concat_out, out_format)
         meta_aln.write_partitions(concat_part)
      
 
