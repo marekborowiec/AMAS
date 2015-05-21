@@ -59,7 +59,7 @@ For every `AMAS.py` run on the command line you need to provide:
 
 The options available for the format are `fasta`, `phylip`, `nexus` (sequential), `phylip-int`, and `nexus-int` (interleaved). Data types are `aa` for protein alignments and `dna` for nucleotide alignments. 
 
-You also need to choose at least one action with `-c` (same as `--concat`), `-s` (`--summary`), or `-v` (`--convert`) for the input to be processed. The order in which arguments are given does not matter.
+You also need to choose at least one action with `-c` (same as `--concat`), `-s` (`--summary`), `-v` (`--convert`), or `-r` (`--replicate`) for the input to be processed. The order in which arguments are given does not matter.
 
 ### Concatenating alignments
 For example, if you want to concatenate all DNA phylip files in a directory and all of them have the `.phy` extension, you can run:
@@ -90,7 +90,13 @@ To convert all nucleotide fasta files with a `.fas` extension in a directory to 
 ```
 python3 AMAS.py -d dna -f fasta -i *fas -v -u nexus -t concatenated.nex
 ```
-In the above, the required options are combined with `-v` action to convert, `-u nexus` indicating the output format, and `-t concatenated.nex` to provide the concatenated file name. 
+In the above, the required options are combined with `-v` (`--convert`) action to convert, `-u nexus` indicating the output format, and `-t concatenated.nex` to provide the concatenated file name.
+
+### Creating replicate data sets
+With `AMAS` you can create concatenated alignments from a proportion of randomly chosen alignments that can be used for, for example, a phylogenetic jackknife analysis. Say you have 1000 phylip files, each containing a single aligned locus, and you want to create 200 replicate phylip alignments, each built from 100 loci randomly chosen from all the input files. You can do this by supplying the `-r` or `--replicate` followed by the number of replicates (in this case `200`) and number of alignments (`100`). Remember to supply the output format with `-u` if you want it to be other than fasta:
+```
+python3 AMAS.py -d dna -f phylip -i *phy -r 200 100 -u phylip
+```
 ### Combining options
 You can get statistics for all input alignments, convert them to phylip, and concatenate (also to a phylip file) in one go by simply combining actions:
 ```
