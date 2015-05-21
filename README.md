@@ -16,8 +16,8 @@ pip install amas
 ```
 usage: AMAS.py [-h] -i [IN_FILE [IN_FILE ...]] -f
                {fasta,phylip,nexus,phylip-int,nexus-int} -d {aa,dna} [-c] [-s]
-               [-v] [-p CONCAT_PART] [-t CONCAT_OUT] [-o SUMMARY_OUT]
-               [-u {fasta,phylip,nexus,phylip-int,nexus-int}]
+               [-v] [-r REPLICATE REPLICATE] [-p CONCAT_PART] [-t CONCAT_OUT]
+               [-o SUMMARY_OUT] [-u {fasta,phylip,nexus,phylip-int,nexus-int}]
 
 Alignment manipulation and summary statistics
 
@@ -26,6 +26,9 @@ optional arguments:
   -c, --concat          Concatenate input alignments
   -s, --summary         Print alignment summary
   -v, --convert         Convert to other file format
+  -r REPLICATE REPLICATE, --replicate REPLICATE REPLICATE
+                        Create replicate data sets for phylogenetic jackknife
+                        [replicates, no alignments for each replicate]
   -p CONCAT_PART, --concat-part CONCAT_PART
                         File name for the concatenated alignment partitions.
                         Default: 'partitions.txt'
