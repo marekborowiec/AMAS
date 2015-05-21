@@ -88,8 +88,9 @@ The statistics calculated include the number of taxa, alignment length, total nu
 ### Converting among formats
 To convert all nucleotide fasta files with a `.fas` extension in a directory to nexus alignments, you could use:
 ```
-python3 AMAS.py -d dna -f fasta -i *fas
+python3 AMAS.py -d dna -f fasta -i *fas -v -u nexus -t concatenated.nex
 ```
+In the above, the required options are combined with `-v` action to convert, `-u nexus` indicating the output format, and `-t concatenated.nex` to provide the concatenated file name. 
 ### Combining options
 You can get statistics for all input alignments, convert them to phylip, and concatenate (also to a phylip file) in one go by simply combining actions:
 ```
