@@ -30,7 +30,9 @@ variable sites, number and proportion of parsimony informative sites,
 and proportions of all characters relative to matrix size.
 """
 
+
 import argparse, re
+from random import sample
 from os import path
 from collections import defaultdict
 
@@ -70,7 +72,14 @@ class ParsedArgs():
             choices = ["aa", "dna"],
             help = "Type of data"
         )
-
+        parser.add_argument(
+            "-r",
+            "--replicate",
+            nargs = 2,
+            type = int,
+            dest = "replicate",
+            help = "Create replicate data sets for phylogenetic jackknife [replicates, no alignments for each replicate]"
+        ) 
         parser.add_argument(
             "-c",
             "--concat",
@@ -181,6 +190,7 @@ class FileParser:
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
+
         return records    
 
     def phylip_interleaved_parse(self):
@@ -534,8 +544,13 @@ class MetaAlignment():
         self.convert = self.args.convert
         self.concat_out = self.args.concat_out
         self.summary = self.args.summary
-        
-        self.alignments = self.get_alignment_objects()
+        self.replicate = self.args.replicate
+    
+        if self.replicate:
+            self.no_replicates = self.args.replicate[0]
+            self.no_loci = self.args.replicate[1]
+       
+        self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()
     
     def get_alignment_objects(self):
@@ -554,7 +569,7 @@ class MetaAlignment():
     def get_parsed_alignments(self):
         # get parsed dictionaries with taxa and sequences
         parsed_alignments = []
-        for alignment in self.alignments:
+        for alignment in self.alignment_objects:
             parsed = alignment.get_parsed_aln()
             parsed_alignments.append(parsed)
     
@@ -592,7 +607,7 @@ class MetaAlignment():
             "GC_content"
         ]
 
-        alignments = self.alignments
+        alignments = self.alignment_objects
         parsed_alignments = self.parsed_alignments
         freq_header = [char for char in alignments[0].alphabet]
         
@@ -613,7 +628,19 @@ class MetaAlignment():
         summary_file.close()
         print("Wrote summaries to file '" + file_name + "'") 
        
-    def get_concatenated(self):
+    def get_replicate(self):
+        # construct replicate data sets for phylogenetic jackknife
+        replicates = []
+        counter = 1
+        for replicate in range(self.no_replicates):
+            random_alignments = sample(self.parsed_alignments, self.no_loci)
+            concat_replicate = self.get_concatenated(random_alignments)[0]
+            replicates.append(concat_replicate)
+            counter += 1
+        
+        return replicates 
+
+    def get_concatenated(self, alignments):
 
         # create empty dictionary of lists
         concatenated = defaultdict(list)
@@ -623,7 +650,7 @@ class MetaAlignment():
         # the concatenated alignment
         all_taxa = []
 
-        for alignment in self.parsed_alignments:
+        for alignment in alignments:
             for taxon in alignment.keys():
                 if taxon not in all_taxa:
                     all_taxa.append(taxon)
@@ -634,13 +661,13 @@ class MetaAlignment():
         # get dict for alignment name and partition
         partitions = {}
 
-        for alignment in self.parsed_alignments:        
+        for alignment in alignments:        
             
             # get alignment length from a random taxon
             partition_length = len(alignment[list(alignment.keys())[0]])
             # get base name of each alignment for use when writing partitions file
             # NOTE: the base name here is whatever comes before fist perion in the file name
-            alignment_name = self.alignments[partition_counter - 1].get_name().split('.')[0]
+            alignment_name = self.alignment_objects[partition_counter - 1].get_name().split('.')[0]
             # add a prefix to the partition names
             partition_name = "p" + str(partition_counter) + "_" + alignment_name
             
@@ -806,7 +833,7 @@ class MetaAlignment():
     def print_partitions(self):
         # print partitions for concatenated alignment
         part_string = ""
-        part_dict = self.get_concatenated()[1]
+        part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
         for key in part_list:
             part_string += key + "=" + str(part_dict[key]) + "\n"
@@ -821,9 +848,16 @@ class MetaAlignment():
 
     def write_out(self, action, file_format):
         # write other output files depending on action 
+        if file_format == "phylip" or file_format == "phylip-int":
+            extension = "-out.phy"
+        elif file_format == "fasta":
+            extension = "-out.fas"
+        elif file_format == "nexus" or file_format == "nexus-int":
+            extension = "-out.nex"
+
         if action == "concat":
             
-            concatenated_alignment = self.get_concatenated()[0]
+            concatenated_alignment = self.get_concatenated(self.parsed_alignments)[0]
             file_name = self.concat_out
             concatenated_file = open(file_name, "w")
             if file_format == "phylip":
@@ -840,19 +874,12 @@ class MetaAlignment():
             print("Wrote concatenated sequences to " + file_format + " file '" + file_name + "'")
 
         elif action == "convert":
-            
-            if file_format == "phylip" or file_format == "phylip-int":
-                extension = "-out.phy"
-            elif file_format == "fasta":
-                extension = "-out.fas"
-            elif file_format == "nexus" or file_format == "nexus-int":
-                extension = "-out.nex"
     
             # start a counter to keep track of files to be converted
             file_counter = 0
     
             for alignment in self.parsed_alignments:
-                file_name = self.alignments[file_counter].get_name() + extension
+                file_name = self.alignment_objects[file_counter].get_name() + extension
                 converted_file = open(file_name, "w")
                 if file_format == "phylip":
                     converted_file.write(self.print_phylip(alignment))
@@ -868,7 +895,29 @@ class MetaAlignment():
                 file_counter += 1
             
             print("Converted " + str(file_counter) + " files from " + self.in_format + " to " + file_format)
-        
+
+        elif action == "replicate":
+
+            file_counter = 1
+            for alignment in self.get_replicate():
+                file_name = "replicate" + str(file_counter) + "_" + str(self.no_loci) + "-loci" + extension
+                replicate_file = open(file_name, "w")
+
+                if file_format == "phylip":
+                    replicate_file.write(self.print_phylip(alignment))
+                elif file_format == "fasta":
+                    replicate_file.write(self.print_fasta(alignment))
+                elif file_format == "phylip-int":
+                    replicate_file.write(self.print_phylip_int(alignment))
+                elif file_format == "nexus":
+                    replicate_file.write(self.print_nexus(alignment))
+                elif file_format == "nexus-int":
+                    replicate_file.write(self.print_nexus_int(alignment))
+                replicate_file.close()
+                file_counter += 1
+
+            print("Constructed " + str(self.no_replicates) + " replicate data sets, each from " + str(self.no_loci) + " alignments")
+
 def main():
     
     # initialize parsed arguments and meta alignment objects
@@ -887,10 +936,12 @@ def main():
     if meta_aln.concat:
         meta_aln.write_out("concat", out_format)
         meta_aln.write_partitions(concat_part)
+    if meta_aln.replicate:
+        meta_aln.write_out("replicate", out_format)
     # print instructions when no action is specified
-    if not meta_aln.summary and not meta_aln.convert and not meta_aln.concat:
+    if not meta_aln.summary and not meta_aln.convert and not meta_aln.concat and not meta_aln.replicate:
         print("""You need to specify at least one action with -v (--convert) for format converions,
--c (--concat) for concatenation, or -s (--summary) for alignment summaries\n""")     
+-c (--concat) for concatenation, -s (--summary) for alignment summaries\n, or -r (--replicate) for replicate data sets""")     
 
 if __name__ == '__main__':
     main()
