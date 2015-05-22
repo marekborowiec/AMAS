@@ -73,14 +73,6 @@ class ParsedArgs():
             help = "Type of data"
         )
         parser.add_argument(
-            "-r",
-            "--replicate",
-            nargs = 2,
-            type = int,
-            dest = "replicate",
-            help = "Create replicate data sets for phylogenetic jackknife [replicates, no alignments for each replicate]"
-        ) 
-        parser.add_argument(
             "-c",
             "--concat",
             dest = "concat",
@@ -100,6 +92,14 @@ class ParsedArgs():
             dest = "convert",
             action = "store_true",
             help = "Convert to other file format"
+        ) 
+        parser.add_argument(
+            "-r",
+            "--replicate",
+            nargs = 2,
+            type = int,
+            dest = "replicate",
+            help = "Create replicate data sets for phylogenetic jackknife [replicates, no alignments for each replicate]"
         ) 
         parser.add_argument(
             "-p",
@@ -848,12 +848,16 @@ class MetaAlignment():
 
     def write_out(self, action, file_format):
         # write other output files depending on action 
-        if file_format == "phylip" or file_format == "phylip-int":
+        if file_format == "phylip":
             extension = "-out.phy"
+        elif file_format == "phylip-int":
+            extension = "-out.int-phy"
         elif file_format == "fasta":
             extension = "-out.fas"
-        elif file_format == "nexus" or file_format == "nexus-int":
+        elif file_format == "nexus":
             extension = "-out.nex"
+        elif file_format == "nexus-int":
+            extension = "-out.int-nex"
 
         if action == "concat":
             
