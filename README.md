@@ -91,9 +91,9 @@ The statistics calculated include the number of taxa, alignment length, total nu
 ### Converting among formats
 To convert all nucleotide fasta files with a `.fas` extension in a directory to nexus alignments, you could use:
 ```
-python3 AMAS.py -d dna -f fasta -i *fas -v -u nexus -t concatenated.nex
+python3 AMAS.py -d dna -f fasta -i *fas -v -u nexus
 ```
-In the above, the required options are combined with `-v` (`--convert`) action to convert, `-u nexus` indicating the output format, and `-t concatenated.nex` to provide the concatenated file name.
+In the above, the required options are combined with `-v` (`--convert`) action to convert and `-u nexus` indicating the output format.
 
 ### Creating replicate data sets
 With `AMAS` you can create concatenated alignments from a proportion of randomly chosen alignments that can be used for, for example, a phylogenetic jackknife analysis. Say you have 1000 phylip files, each containing a single aligned locus, and you want to create 200 replicate phylip alignments, each built from 100 loci randomly chosen from all the input files. You can do this by supplying the `-r` or `--replicate` followed by the number of replicates (in this case `200`) and number of alignments (`100`). Remember to supply the output format with `-u` if you want it to be other than fasta:
