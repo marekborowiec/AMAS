@@ -386,9 +386,6 @@ class Alignment:
         self.in_file = in_file
         self.in_format = in_format
         self.data_type = data_type
-        self.list_of_seqs = []
-        self.no_missing_ambiguous_sites = []
-        self.parsimony_informative = 0
         
     def __str__(self):
         return self.get_name
@@ -418,13 +415,13 @@ class Alignment:
     # call methods to create sequences list, matrix, sites without ambiguous or
     # missing characters; get and summarize alignment statistics
         summary = []
-        self.seq_grabber()
-        self.matrix_creator()
-        self.get_sites_no_missing_ambiguous()
-        variable_sites = str(self.get_variable())
-        prop_variable = str(self.get_prop_variable())
-        parsimony_informative = str(self.get_parsimony_informative())
-        prop_parsimony = str(self.get_prop_parsimony())
+        list_of_seqs = self.seq_grabber()
+        matrix = self.matrix_creator()
+        self.no_missing_ambiguous = self.get_sites_no_missing_ambiguous()
+        self.variable_sites = self.get_variable()
+        self.prop_variable = self.get_prop_variable()
+        self.parsimony_informative = self.get_parsimony_informative()
+        self.prop_parsimony = self.get_prop_parsimony()
         name = str(self.get_name())
         taxa_no = str(self.get_taxa_no())
         length = str(self.get_alignment_length())
@@ -432,7 +429,7 @@ class Alignment:
         missing = str(self.get_missing())
         missing_percent = str(self.get_missing_percent())
         summary = [name, taxa_no, length, cells, missing, missing_percent, \
-         variable_sites, prop_variable, parsimony_informative, prop_parsimony]
+         str(self.variable_sites), str(self.prop_variable), str(self.parsimony_informative), str(self.prop_parsimony)]
         return summary
 
     def get_freq_summary(self):
@@ -465,37 +462,39 @@ class Alignment:
         return all(base == site[0] for base in site)
         
     def get_sites_no_missing_ambiguous(self):
-    # get each site without missing or ambiguous characters  
+    # get each site without missing or ambiguous characters
+        no_missing_ambiguous_sites = []  
         for column in range(self.get_alignment_length()):
             site = self.get_column(column)
             site = [char for char in site if char not in self.missing_ambiguous_chars]
-            self.no_missing_ambiguous_sites.append(site)
-        return self.no_missing_ambiguous_sites
+            no_missing_ambiguous_sites.append(site)
+        return no_missing_ambiguous_sites
         
     def get_variable(self):
     # if all elements of a site without missing or ambiguous characters 
     # are not the same, consider it variable
-        self.variable = len([site for site in self.no_missing_ambiguous_sites \
+        variable = len([site for site in self.no_missing_ambiguous \
          if not self.all_same(site)])      
-        return self.variable
+        return variable
     
     def get_parsimony_informative(self):
     # if the count for a unique character in a site is at least two, 
     # and there are at least two such characters in a site without missing
-    # or ambiguous characters, consider it parsimony informative 
-        for site in self.no_missing_ambiguous_sites:
+    # or ambiguous characters, consider it parsimony informative
+        parsimony_informative = 0
+        for site in self.no_missing_ambiguous:
             unique_chars = set(site)
             
             pattern = [base for base in unique_chars if site.count(base) >= 2]
             no_patterns = len(pattern)
             
             if no_patterns >= 2:
-                self.parsimony_informative += 1
-        return self.parsimony_informative
+                parsimony_informative += 1
+        return parsimony_informative
     
     def get_prop_variable(self):
     # get proportion of variable sites to all sites
-        prop_variable = self.variable / len(self.list_of_seqs[0])
+        prop_variable = self.variable_sites / len(self.list_of_seqs[0])
         return round(prop_variable, 3)
         
     def get_prop_parsimony(self):
