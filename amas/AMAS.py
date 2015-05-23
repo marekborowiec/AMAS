@@ -36,7 +36,7 @@ from random import sample
 from os import path
 from collections import defaultdict
 
-class ParsedArgs():
+class ParsedArgs:
 
     def get_args():
         # parse arguments from the command line
@@ -386,6 +386,8 @@ class Alignment:
         self.in_file = in_file
         self.in_format = in_format
         self.data_type = data_type
+
+        self.parsed_aln = self.get_parsed_aln()
         
     def __str__(self):
         return self.get_name
@@ -441,11 +443,11 @@ class Alignment:
             for char, freq in item.items():
                 characters.append(str(char))
                 frequencies.append(str(freq))
-        return characters, frequencies           
+        return characters, frequencies
+     
     def seq_grabber(self):
     # create a list of sequences from parsed dictionary of names and seqs 
-        parsed_aln = self.get_parsed_aln()
-        list_of_seqs = [seq for name, seq in parsed_aln.items()]
+        list_of_seqs = [seq for name, seq in self.parsed_aln.items()]
         return list_of_seqs
                
     def matrix_creator(self):
@@ -634,7 +636,7 @@ class MetaAlignment():
         # get parsed dictionaries with taxa and sequences
         parsed_alignments = []
         for alignment in self.alignment_objects:
-            parsed = alignment.get_parsed_aln()
+            parsed = alignment.parsed_aln
             parsed_alignments.append(parsed)
     
         return parsed_alignments
@@ -718,8 +720,9 @@ class MetaAlignment():
     def write_summaries(self, file_name):
         # write summaries to file
         summary_file = open(file_name, "w")
-        summary_file.write(self.get_summaries()[0] + '\n')
-        summary_file.write('\n'.join(self.get_summaries()[1]))
+        summary_out = self.get_summaries()
+        summary_file.write(summary_out[0] + '\n')
+        summary_file.write('\n'.join(summary_out[1]))
         summary_file.close()
         print("Wrote summaries to file '" + file_name + "'") 
        
