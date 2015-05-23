@@ -94,6 +94,14 @@ class ParsedArgs():
             help = "Convert to other file format"
         ) 
         parser.add_argument(
+            "-l",
+            "--split",
+            dest = "split",
+            nargs = 1,
+            type = str,
+            help = "File name for partitions to be used for alignment splitting."
+        ) 
+        parser.add_argument(
             "-r",
             "--replicate",
             nargs = 2,
@@ -157,8 +165,8 @@ class FileParser:
     def __init__(self, in_file):
         self.in_file = in_file
         with FileHandler(in_file) as handle:
-            self.in_file_lines = handle.read().rstrip("\r\n")
-    
+            self.in_file_lines = handle.read().rstrip("\r\n")    
+
     def fasta_parse(self):
     # use regex to parse names and sequences in sequential fasta files
         matches = re.finditer(
@@ -317,6 +325,52 @@ class FileParser:
         seq = seq.replace("{AGT}","D")
         seq = seq.replace("{GATC}","N")
         return seq
+
+    def partitions_parse(self):
+        # parse partitions file using regex
+        matches = re.finditer(r"(\s+)?([^ =]+)[ =]+([\\0-9, -]+)", self.in_file_lines, re.MULTILINE)
+        
+        # initiate list to store dictionaries with lists
+        # of slice positions as values
+        partitions = []
+        
+        for match in matches:
+            # initiate dictionary of partition name as key
+            dict_of_dicts = {}
+            # and list of dictionaries with slice positions
+            list_of_dicts = []
+            # get parition name and numbers from parsed partiion strings
+            partition_name = match.group(2)
+            numbers = match.group(3)
+        
+            positions = re.findall(r"([^ ,]+)", numbers)
+        
+            for position in positions:
+                # create dictionary for slicing input sequence
+                # conditioning on whether positions are represented
+                # by range, range with stride, or single number
+                pos_dict = {}
+        
+                if "-" in position:
+                    m = re.search(r"([0-9]+)-([0-9]+)", position)
+                    pos_dict["start"] = int(m.group(1)) - 1
+                    pos_dict["stop"] = int(m.group(2))
+                else:
+                    pos_dict["start"] = int(position) - 1
+                    pos_dict["stop"] = int(position)
+        
+                if "\\" in position:
+                    pos_dict["stride"] = 3
+                elif "\\" not in position:
+                    pos_dict["stride"] = 1
+        
+                list_of_dicts.append(pos_dict)
+        
+            dict_of_dicts[partition_name] = list_of_dicts
+        
+            partitions.append(dict_of_dicts)
+        
+        return partitions
 
  
 class Alignment:
@@ -545,6 +599,7 @@ class MetaAlignment():
         self.concat_out = self.args.concat_out
         self.summary = self.args.summary
         self.replicate = self.args.replicate
+        self.split = self.args.split
     
         if self.replicate:
             self.no_replicates = self.args.replicate[0]
@@ -553,6 +608,16 @@ class MetaAlignment():
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()
     
+        if self.split:
+            self.partitions = self.get_partitions()       
+
+    def get_partitions(self):
+        
+        partitions = FileParser(self.split[0])
+        parsed_partitions = partitions.partitions_parse()
+        
+        return parsed_partitions
+
     def get_alignment_objects(self):
         # get alignment objects on which statistics can be computed
         alignments = []
@@ -574,6 +639,37 @@ class MetaAlignment():
             parsed_alignments.append(parsed)
     
         return parsed_alignments
+
+    def get_partitioned(self):
+        
+        partitions = self.partitions
+
+        if len(self.parsed_alignments) > 1:
+            print("You can specify only one input file for splitting.")
+        else:
+            alignment = self.parsed_alignments[0]
+
+        # initiate list of newly partitioned alignments 
+        list_of_parts = []
+        
+        for partition in partitions:
+            # loop over all parsed partitions, adding taxa and sliced sequences
+            for name, elements in partition.items():
+        
+                new_dict = {}
+         
+                for taxon, seq in alignment.items():
+         
+                    new_seq = ""
+         
+                    for dictionary in elements:
+        
+                        new_seq = new_seq + seq[dictionary["start"]:dictionary["stop"]:dictionary["stride"]]
+                        new_dict[taxon] = new_seq
+            # add partition name : dict of taxa and sequences to the list
+            list_of_parts.append({name : new_dict})
+    
+        return list_of_parts
 
     def get_summaries(self):
         # get summaries for all alignment objects
@@ -896,6 +992,7 @@ class MetaAlignment():
                 elif file_format == "nexus-int":
                     converted_file.write(self.print_nexus_int(alignment))
                 converted_file.close()
+
                 file_counter += 1
             
             print("Converted " + str(file_counter) + " files from " + self.in_format + " to " + file_format)
@@ -903,6 +1000,7 @@ class MetaAlignment():
         elif action == "replicate":
 
             file_counter = 1
+
             for alignment in self.get_replicate():
                 file_name = "replicate" + str(file_counter) + "_" + str(self.no_loci) + "-loci" + extension
                 replicate_file = open(file_name, "w")
@@ -918,9 +1016,39 @@ class MetaAlignment():
                 elif file_format == "nexus-int":
                     replicate_file.write(self.print_nexus_int(alignment))
                 replicate_file.close()
+
                 file_counter += 1
 
             print("Constructed " + str(self.no_replicates) + " replicate data sets, each from " + str(self.no_loci) + " alignments")
+
+        elif action == "split":
+
+            list_of_alignments = self.get_partitioned()
+
+            file_counter = 1
+
+            for item in list_of_alignments:
+            # bad practice with the dicts; figure out better solution
+                file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
+                alignment = list(item.values())[0]
+                from_partition_file = open(file_name, "w")
+
+                if file_format == "phylip":
+                    from_partition_file.write(self.print_phylip(alignment))
+                elif file_format == "fasta":
+                    from_partition_file.write(self.print_fasta(alignment))
+                elif file_format == "phylip-int":
+                    from_partition_file.write(self.print_phylip_int(alignment))
+                elif file_format == "nexus":
+                    from_partition_file.write(self.print_nexus(alignment))
+                elif file_format == "nexus-int":
+                    from_partition_file.write(self.print_nexus_int(alignment))
+                from_partition_file.close()
+
+                file_counter += 1
+
+            print("Wrote " + str(file_counter) + " " + str(file_format) + " files from partitions provided")
+
 
 def main():
     
@@ -932,7 +1060,8 @@ def main():
     concat_out = args.concat_out
     summary_out = args.summary_out
     out_format = args.out_format
-    
+    split = args.split
+        
     if meta_aln.summary:
         meta_aln.write_summaries(summary_out)
     if meta_aln.convert:
@@ -942,10 +1071,12 @@ def main():
         meta_aln.write_partitions(concat_part)
     if meta_aln.replicate:
         meta_aln.write_out("replicate", out_format)
+    if meta_aln.split:
+        meta_aln.write_out("split", out_format)
     # print instructions when no action is specified
-    if not meta_aln.summary and not meta_aln.convert and not meta_aln.concat and not meta_aln.replicate:
+    if not meta_aln.summary and not meta_aln.convert and not meta_aln.concat and not meta_aln.replicate and not meta_aln.split:
         print("""You need to specify at least one action with -v (--convert) for format converions,
--c (--concat) for concatenation, -s (--summary) for alignment summaries\n, or -r (--replicate) for replicate data sets""")     
+-c (--concat) for concatenation, -s (--summary) for alignment summaries\n, -r (--replicate) for replicate data sets, or -l (--split) for splitting to partitions""")     
 
 if __name__ == '__main__':
     main()
