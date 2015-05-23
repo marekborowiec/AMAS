@@ -16,8 +16,9 @@ pip install amas
 ```
 usage: AMAS.py [-h] -i [IN_FILE [IN_FILE ...]] -f
                {fasta,phylip,nexus,phylip-int,nexus-int} -d {aa,dna} [-c] [-s]
-               [-v] [-r REPLICATE REPLICATE] [-p CONCAT_PART] [-t CONCAT_OUT]
-               [-o SUMMARY_OUT] [-u {fasta,phylip,nexus,phylip-int,nexus-int}]
+               [-v] [-l SPLIT] [-r REPLICATE REPLICATE] [-p CONCAT_PART]
+               [-t CONCAT_OUT] [-o SUMMARY_OUT]
+               [-u {fasta,phylip,nexus,phylip-int,nexus-int}]
 
 Alignment manipulation and summary statistics
 
@@ -26,6 +27,9 @@ optional arguments:
   -c, --concat          Concatenate input alignments
   -s, --summary         Print alignment summary
   -v, --convert         Convert to other file format
+  -l SPLIT, --split SPLIT
+                        File name for partitions to be used for alignment
+                        splitting.
   -r REPLICATE REPLICATE, --replicate REPLICATE REPLICATE
                         Create replicate data sets for phylogenetic jackknife
                         [replicates, no alignments for each replicate]
@@ -94,6 +98,19 @@ To convert all nucleotide fasta files with a `.fas` extension in a directory to 
 python3 AMAS.py -d dna -f fasta -i *fas -v -u nexus
 ```
 In the above, the required options are combined with `-v` (`--convert`) action to convert and `-u nexus` indicating the output format.
+
+### Splitting alignment by partitions
+If you have a raxml-style partition file, you can split a concatenated alignment and write a file for each partition:
+```
+python3 AMAS.py -f nexus -d dna -i concat.nex -l  partitions.txt -u nexus
+```
+In the above one input file `concat.nex` was provided for splitting with `-i` (can also use `--in-file`) and partitions file `partitions.txt` with `-l` (same as `--split`). For splitting you can only use one input and one partition file at a time. This is an example partition file:
+```
+  AApos1&2  =  1-604\3, 2-605\3
+  AApos3  =  3-606\3
+  28SAutapoInDels=7583, 7584, 7587, 7593
+```
+If this was the `partitions.txt` file from the example above, `AMAS` would write three output files called `concat_AApos1&2.nex`, `concat_AApos3.nex`, and `concat_28SautapoInDels.nex`. The partitions file will be parsed correctly as long as there is no text prior to the partition name (`CHARSET AApos1&2` or `DNA, AApos1&2` will not work) and commas separate ranges or individual sites in each partition.
 
 ### Creating replicate data sets
 With `AMAS` you can create concatenated alignments from a proportion of randomly chosen alignments that can be used for, for example, a phylogenetic jackknife analysis. Say you have 1000 phylip files, each containing a single aligned locus, and you want to create 200 replicate phylip alignments, each built from 100 loci randomly chosen from all the input files. You can do this by supplying the `-r` or `--replicate` followed by the number of replicates (in this case `200`) and number of alignments (`100`). Remember to supply the output format with `-u` if you want it to be other than fasta:
