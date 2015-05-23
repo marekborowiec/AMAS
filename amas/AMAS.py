@@ -415,8 +415,8 @@ class Alignment:
     # call methods to create sequences list, matrix, sites without ambiguous or
     # missing characters; get and summarize alignment statistics
         summary = []
-        list_of_seqs = self.seq_grabber()
-        matrix = self.matrix_creator()
+        self.list_of_seqs = self.seq_grabber()
+        self.matrix = self.matrix_creator()
         self.no_missing_ambiguous = self.get_sites_no_missing_ambiguous()
         self.variable_sites = self.get_variable()
         self.prop_variable = self.get_prop_variable()
@@ -445,13 +445,13 @@ class Alignment:
     def seq_grabber(self):
     # create a list of sequences from parsed dictionary of names and seqs 
         parsed_aln = self.get_parsed_aln()
-        self.list_of_seqs = [seq for name, seq in parsed_aln.items()]
-        return self.list_of_seqs
+        list_of_seqs = [seq for name, seq in parsed_aln.items()]
+        return list_of_seqs
                
     def matrix_creator(self):
     # decompose character matrix into a two-dimensional list
-        self.matrix = [list(sequence) for sequence in self.list_of_seqs]
-        return self.matrix
+        matrix = [list(sequence) for sequence in self.list_of_seqs]
+        return matrix
 
     def get_column(self, i):
     # get site from the character matrix
