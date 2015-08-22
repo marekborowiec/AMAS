@@ -1027,7 +1027,7 @@ class MetaAlignment():
 
             list_of_alignments = self.get_partitioned()
 
-            file_counter = 1
+            file_counter = 0
 
             for item in list_of_alignments:
             # bad practice with the dicts; figure out better solution
