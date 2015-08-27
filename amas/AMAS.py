@@ -31,7 +31,7 @@ and proportions of all characters relative to matrix size.
 """
 
 
-import argparse, re
+import argparse, re, sys
 from random import sample
 from os import path
 from collections import defaultdict
@@ -149,7 +149,11 @@ class FileHandler:
         self.file_name = file_name
 
     def __enter__(self):
-        self.in_file = open(self.file_name, "r")
+        try:
+            self.in_file = open(self.file_name, "r")
+        except FileNotFoundError:
+            print("Error: file '" + self.file_name + "' not found.")
+            sys.exit()
         return self.in_file
 
     def __exit__(self, *args):
@@ -157,7 +161,6 @@ class FileHandler:
     
     def get_file_name(self):
         return self.file_name
-
         
 class FileParser:
     """Parse file contents and return sequences and sequence names"""
@@ -365,11 +368,11 @@ class FileParser:
                     pos_dict["stride"] = 1
         
                 list_of_dicts.append(pos_dict)
-        
+                
             dict_of_dicts[partition_name] = list_of_dicts
-        
+ 
             partitions.append(dict_of_dicts)
-        
+
         return partitions
 
  
@@ -719,6 +722,10 @@ class MetaAlignment():
 
     def write_summaries(self, file_name):
         # write summaries to file
+
+        if path.exists(file_name):
+            print("WARNING: you are overwriting '" + file_name + "'")
+    
         summary_file = open(file_name, "w")
         summary_out = self.get_summaries()
         summary_file.write(summary_out[0] + '\n')
@@ -940,6 +947,10 @@ class MetaAlignment():
 
     def write_partitions(self, file_name):
         # write partitions file for concatenated alignment
+
+         if path.exists(file_name):
+             print("WARNING: you are overwriting '" + file_name + "'")
+            
          part_file = open(file_name, "w")
          part_file.write(self.print_partitions())
          print("Wrote partitions for the concatenated file to '" + file_name + "'")
@@ -961,6 +972,10 @@ class MetaAlignment():
             
             concatenated_alignment = self.get_concatenated(self.parsed_alignments)[0]
             file_name = self.concat_out
+
+            if path.exists(file_name):
+                print("WARNING: you are overwriting '" + file_name + "'")
+           
             concatenated_file = open(file_name, "w")
             if file_format == "phylip":
                 concatenated_file.write(self.print_phylip(concatenated_alignment))
@@ -982,6 +997,10 @@ class MetaAlignment():
     
             for alignment in self.parsed_alignments:
                 file_name = self.alignment_objects[file_counter].get_name() + extension
+
+                if path.exists(file_name):
+                    print("WARNING: you are overwriting '" + file_name + "'")
+                
                 converted_file = open(file_name, "w")
                 if file_format == "phylip":
                     converted_file.write(self.print_phylip(alignment))
@@ -1005,6 +1024,10 @@ class MetaAlignment():
 
             for alignment in self.get_replicate():
                 file_name = "replicate" + str(file_counter) + "_" + str(self.no_loci) + "-loci" + extension
+
+                if path.exists(file_name):
+                    print("WARNING: you are overwriting '" + file_name + "'")
+                
                 replicate_file = open(file_name, "w")
 
                 if file_format == "phylip":
@@ -1033,6 +1056,10 @@ class MetaAlignment():
             # bad practice with the dicts; figure out better solution
                 file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
                 alignment = list(item.values())[0]
+
+                if path.exists(file_name):
+                    print("WARNING: you are overwriting '" + file_name + "'")
+                
                 from_partition_file = open(file_name, "w")
 
                 if file_format == "phylip":
