@@ -660,7 +660,8 @@ class MetaAlignment():
                  print("ERROR: Sequences in input are of varying lengths. Be sure to align them first.")
                  sys.exit()
             if empty == 0:
-                 print("ERROR: Parsed sequences are empty. Are you sure you specified the right input format?")
+                 print("ERROR: Parsed sequences are empty. "\
+                  "Are you sure you specified the right input format and/or all input files are valid alignments?")
                  sys.exit()
  
         return parsed_alignments
