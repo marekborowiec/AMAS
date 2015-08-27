@@ -102,6 +102,8 @@ python3 AMAS.py -d dna -f fasta -i *fas -v -u nexus
 ```
 In the above, the required options are combined with `-v` (`--convert`) action to convert and `-u nexus` indicating the output format.
 
+`AMAS` will not overwrite over input here but will create new files instead, automatically appending appropriate extensions to the input file's name: `-out.fas`, `-out.phy`, `-out.int-phy`, `-out.nex`, or `-out.int-nex`.
+
 ### Splitting alignment by partitions
 If you have a partition file, you can split a concatenated alignment and write a file for each partition:
 ```
