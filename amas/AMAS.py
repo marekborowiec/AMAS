@@ -144,7 +144,7 @@ class ParsedArgs:
             dest = "check_align",
             action = "store_true",
             default = False,
-            help = "Check if the sequences are aligned in the files. Default: no check"
+            help = "Check if input sequences are aligned. Default: no check"
         )
 
         return parser.parse_args()
