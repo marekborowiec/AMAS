@@ -138,6 +138,14 @@ class ParsedArgs:
             default = "fasta",
             help = "File format for the output alignment. Default: fasta"
         ) 
+ parser.add_argument(
+            "-h",
+          "--check-align",
+          dest = "check_align",
+          action = "store_true",
+          default = False,
+          help = "Check if the sequences are aligned in the files. Default: no check"
+        )
 
         return parser.parse_args()
     
@@ -379,7 +387,7 @@ class FileParser:
 class Alignment:
     """Gets in parsed sequences as input and summarizes their stats"""
     
-    def __init__(self, in_file, in_format, data_type):
+    def __init__(self, in_file, in_format, data_type, check_align):
     
     # initialize alignment class with parsed records and alignment name as arguments,
     # create empty lists for list of sequences, sites without
@@ -389,6 +397,8 @@ class Alignment:
         self.in_file = in_file
         self.in_format = in_format
         self.data_type = data_type
+        
+        self.check_align = check_align
 
         self.parsed_aln = self.get_parsed_aln()
         
