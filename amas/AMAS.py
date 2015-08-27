@@ -152,7 +152,7 @@ class FileHandler:
         try:
             self.in_file = open(self.file_name, "r")
         except FileNotFoundError:
-            print("Error: file '" + self.file_name + "' not found.")
+            print("ERROR: File '" + self.file_name + "' not found.")
             sys.exit()
         return self.in_file
 
@@ -452,6 +452,7 @@ class Alignment:
     # create a list of sequences from parsed dictionary of names and seqs 
         list_of_seqs = [seq for name, seq in self.parsed_aln.items()]
         return list_of_seqs
+
                
     def matrix_creator(self):
     # decompose character matrix into a two-dimensional list
@@ -632,7 +633,6 @@ class MetaAlignment():
             elif self.data_type == "dna":
                 aln = DNAAlignment(alignment, self.in_format, self.data_type)
             alignments.append(aln)
-        
         return alignments
 
     def get_parsed_alignments(self):
@@ -641,7 +641,13 @@ class MetaAlignment():
         for alignment in self.alignment_objects:
             parsed = alignment.parsed_aln
             parsed_alignments.append(parsed)
-    
+        # checking if every seq has the same length; exit if not
+            equal = all(x == [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))][0] 
+             for x in [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))])
+            if equal is False:
+                 print("ERROR: Sequences in input are of varying lengths. Be sure to align them first.")
+                 sys.exit()
+ 
         return parsed_alignments
 
     def get_partitioned(self):
@@ -724,7 +730,7 @@ class MetaAlignment():
         # write summaries to file
 
         if path.exists(file_name):
-            print("WARNING: you are overwriting '" + file_name + "'")
+            print("WARNING: You are overwriting '" + file_name + "'")
     
         summary_file = open(file_name, "w")
         summary_out = self.get_summaries()
@@ -949,7 +955,7 @@ class MetaAlignment():
         # write partitions file for concatenated alignment
 
          if path.exists(file_name):
-             print("WARNING: you are overwriting '" + file_name + "'")
+             print("WARNING: You are overwriting '" + file_name + "'")
             
          part_file = open(file_name, "w")
          part_file.write(self.print_partitions())
@@ -974,7 +980,7 @@ class MetaAlignment():
             file_name = self.concat_out
 
             if path.exists(file_name):
-                print("WARNING: you are overwriting '" + file_name + "'")
+                print("WARNING: You are overwriting '" + file_name + "'")
            
             concatenated_file = open(file_name, "w")
             if file_format == "phylip":
@@ -999,7 +1005,7 @@ class MetaAlignment():
                 file_name = self.alignment_objects[file_counter].get_name() + extension
 
                 if path.exists(file_name):
-                    print("WARNING: you are overwriting '" + file_name + "'")
+                    print("WARNING: You are overwriting '" + file_name + "'")
                 
                 converted_file = open(file_name, "w")
                 if file_format == "phylip":
@@ -1026,7 +1032,7 @@ class MetaAlignment():
                 file_name = "replicate" + str(file_counter) + "_" + str(self.no_loci) + "-loci" + extension
 
                 if path.exists(file_name):
-                    print("WARNING: you are overwriting '" + file_name + "'")
+                    print("WARNING: You are overwriting '" + file_name + "'")
                 
                 replicate_file = open(file_name, "w")
 
@@ -1058,7 +1064,7 @@ class MetaAlignment():
                 alignment = list(item.values())[0]
 
                 if path.exists(file_name):
-                    print("WARNING: you are overwriting '" + file_name + "'")
+                    print("WARNING: You are overwriting '" + file_name + "'")
                 
                 from_partition_file = open(file_name, "w")
 
