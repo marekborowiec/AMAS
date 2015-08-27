@@ -139,7 +139,7 @@ class ParsedArgs:
             help = "File format for the output alignment. Default: fasta"
         ) 
         parser.add_argument(
-            "-h",
+            "-e",
             "--check-align",
             dest = "check_align",
             action = "store_true",
