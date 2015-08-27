@@ -138,13 +138,13 @@ class ParsedArgs:
             default = "fasta",
             help = "File format for the output alignment. Default: fasta"
         ) 
- parser.add_argument(
+        parser.add_argument(
             "-h",
-          "--check-align",
-          dest = "check_align",
-          action = "store_true",
-          default = False,
-          help = "Check if the sequences are aligned in the files. Default: no check"
+            "--check-align",
+            dest = "check_align",
+            action = "store_true",
+            default = False,
+            help = "Check if the sequences are aligned in the files. Default: no check"
         )
 
         return parser.parse_args()
@@ -387,7 +387,7 @@ class FileParser:
 class Alignment:
     """Gets in parsed sequences as input and summarizes their stats"""
     
-    def __init__(self, in_file, in_format, data_type, check_align):
+    def __init__(self, in_file, in_format, data_type):
     
     # initialize alignment class with parsed records and alignment name as arguments,
     # create empty lists for list of sequences, sites without
@@ -397,8 +397,6 @@ class Alignment:
         self.in_file = in_file
         self.in_format = in_format
         self.data_type = data_type
-        
-        self.check_align = check_align
 
         self.parsed_aln = self.get_parsed_aln()
         
@@ -626,6 +624,7 @@ class MetaAlignment():
         self.summary = self.args.summary
         self.replicate = self.args.replicate
         self.split = self.args.split
+        self.check_align = self.args.check_align
     
         if self.replicate:
             self.no_replicates = self.args.replicate[0]
@@ -662,17 +661,18 @@ class MetaAlignment():
         for alignment in self.alignment_objects:
             parsed = alignment.parsed_aln
             parsed_alignments.append(parsed)
-        # checking if every seq has the same length or if parsed is not empty; exit if false 
-            equal = all(x == [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))][0] 
-             for x in [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))])
+        # checking if every seq has the same length or if parsed is not empty; exit if false
+            if self.check_align == True:
+                equal = all(x == [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))][0] 
+                 for x in [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))])
+                if equal is False:
+                    print("ERROR: Sequences in input are of varying lengths. Be sure to align them first.")
+                    sys.exit()
             empty = len(list(parsed.keys()))
-            if equal is False:
-                 print("ERROR: Sequences in input are of varying lengths. Be sure to align them first.")
-                 sys.exit()
             if empty == 0:
-                 print("ERROR: Parsed sequences are empty. "\
-                  "Are you sure you specified the right input format and/or all input files are valid alignments?")
-                 sys.exit()
+                print("ERROR: Parsed sequences are empty. "\
+                 "Are you sure you specified the right input format and/or all input files are valid alignments?")
+                sys.exit()
  
         return parsed_alignments
 
