@@ -671,7 +671,7 @@ class MetaAlignment():
             empty = len(list(parsed.keys()))
             if empty == 0:
                 print("ERROR: Parsed sequences are empty. "\
-                 "Are you sure you specified the right input format and/or all input files are valid alignments?")
+                 "Are you sure you specified the right input format and/or that all input files are valid alignments?")
                 sys.exit()
  
         return parsed_alignments
