@@ -641,11 +641,15 @@ class MetaAlignment():
         for alignment in self.alignment_objects:
             parsed = alignment.parsed_aln
             parsed_alignments.append(parsed)
-        # checking if every seq has the same length; exit if not
+        # checking if every seq has the same length or if parsed is not empty; exit if false 
             equal = all(x == [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))][0] 
              for x in [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))])
+            empty = len(list(parsed.keys()))
             if equal is False:
                  print("ERROR: Sequences in input are of varying lengths. Be sure to align them first.")
+                 sys.exit()
+            if empty == 0:
+                 print("ERROR: Parsed sequences are empty. Are you sure you specified the right input format?")
                  sys.exit()
  
         return parsed_alignments
