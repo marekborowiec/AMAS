@@ -433,6 +433,7 @@ class Alignment:
         cells = str(self.get_matrix_cells())
         missing = str(self.get_missing())
         missing_percent = str(self.get_missing_percent())
+        self.check_data_type()
         summary = [name, taxa_no, length, cells, missing, missing_percent, \
          str(self.variable_sites), str(self.prop_variable), str(self.parsimony_informative), str(self.prop_parsimony)]
         return summary
@@ -542,6 +543,14 @@ class Alignment:
             frequencies.append({char : round(count, 3)})
         return frequencies
 
+    def check_data_type(self):
+    # check if the data type is correct
+        self.check = any(any(char in self.non_alphabet for char in seq) \
+         for seq in self.list_of_seqs)
+        if self.check is True:
+            print("WARNING: found non-" + self.data_type + " characters. "\
+             "Are you sure you specified the right data type?")
+
 
 class AminoAcidAlignment(Alignment):
     """Alphabets specific to amino acid alignments"""
@@ -550,6 +559,7 @@ class AminoAcidAlignment(Alignment):
      "S","T","V","W","Y","B","J","Z","X",".","*","-","?"]
     missing_ambiguous_chars = ["B","J","Z","X",".","*","-","?"]
     missing_chars = ["X",".","*","-","?"]
+    non_alphabet = ["O"]
 
     def get_summary(self):
         data = self.summarize_alignment()
@@ -566,6 +576,7 @@ class DNAAlignment(Alignment):
     missing_ambiguous_chars = ["K","M","R","Y","S","W","B","V","H","D","X", \
      "N", "O", "-","?"] 
     missing_chars = ["X","N","O","-","?"]
+    non_alphabet = ["E", "F", "I", "L", "P", "Q", "J", "Z", ".", "*"]    
 
     def get_summary(self):
         data = self.summarize_alignment()
@@ -1054,7 +1065,8 @@ class MetaAlignment():
 
                 file_counter += 1
 
-            print("Constructed " + str(self.no_replicates) + " replicate data sets, each from " + str(self.no_loci) + " alignments")
+            print("Constructed " + str(self.no_replicates) + " replicate data sets, each from " \
+             + str(self.no_loci) + " alignments")
 
         elif action == "split":
 
