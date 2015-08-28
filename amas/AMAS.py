@@ -193,6 +193,12 @@ class FileParser:
             seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
 
+        empty = len(list(records.keys()))
+        if empty == 0:
+            print("ERROR: Parsed sequences are empty. "\
+             "Are you sure you specified the right input format and/or that all input files are valid alignments?")
+            sys.exit()
+
         return records
     
     def phylip_parse(self):
@@ -209,6 +215,12 @@ class FileParser:
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
+
+        empty = len(list(records.keys()))
+        if empty == 0:
+            print("ERROR: Parsed sequences are empty. "\
+             "Are you sure you specified the right input format and/or that all input files are valid alignments?")
+            sys.exit()
 
         return records    
 
@@ -249,6 +261,12 @@ class FileParser:
             records[taxa[taxon_no]] = sequence
             counter += 1 
 
+        empty = len(list(records.keys()))
+        if empty == 0:
+            print("ERROR: Parsed sequences are empty. "\
+             "Are you sure you specified the right input format and/or that all input files are valid alignments?")
+            sys.exit()
+
         return records
 
         
@@ -275,6 +293,12 @@ class FileParser:
                 seq_match = match.group(3).replace("\n","").upper()
                 seq_match = self.translate_ambiguous(seq_match)
                 records[name_match] = seq_match
+
+        empty = len(list(records.keys()))
+        if empty == 0:
+            print("ERROR: Parsed sequences are empty. "\
+             "Are you sure you specified the right input format and/or that all input files are valid alignments?")
+            sys.exit()
 
         return records
         
@@ -318,6 +342,12 @@ class FileParser:
             
             counter += 1 
             records[taxa[taxon_no]] = full_length_sequence
+
+            empty = len(list(records.keys()))
+            if empty == 0:
+                print("ERROR: Parsed sequences are empty. "\
+                 "Are you sure you specified the right input format and/or that all input files are valid alignments?")
+                sys.exit()
 
         return records
 
@@ -666,13 +696,8 @@ class MetaAlignment():
                 equal = all(x == [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))][0] 
                  for x in [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))])
                 if equal is False:
-                    print("ERROR: Sequences in input are of varying lengths. Be sure to align them first.")
+                    print("ERROR: Sequences in input are of varying lengths. Make sure to align them first and specify the correct inpur format with '-f'.")
                     sys.exit()
-            empty = len(list(parsed.keys()))
-            if empty == 0:
-                print("ERROR: Parsed sequences are empty. "\
-                 "Are you sure you specified the right input format and/or that all input files are valid alignments?")
-                sys.exit()
  
         return parsed_alignments
 
