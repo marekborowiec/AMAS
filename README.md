@@ -71,7 +71,7 @@ The options available for the format are `fasta`, `phylip`, `nexus` (sequential)
 
 You also need to choose at least one action with `-c` (same as `--concat`), `-s` (`--summary`), `-v` (`--convert`), or `-r` (`--replicate`) for the input to be processed. The order in which arguments are given does not matter.
 
-IMPORTANT! `AMAS` is fast and powerful, but be careful: it assumes you know what you are doing and will not prevent you overwriting a file. It will, however, print out a warning if this has happened. You also need to be mindful of the input format specified, as incorrect format may result in unexpected program behavior. `AMAS` performs some basic checks to see if the parsing was successful but there is a trade-off between automated file format detection and computation times. In short, you can expect your output to be garbled if you don't specify the right input format.
+IMPORTANT! `AMAS` is fast and powerful, but be careful: it assumes you know what you are doing and will not prevent you overwriting a file. It will, however, print out a warning if this has happened. You also need to be mindful of the input format specified, as incorrect format may result in unexpected program behavior. `AMAS` performs some basic checks to see if the parsing was successful but there is a trade-off between automated file format detection and computation times. In short, you can expect your output to be garbled if you don't get the input format right.
 
 ### Concatenating alignments
 For example, if you want to concatenate all DNA phylip files in a directory and all of them have the `.phy` extension, you can run:
