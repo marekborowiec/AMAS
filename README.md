@@ -86,7 +86,7 @@ python3 AMAS.py -f fasta -d aa -i *phy -c -u nexus
 ```
 Alignments to be concatenated need not have identical sets of taxa before processing: the concatenated alignment will be populated with missing data where a given locus is missing a taxon. However, if every file to be concatenated includes only unique names (for example species name plus sequence name: `D_melanogaster_NW_001845408.1` in one alignment, `D_melanogaster_NW_001848855.1` in other alignment etc.), you will first need to trim those names so that sequences from one taxon have equivalents in all files.   
 
-Note that it takes `AMAS` longer to write an interleaved file than a sequential one, which may be an issue if you are concatenating to a large (>50MB) alignment on a laptop or an older desktop computer.
+Note that it takes `AMAS` longer to write an interleaved file than a sequential one, which may be an issue if you are concatenating to a large alignment on a laptop or an older desktop computer.
 
 ### Getting alignment statistics
 This is an example of how you can summarize two protein fasta alignments by running:
@@ -95,7 +95,7 @@ python3 AMAS.py -f fasta -d aa -i my_aln.fasta my_aln2.fasta -s
 ```
 By default `AMAS` will write a file with the summary of the alignment in `summary.txt`. You can change the name of this file with `-o` or `--summary-out`. You can also summarize a single or multiple sequence alignments at once. 
 
-The statistics calculated include the number of taxa, alignment length, total number of matrix cells, overall number of undetermined characters, percent of missing data, AT and GC contents (for DNA alignments), number and proportion of variable sites, number and proportion of parsimony informative sites, and proportions of all characters relative to the matrix size.
+The statistics calculated include the number of taxa, alignment length, total number of matrix cells, overall number of undetermined characters, percent of missing data, AT and GC contents (for DNA alignments), number and proportion of variable sites, number and proportion of parsimony informative sites, and counts of all characters of the relevant amino acid or nucleotide alphabet.
 
 ### Converting among formats
 To convert all nucleotide fasta files with a `.fas` extension in a directory to nexus alignments, you could use:
@@ -120,7 +120,7 @@ In the above one input file `concat.nex` was provided for splitting with `-i` (c
 If this was the `partitions.txt` file from the example command above, `AMAS` would write three output files called `concat_AApos1&2.nex`, `concat_AApos3.nex`, and `concat_28SautapoInDels.nex`. The partitions file will be parsed correctly as long as there is no text prior to the partition name (`CHARSET AApos1&2` or `DNA, AApos1&2` will not work) and commas separate ranges or individual sites in each partition.
 
 ### Creating replicate data sets
-With `AMAS` you can create concatenated alignments from a proportion of randomly chosen alignments that can be used for, for example, a phylogenetic jackknife analysis. Say you have 1000 phylip files, each containing a single aligned locus, and you want to create 200 replicate phylip alignments, each built from 100 loci randomly chosen from all the input files. You can do this by supplying the `-r` or `--replicate` followed by the number of replicates (in this case `200`) and number of alignments (`100`). Remember to supply the output format with `-u` if you want it to be other than fasta:
+With `AMAS` you can create concatenated alignments from a number of randomly chosen alignments that can be used for, for example, a phylogenetic jackknife analysis. Say you have 1000 phylip files, each containing a single aligned locus, and you want to create 200 replicate phylip alignments, each built from 100 loci randomly chosen from all the input files. You can do this by supplying the `-r` or `--replicate` followed by the number of replicates (in this case `200`) and number of alignments (`100`). Remember to supply the output format with `-u` if you want it to be other than fasta:
 ```
 python3 AMAS.py -d dna -f phylip -i *phy -r 200 100 -u phylip
 ```
