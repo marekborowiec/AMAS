@@ -2,4 +2,4 @@
 
 __author__ = 'Marek Borowiec'
 __email__ = 'petiolus@gmail.com'
-__version__ = '0.91'
+__version__ = '0.93'
