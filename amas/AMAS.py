@@ -641,8 +641,6 @@ class MetaAlignment():
  
     def __init__(self, **kwargs):
 
-
-        print(kwargs)
         # set defaults and get values from kwargs
         self.in_files = kwargs.get("in_files")
         self.in_format = kwargs.get("in_format")
@@ -655,7 +653,6 @@ class MetaAlignment():
         self.split = kwargs.get("split", False)
         self.check_align = kwargs.get("check_align", False)
      
-        print(self.in_files)
         if self.replicate:
             self.no_replicates = self.replicate[0]
             self.no_loci = self.replicate[1]
