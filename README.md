@@ -134,10 +134,8 @@ You can get statistics for all input alignments, convert them to phylip, and con
 ```
 python3 AMAS.py -d aa -f fasta -i *fas -c -s -v -u phylip
 ```
-<<<<<<< HEAD
 ### Checking if input is aligned
 By specifying optional argument `-e` (`--check-align`), you can make `AMAS` check if your input files contain only aligned sequences. This option is disabled by default because it can substantially increase computation times in files with many taxa. Enabling this option also provides an additional check against misspecified input file format.
-=======
 
 # AMAS as a Python module
 Using `AMAS` inside your Python pipeline gives you much more flexibility in how the input and output are being processed. All the major functions of the command line interface can recreated using `AMAS` as a module. Following installation from [pip](https://pip.pypa.io/en/latest/installing.html) you can import it with:
@@ -208,4 +206,3 @@ for alignment in aln_dicts:
     nex_int_string = meta_aln.print_nexus_int(alignment)
     print(nex_int_string)
 ```
->>>>>>> develop
