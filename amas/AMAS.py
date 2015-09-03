@@ -27,7 +27,7 @@ Current statistics include the number of taxa, alignment length, total number
 of matrix cells, overall number of undetermined characters, percent of missing 
 data, AT and GC contents (for DNA alignments), number and proportion of 
 variable sites, number and proportion of parsimony informative sites,
-and proportions of all characters relative to matrix size.
+and counts of all characters from the relevant alphabet.
 """
 
 
