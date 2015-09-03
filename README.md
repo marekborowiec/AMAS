@@ -138,11 +138,11 @@ python3 AMAS.py -d aa -f fasta -i *fas -c -s -v -u phylip
 # AMAS as a Python module
 Using `AMAS` inside your Python pipeline gives you much more flexibility in how the input and output are being processed. All the major functions of the command line interface can recreated using `AMAS` as a module. Following installation from [pip](https://pip.pypa.io/en/latest/installing.html) you can import it with:
 
-```python3
+```python
 from amas import AMAS
 ```
 The class used to manipulate alignments in `AMAS` is `MetaAlignment`. This class has to be instantiated with the same, named arguments as on the command line: `in_files`, `data_type`, `in_format`. MetaAlignment holds one or multiple alignments and its `in_files` option must be a list, even if only one file is being read.
-```python3 
+```python
 
 meta_aln = AMAS.MetaAlignment(
 
@@ -151,7 +151,7 @@ in_files=["gene1.phy"], data_type="dna",in_format="phylip"
 )
 ```
 Creating MetaAlignment with multiple files is easy:
-```python3
+```python
 multi_meta_aln = AMAS.MetaAlignment(
 
 in_files=["gene1.phy", "gene1.phy"], data_type="dna", in_format="phylip"
@@ -159,15 +159,15 @@ in_files=["gene1.phy", "gene1.phy"], data_type="dna", in_format="phylip"
 )
 ```
 Now you can call the various methods on your alignments. `.get_summaries()` method will compute summaries for your alignments and produce headers for them as a tuple with first element being the header and the second element a list of lists with the statistics:
-```python3
+```python
 summaries = meta_aln.get_summaries()
 ```
 The header is different for nucleotide and amino acid data. You may choose to skip it and print only the second element of the tuple, that is a list of summary statistics:
-```python3
+```python
 statistics = summaries[1]
 ```
 `.get_parsed_alignments()` returns a list of dictionaries where each dictionary is an alignment and where taxa are the keys and sequences are the values. This allows you to, for example, print only taxa names in each alignment:
-```python3  
+```python3 
 # get parsed dictionaties
 aln_dicts = multi_meta_aln.get_parsed_alignments()
 
@@ -177,29 +177,29 @@ for alignment in aln_dicts:
         print(taxon_name)
 ```
 To split alignment use `.get_partitioned("your_partitions_file")` on a `MetaAlignment` with a single input file. `.get_partitioned()` returns a list of dictionaries of dictionaries, with `{ partition_name : { taxon : sequence } }` structure for each partition:
-```python3
+```python
 partitions = meta_aln.get_partitioned("partitions.txt")
 ```
 `AMAS` uses `.get_partitions("your_partitions_file")` to parse the partition file:
-```python3
+```python
 parsed_parts = meta_aln.get_partitions("partitions.txt")
 print(parsed_parts)
 ```
 
 `.get_replicate(no_replicates, no_loci)` gives a list of parsed alignments (dictionaries), each a replicate constructed from the specified number of loci:
-```python3
+```python
 replicate_sets = multi_meta_aln.get_replicate(2, 2)
 ```
 To concatenate multiple alignments first parse them with `.get_parsed_alignments()`, then pass to `.get_concatenated(your_parsed_alignments)`. This will return a tuple where the first element is the `{ taxon : sequence }` dict
 of concatenated alignment and the second element is the partitions dict with `{ name : range }`.
-```python3
+```python
 parsed_alns = multi_meta_aln.get_parsed_alignments()
 concat_tuple = multi_meta_aln.get_concatenated(parsed_alns)
 concatenated_alignments = concat_tuple[0]
 concatenated_partitions = concat_tuple[1]
 ```
 To print to file or convert among file formats use one of the `.print_format(parsed_alignment)` methods called with a parsed dictionary as an argument. These methods include `.print_fasta()`, `.print_nexus()`, `.print_nexus_int`, `print_phylip()`, and `.print_phylip_int()`. They return an apporpriately formatted string.
-```python3
+```python
 for alignment in aln_dicts:
     nex_int_string = meta_aln.print_nexus_int(alignment)
     print(nex_int_string)
