@@ -48,13 +48,13 @@ class ParsedArgs:
         required_named = parser.add_argument_group('required named arguments')
         required_named.add_argument(
             "-i",
-            "--in-file",
+            "--in-files",
             nargs = "*",
             type = str,
-            dest = "in_file",
+            dest = "in_files",
             required = True,
             help = """Alignment files to be taken as input.
-            You can specify multiple files using wildcards (e.g. --in-file *fasta)"""
+            You can specify multiple files using wildcards (e.g. --in-files *fasta)"""
         )
         required_named.add_argument(
             "-f",
@@ -97,8 +97,6 @@ class ParsedArgs:
             "-l",
             "--split",
             dest = "split",
-            nargs = 1,
-            type = str,
             help = "File name for partitions to be used for alignment splitting."
         ) 
         parser.add_argument(
@@ -602,7 +600,7 @@ class AminoAcidAlignment(Alignment):
         data = self.summarize_alignment()
         new_data = data + list(self.get_char_summary()[1])
         
-        return "\t".join(new_data)
+        return new_data
 
            
 class DNAAlignment(Alignment):
@@ -621,7 +619,7 @@ class DNAAlignment(Alignment):
         new_data = data + self.get_atgc_content() \
          + list(self.get_char_summary()[1])
         
-        return "\t".join(new_data)
+        return new_data
         
     def get_atgc_content(self):
     # get AC and GC contents
@@ -641,33 +639,33 @@ class DNAAlignment(Alignment):
 class MetaAlignment():
     """Class of multiple sequence alignments"""
  
-    def __init__(self):
+    def __init__(self, **kwargs):
 
-        self.args = ParsedArgs.get_args()
-        self.in_files = self.args.in_file
-        self.in_format = self.args.in_format
-        self.data_type = self.args.data_type
-        self.concat = self.args.concat
-        self.convert = self.args.convert
-        self.concat_out = self.args.concat_out
-        self.summary = self.args.summary
-        self.replicate = self.args.replicate
-        self.split = self.args.split
-        self.check_align = self.args.check_align
-    
+
+        print(kwargs)
+        # set defaults and get values from kwargs
+        self.in_files = kwargs.get("in_files")
+        self.in_format = kwargs.get("in_format")
+        self.data_type = kwargs.get("data_type")
+        self.concat = kwargs.get("concat", False)
+        self.concat_out = kwargs.get("concat_out", "concatenated.out")
+        self.convert = kwargs.get("convert", False)
+        self.summary = kwargs.get("summary", False)
+        self.replicate = kwargs.get("replicate", False)
+        self.split = kwargs.get("split", False)
+        self.check_align = kwargs.get("check_align", False)
+     
+        print(self.in_files)
         if self.replicate:
-            self.no_replicates = self.args.replicate[0]
-            self.no_loci = self.args.replicate[1]
+            self.no_replicates = self.replicate[0]
+            self.no_loci = self.replicate[1]
        
         self.alignment_objects = self.get_alignment_objects()
-        self.parsed_alignments = self.get_parsed_alignments()
-    
-        if self.split:
-            self.partitions = self.get_partitions()       
+        self.parsed_alignments = self.get_parsed_alignments()           
 
-    def get_partitions(self):
+    def get_partitions(self, partitions_file):
         
-        partitions = FileParser(self.split[0])
+        partitions = FileParser(partitions_file)
         parsed_partitions = partitions.partitions_parse()
         
         return parsed_partitions
@@ -700,14 +698,11 @@ class MetaAlignment():
  
         return parsed_alignments
 
-    def get_partitioned(self):
-        
-        partitions = self.partitions
+    def get_partitioned(self, partitions_file):
 
-        if len(self.parsed_alignments) > 1:
-            print("You can specify only one input file for splitting.")
-        else:
-            alignment = self.parsed_alignments[0]
+        partitions = self.get_partitions(partitions_file)
+
+        alignment = self.parsed_alignments[0]
 
         # initiate list of newly partitioned alignments 
         list_of_parts = []
@@ -773,7 +768,7 @@ class MetaAlignment():
             header = dna_header + freq_header
  
         summaries = [alignment.get_summary() for alignment in alignments]            
-        return "\t".join(header), summaries
+        return header, summaries
 
 
     def write_summaries(self, file_name):
@@ -781,20 +776,29 @@ class MetaAlignment():
 
         if path.exists(file_name):
             print("WARNING: You are overwriting '" + file_name + "'")
-    
+
         summary_file = open(file_name, "w")
         summary_out = self.get_summaries()
-        summary_file.write(summary_out[0] + '\n')
-        summary_file.write('\n'.join(summary_out[1]))
+        header = '\t'.join(summary_out[0])
+        new_summ = ['\t'.join(summary) for summary in summary_out[1]]
+        summary_file.write(header + '\n')
+        summary_file.write('\n'.join(new_summ))
         summary_file.close()
         print("Wrote summaries to file '" + file_name + "'") 
        
-    def get_replicate(self):
+    def get_replicate(self, no_replicates, no_loci):
         # construct replicate data sets for phylogenetic jackknife
         replicates = []
         counter = 1
-        for replicate in range(self.no_replicates):
-            random_alignments = sample(self.parsed_alignments, self.no_loci)
+        for replicate in range(no_replicates):
+            
+            try:
+                random_alignments = sample(self.parsed_alignments, no_loci)
+            except ValueError:
+                print("ERROR: You specified more loci per replicate than there are in your input.")
+                sys.exit()
+
+            random_alignments = sample(self.parsed_alignments, no_loci)
             concat_replicate = self.get_concatenated(random_alignments)[0]
             replicates.append(concat_replicate)
             counter += 1
@@ -1078,7 +1082,7 @@ class MetaAlignment():
 
             file_counter = 1
 
-            for alignment in self.get_replicate():
+            for alignment in self.get_replicate(self.no_replicates, self.no_loci):
                 file_name = "replicate" + str(file_counter) + "_" + str(self.no_loci) + "-loci" + extension
 
                 if path.exists(file_name):
@@ -1105,7 +1109,7 @@ class MetaAlignment():
 
         elif action == "split":
 
-            list_of_alignments = self.get_partitioned()
+            list_of_alignments = self.get_partitioned(self.split)
 
             file_counter = 0
 
@@ -1135,34 +1139,34 @@ class MetaAlignment():
 
             print("Wrote " + str(file_counter) + " " + str(file_format) + " files from partitions provided")
 
-
 def main():
     
     # initialize parsed arguments and meta alignment objects
-    args = ParsedArgs.get_args()
-    meta_aln = MetaAlignment()
-
-    concat_part = args.concat_part
-    concat_out = args.concat_out
-    summary_out = args.summary_out
-    out_format = args.out_format
-    split = args.split
-        
+    kwargs = run()
+    meta_aln = MetaAlignment(**kwargs)
+       
     if meta_aln.summary:
-        meta_aln.write_summaries(summary_out)
+        meta_aln.write_summaries(kwargs["summary_out"])
     if meta_aln.convert:
-        meta_aln.write_out("convert", out_format)
+        meta_aln.write_out("convert", kwargs["out_format"])
     if meta_aln.concat:
-        meta_aln.write_out("concat", out_format)
-        meta_aln.write_partitions(concat_part)
+        meta_aln.write_out("concat", kwargs["out_format"])
+        meta_aln.write_partitions(kwargs["concat_part"])
     if meta_aln.replicate:
-        meta_aln.write_out("replicate", out_format)
+        meta_aln.write_out("replicate", kwargs["out_format"])
     if meta_aln.split:
-        meta_aln.write_out("split", out_format)
+        meta_aln.write_out("split", kwargs["out_format"])
     # print instructions when no action is specified
     if not meta_aln.summary and not meta_aln.convert and not meta_aln.concat and not meta_aln.replicate and not meta_aln.split:
         print("""You need to specify at least one action with -v (--convert) for format converions,
 -c (--concat) for concatenation, -s (--summary) for alignment summaries\n, -r (--replicate) for replicate data sets, or -l (--split) for splitting to partitions""")     
 
+def run():
+
+    # initialize parsed arguments
+    config = ParsedArgs.get_args()
+    return config.__dict__
+    
 if __name__ == '__main__':
-    main()
+        
+        main()
