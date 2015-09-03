@@ -446,16 +446,16 @@ class Alignment:
          str(self.variable_sites), str(self.prop_variable), str(self.parsimony_informative), str(self.prop_parsimony)]
         return summary
 
-    def get_freq_summary(self):
+    def get_char_summary(self):
     # get summary of frequencies for all characters
         characters = []
-        frequencies = []
+        counts = []
         
-        for item in self.get_frequencies():
-            for char, freq in item.items():
+        for item in self.get_counts():
+            for char, count in item.items():
                 characters.append(str(char))
-                frequencies.append(str(freq))
-        return characters, frequencies
+                counts.append(str(count))
+        return characters, counts
      
     def seq_grabber(self):
     # create a list of sequences from parsed dictionary of names and seqs 
@@ -541,15 +541,14 @@ class Alignment:
          for char in self.missing_chars)
         return self.missing
     
-    def get_frequencies(self):
-    # get frequencies of each character in the used alphabet
-        frequencies = []
+    def get_counts(self):
+    # get counts of each character in the used alphabet
+        counts = []
         
         for char in self.alphabet:
-            count = sum(seq.count(char) for seq in self.list_of_seqs) \
-             / self.all_matrix_cells
-            frequencies.append({char : round(count, 3)})
-        return frequencies
+            count = sum(seq.count(char) for seq in self.list_of_seqs)
+            counts.append({char : count})
+        return counts
 
     def check_data_type(self):
     # check if the data type is correct
@@ -571,7 +570,7 @@ class AminoAcidAlignment(Alignment):
 
     def get_summary(self):
         data = self.summarize_alignment()
-        new_data = data + list(self.get_freq_summary()[1])
+        new_data = data + list(self.get_char_summary()[1])
         
         return "\t".join(new_data)
 
@@ -590,7 +589,7 @@ class DNAAlignment(Alignment):
         data = self.summarize_alignment()
         
         new_data = data + self.get_atgc_content() \
-         + list(self.get_freq_summary()[1])
+         + list(self.get_char_summary()[1])
         
         return "\t".join(new_data)
         
