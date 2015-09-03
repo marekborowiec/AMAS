@@ -1110,34 +1110,42 @@ class MetaAlignment():
 
             print("Wrote " + str(file_counter) + " " + str(file_format) + " files from partitions provided")
 
-
-def main():
+def main(**kwargs):
     
     # initialize parsed arguments and meta alignment objects
-    args = ParsedArgs.get_args()
+    #args = ParsedArgs.get_args()
     meta_aln = MetaAlignment()
 
-    concat_part = args.concat_part
-    concat_out = args.concat_out
-    summary_out = args.summary_out
-    out_format = args.out_format
-    split = args.split
+    #concat_part = args.concat_part
+    #concat_out = args.concat_out
+    #summary_out = args.summary_out
+    #out_format = args.out_format
+    #split = args.split
         
     if meta_aln.summary:
-        meta_aln.write_summaries(summary_out)
+        meta_aln.write_summaries(kwargs["summary_out"])
     if meta_aln.convert:
-        meta_aln.write_out("convert", out_format)
+        meta_aln.write_out("convert", kwargs["out_format"])
     if meta_aln.concat:
-        meta_aln.write_out("concat", out_format)
-        meta_aln.write_partitions(concat_part)
+        meta_aln.write_out("concat", kwargs["out_format"])
+        meta_aln.write_partitions(kwargs["concat_part"])
     if meta_aln.replicate:
-        meta_aln.write_out("replicate", out_format)
+        meta_aln.write_out("replicate", kwargs["out_format"])
     if meta_aln.split:
-        meta_aln.write_out("split", out_format)
+        meta_aln.write_out("split", kwargs["out_format"])
     # print instructions when no action is specified
     if not meta_aln.summary and not meta_aln.convert and not meta_aln.concat and not meta_aln.replicate and not meta_aln.split:
         print("""You need to specify at least one action with -v (--convert) for format converions,
 -c (--concat) for concatenation, -s (--summary) for alignment summaries\n, -r (--replicate) for replicate data sets, or -l (--split) for splitting to partitions""")     
 
-if __name__ == '__main__':
-    main()
+def run():
+
+    # initialize parsed arguments
+    config = ParsedArgs.get_args()
+    print(config.__dict__)
+    
+    if __name__ == '__main__':
+        
+        main(**config.__dict__)
+
+run()
