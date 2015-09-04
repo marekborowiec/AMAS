@@ -192,7 +192,7 @@ print(parsed_parts)
 ```python
 replicate_sets = multi_meta_aln.get_replicate(2, 2)
 ```
-To concatenate multiple alignments first parse them with `.get_parsed_alignments()`, then pass to `.get_concatenated(your_parsed_alignments)`. This will return a tuple where the first element is the `{ taxon : sequence }` dict
+To concatenate multiple alignments first parse them with `.get_parsed_alignments()`, then pass to `.get_concatenated(your_parsed_alignments)`. This will return a tuple where the first element is the `{ taxon : sequence }` dictionary
 of concatenated alignment and the second element is the partitions dict with `{ name : range }`.
 ```python
 parsed_alns = multi_meta_aln.get_parsed_alignments()
@@ -200,9 +200,9 @@ concat_tuple = multi_meta_aln.get_concatenated(parsed_alns)
 concatenated_alignments = concat_tuple[0]
 concatenated_partitions = concat_tuple[1]
 ```
-To print to file or convert among file formats use one of the `.print_format(parsed_alignment)` methods called with a parsed dictionary as an argument. These methods include `.print_fasta()`, `.print_nexus()`, `.print_nexus_int`, `print_phylip()`, and `.print_phylip_int()`. They return an apporpriately formatted string.
+To print to file or convert among file formats use one of the `.print_format(parsed_alignment)` methods called with a parsed dictionary as an argument. These methods include `.print_fasta()`, `.print_nexus()`, `.print_nexus_int()`, `print_phylip()`, and `.print_phylip_int()`. They return an apporpriately formatted string.
 ```python
-for alignment in aln_dicts:
+for alignment in concatenated_alignments:
     nex_int_string = meta_aln.print_nexus_int(alignment)
     print(nex_int_string)
 ```
