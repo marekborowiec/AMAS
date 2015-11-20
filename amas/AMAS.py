@@ -688,18 +688,14 @@ class MetaAlignment():
         self.in_files = kwargs.get("in_files")
         self.in_format = kwargs.get("in_format")
         self.data_type = kwargs.get("data_type")
-        self.concat = kwargs.get("concat", False)
+        self.command = kwargs.get("command")
         self.concat_out = kwargs.get("concat_out", "concatenated.out")
-        self.convert = kwargs.get("convert", False)
-        self.summary = kwargs.get("summary", False)
-        self.replicate = kwargs.get("replicate", False)
-        self.split = kwargs.get("split", False)
         self.check_align = kwargs.get("check_align", False)
      
         print(self.in_files)
-        if self.replicate:
-            self.no_replicates = self.replicate[0]
-            self.no_loci = self.replicate[1]
+        if self.command == "replicate":
+            self.no_replicates = kwargs.get("replicate_args")[0]
+            self.no_loci = kwargs.get("replicate_args")[1]
        
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()           
@@ -1191,27 +1187,25 @@ def main():
     kwargs = run()
     meta_aln = MetaAlignment(**kwargs)
        
-    if meta_aln.summary:
+    if meta_aln.command == "summary":
         meta_aln.write_summaries(kwargs["summary_out"])
-    if meta_aln.convert:
+    if meta_aln.command == "convert":
         meta_aln.write_out("convert", kwargs["out_format"])
-    if meta_aln.concat:
+    if meta_aln.command == "concat":
         meta_aln.write_out("concat", kwargs["out_format"])
         meta_aln.write_partitions(kwargs["concat_part"])
-    if meta_aln.replicate:
+    if meta_aln.command == "replicate":
         meta_aln.write_out("replicate", kwargs["out_format"])
-    if meta_aln.split:
+    if meta_aln.command == "split":
         meta_aln.write_out("split", kwargs["out_format"])
-    # print instructions when no action is specified
-    if not meta_aln.summary and not meta_aln.convert and not meta_aln.concat and not meta_aln.replicate and not meta_aln.split:
-        print("""You need to specify at least one action with -v (--convert) for format converions,
--c (--concat) for concatenation, -s (--summary) for alignment summaries\n, -r (--replicate) for replicate data sets, or -l (--split) for splitting to partitions""")     
+  
 
 def run():
 
     # initialize parsed arguments
-    config = ParsedArgs.get_args()
-    return config.__dict__
+    config = ParsedArgs()
+    config_dict = config.get_args_dict()
+    return config_dict
     
 if __name__ == '__main__':
         
