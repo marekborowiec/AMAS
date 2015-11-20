@@ -70,6 +70,15 @@ The AMAS commands are:
     def add_common_args(self, parser):
 
         requiredNamed = parser.add_argument_group('required arguments')
+        parser.add_argument(
+            "-e",
+            "--check-align",
+            dest = "check_align",
+            action = "store_true",
+            default = False,
+            help = "Check if input sequences are aligned. Default: no check"
+        )
+        
         requiredNamed.add_argument(
             "-i",
             "--in-files",
@@ -110,7 +119,7 @@ The AMAS commands are:
             default = "summary.txt",
             help = "File name for the alignment summary. Default: 'summary.txt'"
         )
-        # add required arguments
+        # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
         return args
@@ -142,15 +151,7 @@ The AMAS commands are:
             default = "fasta",
             help = "File format for the output alignment. Default: fasta"
         ) 
-        parser.add_argument(
-            "-e",
-            "--check-align",
-            dest = "check_align",
-            action = "store_true",
-            default = False,
-            help = "Check if input sequences are aligned. Default: no check"
-        )
-        # add required arguments
+        # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
         return args
@@ -168,7 +169,7 @@ The AMAS commands are:
             default = "fasta",
             help = "File format for the output alignment. Default: fasta"
         )
-        # add required arguments
+        # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
         return args
@@ -187,7 +188,7 @@ The AMAS commands are:
             help = "Create replicate data sets for phylogenetic jackknife [replicates, no alignments for each replicate]",
             required = True
         ) 
-        # add required arguments
+        # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
         return args
@@ -204,7 +205,7 @@ The AMAS commands are:
             help = "File name for partitions to be used for alignment splitting.",
             required = True
         )
-        # add required arguments
+        # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
         return args
