@@ -38,33 +38,57 @@ from collections import defaultdict
 
 class ParsedArgs:
 
-    def get_args():
-        # parse arguments from the command line
+    def __init__(self):
         parser = argparse.ArgumentParser(
-            description="Alignment manipulation and summary statistics"
+            usage='''AMAS <command> [<args>]
+
+The AMAS commands are:
+   concat      Concatenate input alignments
+   convert     Convert to other file format
+   replicate   Create replicate data sets for phylogenetic jackknife
+   split       Split alignment according to a partitions file
+   summary     Write alignment summary
+'''
         )
-        # create new group of 'required named arguments' to override
-        # argparse default behavior of classifying required flags as optional
-        required_named = parser.add_argument_group('required named arguments')
-        required_named.add_argument(
+
+        parser.add_argument(
+            "command", 
+            help="Subcommand to run"
+        )
+
+        # parse_args defaults to [1:] for args, but you need to
+        # exclude the rest of the args too, or validation will fail
+        self.args = parser.parse_args(sys.argv[1:2])
+        if not hasattr(self, self.args.command):
+            print('Unrecognized command')
+            parser.print_help()
+            exit(1)
+        # use dispatch pattern to invoke method with same name
+        getattr(self, self.args.command)()
+
+    # define required arguments for every command
+    def add_common_args(self, parser):
+
+        requiredNamed = parser.add_argument_group('required arguments')
+        requiredNamed.add_argument(
             "-i",
             "--in-files",
-            nargs = "*",
+            nargs = "+",
             type = str,
             dest = "in_files",
             required = True,
             help = """Alignment files to be taken as input.
             You can specify multiple files using wildcards (e.g. --in-files *fasta)"""
         )
-        required_named.add_argument(
+        requiredNamed.add_argument(
             "-f",
             "--in-format",
             dest = "in_format",
             required = True,
             choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
-            help="The format of input alignment"
+            help = "The format of input alignment"
         )
-        required_named.add_argument(
+        requiredNamed.add_argument(
             "-d",
             "--data-type",
             dest = "data_type",
@@ -72,41 +96,30 @@ class ParsedArgs:
             choices = ["aa", "dna"],
             help = "Type of data"
         )
+
+    # summary command
+    def summary(self):
+        parser = argparse.ArgumentParser(
+            description="Write alignment summary",
+        )
+
         parser.add_argument(
-            "-c",
-            "--concat",
-            dest = "concat",
-            action = "store_true",
-            help = "Concatenate input alignments"
-        ) 
-        parser.add_argument(
-            "-s",
-            "--summary",
-            dest = "summary",
-            action = "store_true",
-            help = "Print alignment summary"
-        ) 
-        parser.add_argument(
-            "-v",
-            "--convert",
-            dest = "convert",
-            action = "store_true",
-            help = "Convert to other file format"
-        ) 
-        parser.add_argument(
-            "-l",
-            "--split",
-            dest = "split",
-            help = "File name for partitions to be used for alignment splitting."
-        ) 
-        parser.add_argument(
-            "-r",
-            "--replicate",
-            nargs = 2,
-            type = int,
-            dest = "replicate",
-            help = "Create replicate data sets for phylogenetic jackknife [replicates, no alignments for each replicate]"
-        ) 
+            "-o",
+            "--summary-out",
+            dest = "summary_out",
+            default = "summary.txt",
+            help = "File name for the alignment summary. Default: 'summary.txt'"
+        )
+        # add required arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
+    # concat command
+    def concat(self):
+        parser = argparse.ArgumentParser(
+            description="Concatenate input alignments"
+        )
         parser.add_argument(
             "-p",
             "--concat-part",
@@ -121,13 +134,6 @@ class ParsedArgs:
             default = "concatenated.out",
             help = "File name for the concatenated alignment. Default: 'concatenated.out'"
         )
-        parser.add_argument(
-            "-o",
-            "--summary-out",
-            dest = "summary_out",
-            default = "summary.txt",
-            help = "File name for the alignment summary. Default: 'summary.txt'"
-        ) 
         parser.add_argument(
             "-u",
             "--out-format",
@@ -144,8 +150,73 @@ class ParsedArgs:
             default = False,
             help = "Check if input sequences are aligned. Default: no check"
         )
+        # add required arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
 
-        return parser.parse_args()
+    # convert command
+    def convert(self):
+        parser = argparse.ArgumentParser(
+            description="Convert to other file format",
+        )
+        parser.add_argument(
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            default = "fasta",
+            help = "File format for the output alignment. Default: fasta"
+        )
+        # add required arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
+    # replicate command
+    def replicate(self):
+        parser = argparse.ArgumentParser(
+            description="Create replicate datasets for phylogenetic jackknife",
+        )
+        parser.add_argument(
+            "-r",
+            "--replicate",
+            nargs = 2,
+            type = int,
+            dest = "replicate_args",
+            help = "Create replicate data sets for phylogenetic jackknife [replicates, no alignments for each replicate]",
+            required = True
+        ) 
+        # add required arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
+    # split command
+    def split(self):
+        parser = argparse.ArgumentParser(
+            description="Split alignment according to a partitions file",
+        )
+        parser.add_argument(
+            "-l",
+            "--split",
+            dest = "split_file",
+            help = "File name for partitions to be used for alignment splitting.",
+            required = True
+        )
+        # add required arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
+    def get_args_dict(self):
+
+        command = self.args.__dict__
+        arguments = getattr(self, self.args.command)().__dict__
+        argument_dictionary = command.copy()
+        argument_dictionary.update(arguments)
+        
+        return argument_dictionary
     
 
 class FileHandler:
