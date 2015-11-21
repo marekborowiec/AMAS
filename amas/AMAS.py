@@ -48,6 +48,8 @@ The AMAS commands are:
   replicate   Create replicate data sets for phylogenetic jackknife
   split       Split alignment according to a partitions file
   summary     Write alignment summary
+
+Use AMAS <command> -h for help with arguments of individual commands
 '''
         )
 
