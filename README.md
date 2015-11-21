@@ -23,17 +23,19 @@ See below for the instructions on how to use this program as a Python module.
 usage: AMAS <command> [<args>]
 
 The AMAS commands are:
-   concat      Concatenate input alignments
-   convert     Convert to other file format
-   replicate   Create replicate data sets for phylogenetic jackknife
-   split       Split alignment according to a partitions file
-   summary     Write alignment summary
+  concat      Concatenate input alignments
+  convert     Convert to other file format
+  replicate   Create replicate data sets for phylogenetic jackknife
+  split       Split alignment according to a partitions file
+  summary     Write alignment summary
+
+Use AMAS <command> -h for help with arguments of the command of interest
 
 positional arguments:
-   command     Subcommand to run
+  command     Subcommand to run
 
 optional arguments:
-   -h, --help  show this help message and exit
+  -h, --help  show this help message and exit
 ```
 
 To show help for individual commands, use `AMAS.py <command> -h` or `--help`.
