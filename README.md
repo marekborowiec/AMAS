@@ -20,51 +20,27 @@ See below for the instructions on how to use this program as a Python module.
 `AMAS` can be run from the command line. Here is the general usage (you can view this in your command line with `python3 AMAS.py -h`):
 
 ```
-usage: AMAS.py [-h] -i [IN_FILES [IN_FILES ...]] -f
-               {fasta,phylip,nexus,phylip-int,nexus-int} -d {aa,dna} [-c] [-s]
-               [-v] [-l SPLIT] [-r REPLICATE REPLICATE] [-p CONCAT_PART]
-               [-t CONCAT_OUT] [-o SUMMARY_OUT]
-               [-u {fasta,phylip,nexus,phylip-int,nexus-int}] [-e]
+usage: AMAS <command> [<args>]
 
-Alignment manipulation and summary statistics
+The AMAS commands are:
+   concat      Concatenate input alignments
+   convert     Convert to other file format
+   replicate   Create replicate data sets for phylogenetic jackknife
+   split       Split alignment according to a partitions file
+   summary     Write alignment summary
+
+positional arguments:
+   command     Subcommand to run
 
 optional arguments:
-  -h, --help            show this help message and exit
-  -c, --concat          Concatenate input alignments
-  -s, --summary         Print alignment summary
-  -v, --convert         Convert to other file format
-  -l SPLIT, --split SPLIT
-                        File name for partitions to be used for alignment
-                        splitting.
-  -r REPLICATE REPLICATE, --replicate REPLICATE REPLICATE
-                        Create replicate data sets for phylogenetic jackknife
-                        [replicates, no alignments for each replicate]
-  -p CONCAT_PART, --concat-part CONCAT_PART
-                        File name for the concatenated alignment partitions.
-                        Default: 'partitions.txt'
-  -t CONCAT_OUT, --concat-out CONCAT_OUT
-                        File name for the concatenated alignment. Default:
-                        'concatenated.out'
-  -o SUMMARY_OUT, --summary-out SUMMARY_OUT
-                        File name for the alignment summary. Default:
-                        'summary.txt'
-  -u {fasta,phylip,nexus,phylip-int,nexus-int}, --out-format {fasta,phylip,nexus,phylip-int,nexus-int}
-                        File format for the output alignment. Default: fasta
-  -e, --check-align     Check if input sequences are aligned. Default: no
-                        check
-
-required named arguments:
-  -i [IN_FILES [IN_FILES ...]], --in-files [IN_FILES [IN_FILES ...]]
-                        Alignment files to be taken as input. You can specify
-                        multiple files using wildcards (e.g. --in-files *fasta)
-  -f {fasta,phylip,nexus,phylip-int,nexus-int}, --in-format {fasta,phylip,nexus,phylip-int,nexus-int}
-                        The format of input alignment
-  -d {aa,dna}, --data-type {aa,dna}
-                        Type of data
+   -h, --help  show this help message and exit
 ```
 
+To show help for individual commands, use `AMAS.py <command> -h` or `--help`.
+
 ## Examples
-For every `AMAS.py` run on the command line you need to provide:
+For every `AMAS.py` run on the command line you need to specify action with `concat`, `convert`, `replicate`, `split`, or `summary` for the input to be processed. 
+Additionally, you need to provide three required arguments. The order in which the arguments are given does not matter:
 
 1) input file name(s) with `-i` (or in long version: `--in-files`),
 
@@ -72,22 +48,25 @@ For every `AMAS.py` run on the command line you need to provide:
 
 3) and data type with `-d` (`--data-type`). 
 
-The options available for the format are `fasta`, `phylip`, `nexus` (sequential), `phylip-int`, and `nexus-int` (interleaved). Data types are `aa` for protein alignments and `dna` for nucleotide alignments. 
+The options available for the format are `fasta`, `phylip`, `nexus` (sequential), `phylip-int`, and `nexus-int` (interleaved). Data types are `aa` for protein alignments and `dna` for nucleotide alignments.
 
-You also need to choose at least one action with `-c` (same as `--concat`), `-s` (`--summary`), `-v` (`--convert`), or `-r` (`--replicate`) for the input to be processed. The order in which arguments are given does not matter.
+For example:
+```
+python3 AMAS.py concat -i gene1.nex gene2.nex -f nexus -d dna
+```
 
-IMPORTANT! `AMAS` is fast and powerful, but be careful: it assumes you know what you are doing and will not prevent you overwriting a file. It will, however, print out a warning if this has happened.
+IMPORTANT! `AMAS` is fast and powerful, but be careful: it assumes you know what you are doing and will not prevent you overwriting a file. It will, however, print out a warning if this has happened. `AMAS` was also written to work with aligned data and some of the output generated from unaligned sequences won't make sense. Because of computing efficiency `AMAS` by default does not check if input sequences are aligned. You can turn this option on with `-e` or `--check-align`.
 
 ### Concatenating alignments
 For example, if you want to concatenate all DNA phylip files in a directory and all of them have the `.phy` extension, you can run:
 ```
-python3 AMAS.py -f phylip -d dna -i *phy -c
+python3 AMAS.py concat -f phylip -d dna -i *phy
 ```
 By default the output will be written to two files: `partitions.txt`, containing partitions from which your new alignment was constructed, and `concatenated.out` with the alignment itself in the fasta format. You can change the default names for these files with `-p` (`--concat-part`) and `-t` (`--concat-out`), respectively, followed by the desired name. The output format is specified by `-u` (`--out-format`) and can also be any of the following: `fasta`, `phylip`, `nexus` (sequential), `phylip-int`, or `nexus-int` (interleaved).
 
 Below is a command specifying the concatenated file output format as nexus with `-u nexus`:
 ```
-python3 AMAS.py -f fasta -d aa -i *phy -c -u nexus
+python3 AMAS.py concat -f fasta -d aa -i *phy -u nexus
 ```
 Alignments to be concatenated need not have identical sets of taxa before processing: the concatenated alignment will be populated with missing data where a given locus is missing a taxon. However, if every file to be concatenated includes only unique names (for example species name plus sequence name: `D_melanogaster_NW_001845408.1` in one alignment, `D_melanogaster_NW_001848855.1` in other alignment etc.), you will first need to trim those names so that sequences from one taxon have equivalents in all files.   
 
@@ -96,27 +75,27 @@ Note that it takes `AMAS` longer to write an interleaved file than a sequential 
 ### Getting alignment statistics
 This is an example of how you can summarize two protein fasta alignments by running:
 ```
-python3 AMAS.py -f fasta -d aa -i my_aln.fasta my_aln2.fasta -s
+python3 AMAS.py summary -f fasta -d aa -i my_aln.fasta my_aln2.fasta
 ```
 By default `AMAS` will write a file with the summary of the alignment in `summary.txt`. You can change the name of this file with `-o` or `--summary-out`. You can also summarize a single or multiple sequence alignments at once. 
 
-The statistics calculated include the number of taxa, alignment length, total number of matrix cells, overall number of undetermined characters, percent of missing data, AT and GC contents (for DNA alignments), number and proportion of variable sites, number and proportion of parsimony informative sites, and proportions of all characters relative to the matrix size.
+The statistics calculated include the number of taxa, alignment length, total number of matrix cells, overall number of undetermined characters, percent of missing data, AT and GC contents (for DNA alignments), number and proportion of variable sites, number and proportion of parsimony informative sites, and counts of all characters present in the relevant alphabet.
 
 ### Converting among formats
 To convert all nucleotide fasta files with a `.fas` extension in a directory to nexus alignments, you could use:
 ```
-python3 AMAS.py -d dna -f fasta -i *fas -v -u nexus
+python3 AMAS.py convert -d dna -f fasta -i *fas -u nexus
 ```
-In the above, the required options are combined with `-v` (`--convert`) action to convert and `-u nexus` indicating the output format.
+In the above, the required options are combined with `convert` command to convert the input files and `-u nexus` which indicates the output format.
 
 `AMAS` will not overwrite over input here but will create new files instead, automatically appending appropriate extensions to the input file's name: `-out.fas`, `-out.phy`, `-out.int-phy`, `-out.nex`, or `-out.int-nex`.
 
 ### Splitting alignment by partitions
 If you have a partition file, you can split a concatenated alignment and write a file for each partition:
 ```
-python3 AMAS.py -f nexus -d dna -i concat.nex -l  partitions.txt -u nexus
+python3 AMAS.py split -f nexus -d dna -i concat.nex -l partitions.txt -u nexus
 ```
-In the above one input file `concat.nex` was provided for splitting with `-i` (can also use `--in-files`) and partitions file `partitions.txt` with `-l` (same as `--split`). For splitting you can only use one input and one partition file at a time. This is an example partition file:
+In the above one input file `concat.nex` was provided for splitting with `split` and partitions file `partitions.txt` with `-l` (same as `--split-file`). For splitting you should only use one input and one partition file at a time. This is an example partition file:
 ```
   AApos1&2  =  1-604\3, 2-605\3
   AApos3  =  3-606\3
@@ -125,15 +104,11 @@ In the above one input file `concat.nex` was provided for splitting with `-i` (c
 If this was the `partitions.txt` file from the example command above, `AMAS` would write three output files called `concat_AApos1&2.nex`, `concat_AApos3.nex`, and `concat_28SautapoInDels.nex`. The partitions file will be parsed correctly as long as there is no text prior to the partition name (`CHARSET AApos1&2` or `DNA, AApos1&2` will not work) and commas separate ranges or individual sites in each partition.
 
 ### Creating replicate data sets
-With `AMAS` you can create concatenated alignments from a proportion of randomly chosen alignments that can be used for, for example, a phylogenetic jackknife analysis. Say you have 1000 phylip files, each containing a single aligned locus, and you want to create 200 replicate phylip alignments, each built from 100 loci randomly chosen from all the input files. You can do this by supplying the `-r` or `--replicate` followed by the number of replicates (in this case `200`) and number of alignments (`100`). Remember to supply the output format with `-u` if you want it to be other than fasta:
+With `AMAS` you can create concatenated alignments from a proportion of randomly chosen alignments that can be used for, for example, a phylogenetic jackknife analysis. Say you have 1000 phylip files, each containing a single aligned locus, and you want to create 200 replicate phylip alignments, each built from 100 loci randomly chosen from all the input files. You can do this by supplying the `-r` or `--rep-aln` followed by the number of replicates (in this case `200`) and number of alignments (`100`). Remember to supply the output format with `-u` if you want it to be other than fasta:
 ```
-python3 AMAS.py -d dna -f phylip -i *phy -r 200 100 -u phylip
+python3 AMAS.py replicate -r 200 100 -d dna -f phylip -i *phy -u phylip
 ```
-### Combining options
-You can get statistics for all input alignments, convert them to phylip, and concatenate (also to a phylip file) in one go by simply combining actions:
-```
-python3 AMAS.py -d aa -f fasta -i *fas -c -s -v -u phylip
-```
+
 
 # AMAS as a Python module
 Using `AMAS` inside your Python pipeline gives you much more flexibility in how the input and output are being processed. All the major functions of the command line interface can recreated using `AMAS` as a module. Following installation from [pip](https://pip.pypa.io/en/latest/installing.html) you can import it with:
@@ -144,21 +119,13 @@ from amas import AMAS
 The class used to manipulate alignments in `AMAS` is `MetaAlignment`. This class has to be instantiated with the same, named arguments as on the command line: `in_files`, `data_type`, `in_format`. MetaAlignment holds one or multiple alignments and its `in_files` option must be a list, even if only one file is being read.
 ```python
 
-meta_aln = AMAS.MetaAlignment(
-
-in_files=["gene1.phy"], data_type="dna",in_format="phylip"
-
-)
+meta_aln = AMAS.MetaAlignment(in_files=["gene1.phy"], data_type="dna",in_format="phylip")
 ```
 Creating MetaAlignment with multiple files is easy:
 ```python
-multi_meta_aln = AMAS.MetaAlignment(
-
-in_files=["gene1.phy", "gene1.phy"], data_type="dna", in_format="phylip"
-
-)
+multi_meta_aln = AMAS.MetaAlignment(in_files=["gene1.phy", "gene1.phy"], data_type="dna", in_format="phylip")
 ```
-Now you can call the various methods on your alignments. `.get_summaries()` method will compute summaries for your alignments and produce headers for them as a tuple with first element being the header and the second element a list of lists with the statistics:
+Now you can call the various methods on your alignments. `.get_summaries()` method will compute summaries for your alignments and produce headers for them as atuple with first element being the header and the second element a list of lists with the statistics:
 ```python
 summaries = meta_aln.get_summaries()
 ```
