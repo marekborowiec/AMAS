@@ -181,12 +181,20 @@ The AMAS commands are:
         )
         parser.add_argument(
             "-r",
-            "--replicate",
+            "--rep-aln",
             nargs = 2,
             type = int,
             dest = "replicate_args",
             help = "Create replicate data sets for phylogenetic jackknife [replicates, no alignments for each replicate]",
             required = True
+        ) 
+        parser.add_argument(
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            default = "fasta",
+            help = "File format for the output alignment. Default: fasta"
         ) 
         # add shared arguments
         self.add_common_args(parser)
