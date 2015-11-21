@@ -430,9 +430,7 @@ class FileParser:
             list_of_dicts = []
             # get parition name and numbers from parsed partiion strings
             partition_name = match.group(2)
-            #print(partition_name)
             numbers = match.group(3)
-            print(numbers)
         
             positions = re.findall(r"([^ ,]+)", numbers)
         
@@ -460,7 +458,6 @@ class FileParser:
             dict_of_dicts[partition_name] = list_of_dicts
  
             partitions.append(dict_of_dicts)
-            print(partitions)
 
         return partitions
 
@@ -694,8 +691,6 @@ class MetaAlignment():
  
     def __init__(self, **kwargs):
 
-
-        print(kwargs)
         # set defaults and get values from kwargs
         self.in_files = kwargs.get("in_files")
         self.in_format = kwargs.get("in_format")
@@ -704,7 +699,6 @@ class MetaAlignment():
         self.concat_out = kwargs.get("concat_out", "concatenated.out")
         self.check_align = kwargs.get("check_align", False)
      
-        print(self.in_files)
         if self.command == "replicate":
             self.no_replicates = kwargs.get("replicate_args")[0]
             self.no_loci = kwargs.get("replicate_args")[1]
@@ -926,7 +920,7 @@ class MetaAlignment():
             # split dictionary values to a list of string, each n chars long
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
             # in case there are unwanted spaces in taxon names
-            taxon = taxon.replace(" ","_")
+            taxon = taxon.replace(" ","_").strip("'")
             fasta_string += ">" + taxon + "\n"
             for element in seq:
                 fasta_string += element + "\n"
@@ -945,7 +939,7 @@ class MetaAlignment():
         header = str(len(source_dict)) + " " + str(seq_length)
         phylip_string = header + "\n"
         for taxon, seq in sorted(source_dict.items()):
-            taxon = taxon.replace(" ","_")
+            taxon = taxon.replace(" ","_").strip("'")
             # left-justify taxon names relative to sequences
             phylip_string += taxon.ljust(pad_longest_name, ' ') + seq + "\n"
  
@@ -967,7 +961,7 @@ class MetaAlignment():
         
         for taxon, seq in sorted(source_dict.items()):
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
-            taxon = taxon.replace(" ","_")
+            taxon = taxon.replace(" ","_").strip("'")
             phylip_int_string += taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
         phylip_int_string += "\n"
 
@@ -997,7 +991,7 @@ class MetaAlignment():
           "  GAP = - MISSING = ?;\n\tMATRIX\n"
 
         for taxon, seq in sorted(source_dict.items()):
-            taxon = taxon.replace(" ","_")
+            taxon = taxon.replace(" ","_").strip("'")
             nexus_string += "\t" + taxon.ljust(pad_longest_name, ' ') + seq + "\n"
         nexus_string += "\n;\n\nEND;"
         
@@ -1028,7 +1022,7 @@ class MetaAlignment():
         # first need to create list of seq strings chunks n characters-long
         for taxon, seq in sorted(source_dict.items()):
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
-            taxon = taxon.replace(" ","_")
+            taxon = taxon.replace(" ","_").strip("'")
             nexus_int_string += "\t" + taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
 
         nexus_int_string += "\n"
@@ -1167,14 +1161,12 @@ class MetaAlignment():
         elif action == "split":
 
             list_of_alignments = self.get_partitioned(self.split)
-            #print(list_of_alignments)
             file_counter = 0
 
             for item in list_of_alignments:
             # bad practice with the dicts; figure out better solution
                 file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
                 alignment = list(item.values())[0]
-                #print(file_name)
 
                 if path.exists(file_name):
                     print("WARNING: You are overwriting '" + file_name + "'")
@@ -1197,6 +1189,7 @@ class MetaAlignment():
 
             print("Wrote " + str(file_counter) + " " + str(file_format) + " files from partitions provided")
 
+
 def main():
     
     # initialize parsed arguments and meta alignment objects
@@ -1215,11 +1208,11 @@ def main():
     if meta_aln.command == "split":
         meta_aln.write_out("split", kwargs["out_format"])
   
-
 def run():
 
     # initialize parsed arguments
     config = ParsedArgs()
+    # get arguments
     config_dict = config.get_args_dict()
     return config_dict
     
