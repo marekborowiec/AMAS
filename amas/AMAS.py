@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 #   Program to calculate various statistics on a multiple sequence alignment
+#   and allow efficient manipulation of phylogenomic data sets
 
 #   Copyright (C) 2015 Marek Borowiec
 
