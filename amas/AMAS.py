@@ -200,11 +200,19 @@ The AMAS commands are:
         )
         parser.add_argument(
             "-l",
-            "--split",
+            "--split-file",
             dest = "split_file",
             help = "File name for partitions to be used for alignment splitting.",
             required = True
         )
+        parser.add_argument(
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            default = "fasta",
+            help = "File format for the output alignment. Default: fasta"
+        ) 
         # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
@@ -409,7 +417,7 @@ class FileParser:
 
     def partitions_parse(self):
         # parse partitions file using regex
-        matches = re.finditer(r"(\s+)?([^ =]+)[ =]+([\\0-9, -]+)", self.in_file_lines, re.MULTILINE)
+        matches = re.finditer(r"^(\s+)?([^ =]+)[ =]+([\\0-9, -]+)", self.in_file_lines, re.MULTILINE)
         
         # initiate list to store dictionaries with lists
         # of slice positions as values
@@ -422,7 +430,9 @@ class FileParser:
             list_of_dicts = []
             # get parition name and numbers from parsed partiion strings
             partition_name = match.group(2)
+            #print(partition_name)
             numbers = match.group(3)
+            print(numbers)
         
             positions = re.findall(r"([^ ,]+)", numbers)
         
@@ -450,6 +460,7 @@ class FileParser:
             dict_of_dicts[partition_name] = list_of_dicts
  
             partitions.append(dict_of_dicts)
+            print(partitions)
 
         return partitions
 
@@ -697,6 +708,9 @@ class MetaAlignment():
         if self.command == "replicate":
             self.no_replicates = kwargs.get("replicate_args")[0]
             self.no_loci = kwargs.get("replicate_args")[1]
+
+        if self.command == "split":
+            self.split = kwargs.get("split_file")
        
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()           
@@ -1153,13 +1167,14 @@ class MetaAlignment():
         elif action == "split":
 
             list_of_alignments = self.get_partitioned(self.split)
-
+            #print(list_of_alignments)
             file_counter = 0
 
             for item in list_of_alignments:
             # bad practice with the dicts; figure out better solution
                 file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
                 alignment = list(item.values())[0]
+                #print(file_name)
 
                 if path.exists(file_name):
                     print("WARNING: You are overwriting '" + file_name + "'")
