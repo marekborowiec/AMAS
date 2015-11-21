@@ -43,11 +43,11 @@ class ParsedArgs:
             usage='''AMAS <command> [<args>]
 
 The AMAS commands are:
-   concat      Concatenate input alignments
-   convert     Convert to other file format
-   replicate   Create replicate data sets for phylogenetic jackknife
-   split       Split alignment according to a partitions file
-   summary     Write alignment summary
+  concat      Concatenate input alignments
+  convert     Convert to other file format
+  replicate   Create replicate data sets for phylogenetic jackknife
+  split       Split alignment according to a partitions file
+  summary     Write alignment summary
 '''
         )
 
