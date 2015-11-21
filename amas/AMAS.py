@@ -49,7 +49,7 @@ The AMAS commands are:
   split       Split alignment according to a partitions file
   summary     Write alignment summary
 
-Use AMAS <command> -h for help with arguments of individual commands
+Use AMAS <command> -h for help with arguments of the command of interest
 '''
         )
 
