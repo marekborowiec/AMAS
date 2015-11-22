@@ -32,7 +32,7 @@ and counts of all characters present in the relevant (nucleotide or amino acid) 
 """
 
 
-import argparse, functools, multiprocessing, re, sys
+import argparse, multiprocessing as mp, re, sys
 from random import sample
 from os import path
 from collections import defaultdict
@@ -734,16 +734,23 @@ class MetaAlignment():
         
         return parsed_partitions
 
+    def get_alignment_object(self, alignment):
+
+        # parse according to the given alphabet
+        if self.data_type == "aa":
+            aln = AminoAcidAlignment(alignment, self.in_format, self.data_type)
+        elif self.data_type == "dna":
+            aln = DNAAlignment(alignment, self.in_format, self.data_type)
+        return aln
+
     def get_alignment_objects(self):
         # get alignment objects on which statistics can be computed
-        alignments = []
-        for alignment in self.in_files:
-            # parse according to the given alphabet
-            if self.data_type == "aa":
-                aln = AminoAcidAlignment(alignment, self.in_format, self.data_type)
-            elif self.data_type == "dna":
-                aln = DNAAlignment(alignment, self.in_format, self.data_type)
-            alignments.append(aln)
+        # use multiprocessing if more than one core specified
+        if int(self.cores) == 1:
+            alignments = [self.get_alignment_object(alignment) for alignment in self.in_files]            
+        elif int(self.cores) > 1:
+            pool = mp.Pool(int(self.cores))
+            alignments = pool.map(self.get_alignment_object, self.in_files)
         return alignments
 
     def get_parsed_alignments(self):
@@ -840,7 +847,7 @@ class MetaAlignment():
         if int(self.cores) == 1:
             summaries = [alignment.get_summary() for alignment in alignments]            
         elif int(self.cores) > 1:
-            pool = multiprocessing.Pool(int(self.cores))
+            pool = mp.Pool(int(self.cores))
             summaries = pool.map(self.summarize_alignments, alignments)
         return header, summaries
 
@@ -1159,13 +1166,9 @@ class MetaAlignment():
 
         elif action == "convert":
         
-            length = list(range(len(self.alignment_objects)))
-            print(length)
-
-            for i, alignment in enumerate(self.parsed_alignments):
-                self.write_convert(i, alignment, file_format, extension)
-            
-            print("Converted " + str(i + 1) + " files from " + self.in_format + " to " + file_format)
+            length = len(self.alignment_objects)
+            [self.write_convert(i, alignment, file_format, extension) for i, alignment in enumerate(self.parsed_alignments)]
+            print("Converted " + str(length) + " files from " + self.in_format + " to " + file_format)
 
         elif action == "replicate":
 
