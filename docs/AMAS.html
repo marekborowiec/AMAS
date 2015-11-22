@@ -1,0 +1,376 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module AMAS</title>
+<meta charset="utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>AMAS</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/mlb/Dropbox/AMAS/amas/AMAS.py">/home/mlb/Dropbox/AMAS/amas/AMAS.py</a></font></td></tr></table>
+    <p><tt>This&nbsp;stand-alone&nbsp;program&nbsp;allows&nbsp;manipulations&nbsp;of&nbsp;multiple&nbsp;sequence<br>
+alignments.&nbsp;It&nbsp;supports&nbsp;sequential&nbsp;FASTA,&nbsp;PHYLIP,&nbsp;NEXUS,&nbsp;and&nbsp;interleaved&nbsp;PHYLIP&nbsp;<br>
+and&nbsp;NEXUS&nbsp;formats&nbsp;for&nbsp;DNA&nbsp;and&nbsp;aino&nbsp;acid&nbsp;sequences.&nbsp;It&nbsp;can&nbsp;print&nbsp;summary&nbsp;statistics,<br>
+convert&nbsp;among&nbsp;formats,&nbsp;and&nbsp;concatenate&nbsp;alignments.<br>
+&nbsp;<br>
+Current&nbsp;statistics&nbsp;include&nbsp;the&nbsp;number&nbsp;of&nbsp;taxa,&nbsp;alignment&nbsp;length,&nbsp;total&nbsp;number<br>
+of&nbsp;matrix&nbsp;cells,&nbsp;overall&nbsp;number&nbsp;of&nbsp;undetermined&nbsp;characters,&nbsp;percent&nbsp;of&nbsp;missing&nbsp;<br>
+data,&nbsp;AT&nbsp;and&nbsp;GC&nbsp;contents&nbsp;(for&nbsp;DNA&nbsp;alignments),&nbsp;number&nbsp;and&nbsp;proportion&nbsp;of&nbsp;<br>
+variable&nbsp;sites,&nbsp;number&nbsp;and&nbsp;proportion&nbsp;of&nbsp;parsimony&nbsp;informative&nbsp;sites,<br>
+and&nbsp;counts&nbsp;of&nbsp;all&nbsp;characters&nbsp;present&nbsp;in&nbsp;the&nbsp;relevant&nbsp;(nucleotide&nbsp;or&nbsp;amino&nbsp;acid)&nbsp;alphabet.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="argparse.html">argparse</a><br>
+</td><td width="25%" valign=top><a href="posixpath.html">posixpath</a><br>
+</td><td width="25%" valign=top><a href="re.html">re</a><br>
+</td><td width="25%" valign=top><a href="sys.html">sys</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="AMAS.html#Alignment">Alignment</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="AMAS.html#AminoAcidAlignment">AminoAcidAlignment</a>
+</font></dt><dt><font face="helvetica, arial"><a href="AMAS.html#DNAAlignment">DNAAlignment</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="AMAS.html#FileHandler">FileHandler</a>
+</font></dt><dt><font face="helvetica, arial"><a href="AMAS.html#FileParser">FileParser</a>
+</font></dt><dt><font face="helvetica, arial"><a href="AMAS.html#MetaAlignment">MetaAlignment</a>
+</font></dt><dt><font face="helvetica, arial"><a href="AMAS.html#ParsedArgs">ParsedArgs</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Alignment">class <strong>Alignment</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Gets&nbsp;in&nbsp;parsed&nbsp;sequences&nbsp;as&nbsp;input&nbsp;and&nbsp;summarizes&nbsp;their&nbsp;stats<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Alignment-__init__"><strong>__init__</strong></a>(self, in_file, in_format, data_type)</dt></dl>
+
+<dl><dt><a name="Alignment-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-all_same"><strong>all_same</strong></a>(self, site)</dt></dl>
+
+<dl><dt><a name="Alignment-check_data_type"><strong>check_data_type</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_alignment_length"><strong>get_alignment_length</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_aln_input"><strong>get_aln_input</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_char_summary"><strong>get_char_summary</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_column"><strong>get_column</strong></a>(self, i)</dt></dl>
+
+<dl><dt><a name="Alignment-get_counts"><strong>get_counts</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_matrix_cells"><strong>get_matrix_cells</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_missing"><strong>get_missing</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_missing_percent"><strong>get_missing_percent</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_name"><strong>get_name</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_parsed_aln"><strong>get_parsed_aln</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_parsimony_informative"><strong>get_parsimony_informative</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_prop_parsimony"><strong>get_prop_parsimony</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_prop_variable"><strong>get_prop_variable</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_sites_no_missing_ambiguous"><strong>get_sites_no_missing_ambiguous</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_taxa_no"><strong>get_taxa_no</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-get_variable"><strong>get_variable</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-matrix_creator"><strong>matrix_creator</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-seq_grabber"><strong>seq_grabber</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Alignment-summarize_alignment"><strong>summarize_alignment</strong></a>(self)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="AminoAcidAlignment">class <strong>AminoAcidAlignment</strong></a>(<a href="AMAS.html#Alignment">Alignment</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Alphabets&nbsp;specific&nbsp;to&nbsp;amino&nbsp;acid&nbsp;alignments<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="AminoAcidAlignment-get_summary"><strong>get_summary</strong></a>(self)</dt></dl>
+
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>alphabet</strong> = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y', ...]</dl>
+
+<dl><dt><strong>missing_ambiguous_chars</strong> = ['B', 'J', 'Z', 'X', '.', '*', '-', '?']</dl>
+
+<dl><dt><strong>missing_chars</strong> = ['X', '.', '*', '-', '?']</dl>
+
+<dl><dt><strong>non_alphabet</strong> = ['O']</dl>
+
+<hr>
+Methods inherited from <a href="AMAS.html#Alignment">Alignment</a>:<br>
+<dl><dt><a name="AminoAcidAlignment-__init__"><strong>__init__</strong></a>(self, in_file, in_format, data_type)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-all_same"><strong>all_same</strong></a>(self, site)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-check_data_type"><strong>check_data_type</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_alignment_length"><strong>get_alignment_length</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_aln_input"><strong>get_aln_input</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_char_summary"><strong>get_char_summary</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_column"><strong>get_column</strong></a>(self, i)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_counts"><strong>get_counts</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_matrix_cells"><strong>get_matrix_cells</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_missing"><strong>get_missing</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_missing_percent"><strong>get_missing_percent</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_name"><strong>get_name</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_parsed_aln"><strong>get_parsed_aln</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_parsimony_informative"><strong>get_parsimony_informative</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_prop_parsimony"><strong>get_prop_parsimony</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_prop_variable"><strong>get_prop_variable</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_sites_no_missing_ambiguous"><strong>get_sites_no_missing_ambiguous</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_taxa_no"><strong>get_taxa_no</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-get_variable"><strong>get_variable</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-matrix_creator"><strong>matrix_creator</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-seq_grabber"><strong>seq_grabber</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AminoAcidAlignment-summarize_alignment"><strong>summarize_alignment</strong></a>(self)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="DNAAlignment">class <strong>DNAAlignment</strong></a>(<a href="AMAS.html#Alignment">Alignment</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Alphabets&nbsp;specific&nbsp;to&nbsp;DNA&nbsp;alignments<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="DNAAlignment-get_atgc_content"><strong>get_atgc_content</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_summary"><strong>get_summary</strong></a>(self)</dt></dl>
+
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>alphabet</strong> = ['A', 'C', 'G', 'T', 'K', 'M', 'R', 'Y', 'S', 'W', 'B', 'V', 'H', 'D', 'X', 'N', 'O', '-', '?']</dl>
+
+<dl><dt><strong>missing_ambiguous_chars</strong> = ['K', 'M', 'R', 'Y', 'S', 'W', 'B', 'V', 'H', 'D', 'X', 'N', 'O', '-', '?']</dl>
+
+<dl><dt><strong>missing_chars</strong> = ['X', 'N', 'O', '-', '?']</dl>
+
+<dl><dt><strong>non_alphabet</strong> = ['E', 'F', 'I', 'L', 'P', 'Q', 'J', 'Z', '.', '*']</dl>
+
+<hr>
+Methods inherited from <a href="AMAS.html#Alignment">Alignment</a>:<br>
+<dl><dt><a name="DNAAlignment-__init__"><strong>__init__</strong></a>(self, in_file, in_format, data_type)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-all_same"><strong>all_same</strong></a>(self, site)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-check_data_type"><strong>check_data_type</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_alignment_length"><strong>get_alignment_length</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_aln_input"><strong>get_aln_input</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_char_summary"><strong>get_char_summary</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_column"><strong>get_column</strong></a>(self, i)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_counts"><strong>get_counts</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_matrix_cells"><strong>get_matrix_cells</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_missing"><strong>get_missing</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_missing_percent"><strong>get_missing_percent</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_name"><strong>get_name</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_parsed_aln"><strong>get_parsed_aln</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_parsimony_informative"><strong>get_parsimony_informative</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_prop_parsimony"><strong>get_prop_parsimony</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_prop_variable"><strong>get_prop_variable</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_sites_no_missing_ambiguous"><strong>get_sites_no_missing_ambiguous</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_taxa_no"><strong>get_taxa_no</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-get_variable"><strong>get_variable</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-matrix_creator"><strong>matrix_creator</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-seq_grabber"><strong>seq_grabber</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="DNAAlignment-summarize_alignment"><strong>summarize_alignment</strong></a>(self)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="FileHandler">class <strong>FileHandler</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Define&nbsp;file&nbsp;handle&nbsp;that&nbsp;closes&nbsp;when&nbsp;out&nbsp;of&nbsp;scope<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="FileHandler-__enter__"><strong>__enter__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FileHandler-__exit__"><strong>__exit__</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="FileHandler-__init__"><strong>__init__</strong></a>(self, file_name)</dt></dl>
+
+<dl><dt><a name="FileHandler-get_file_name"><strong>get_file_name</strong></a>(self)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="FileParser">class <strong>FileParser</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Parse&nbsp;file&nbsp;contents&nbsp;and&nbsp;return&nbsp;sequences&nbsp;and&nbsp;sequence&nbsp;names<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="FileParser-__init__"><strong>__init__</strong></a>(self, in_file)</dt></dl>
+
+<dl><dt><a name="FileParser-fasta_parse"><strong>fasta_parse</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FileParser-nexus_interleaved_parse"><strong>nexus_interleaved_parse</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FileParser-nexus_parse"><strong>nexus_parse</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FileParser-partitions_parse"><strong>partitions_parse</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FileParser-phylip_interleaved_parse"><strong>phylip_interleaved_parse</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FileParser-phylip_parse"><strong>phylip_parse</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="FileParser-translate_ambiguous"><strong>translate_ambiguous</strong></a>(self, seq)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="MetaAlignment">class <strong>MetaAlignment</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;of&nbsp;multiple&nbsp;sequence&nbsp;alignments<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="MetaAlignment-__init__"><strong>__init__</strong></a>(self, **kwargs)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-get_alignment_objects"><strong>get_alignment_objects</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-get_concatenated"><strong>get_concatenated</strong></a>(self, alignments)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-get_parsed_alignments"><strong>get_parsed_alignments</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-get_partitioned"><strong>get_partitioned</strong></a>(self, partitions_file)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-get_partitions"><strong>get_partitions</strong></a>(self, partitions_file)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-get_replicate"><strong>get_replicate</strong></a>(self, no_replicates, no_loci)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-get_summaries"><strong>get_summaries</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-natural_sort"><strong>natural_sort</strong></a>(self, a_list)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-print_fasta"><strong>print_fasta</strong></a>(self, source_dict)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-print_nexus"><strong>print_nexus</strong></a>(self, source_dict)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-print_nexus_int"><strong>print_nexus_int</strong></a>(self, source_dict)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-print_partitions"><strong>print_partitions</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-print_phylip"><strong>print_phylip</strong></a>(self, source_dict)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-print_phylip_int"><strong>print_phylip_int</strong></a>(self, source_dict)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-write_out"><strong>write_out</strong></a>(self, action, file_format)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-write_partitions"><strong>write_partitions</strong></a>(self, file_name)</dt></dl>
+
+<dl><dt><a name="MetaAlignment-write_summaries"><strong>write_summaries</strong></a>(self, file_name)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="ParsedArgs">class <strong>ParsedArgs</strong></a></font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="ParsedArgs-__init__"><strong>__init__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="ParsedArgs-add_common_args"><strong>add_common_args</strong></a>(self, parser)</dt><dd><tt>#&nbsp;define&nbsp;required&nbsp;arguments&nbsp;for&nbsp;every&nbsp;command</tt></dd></dl>
+
+<dl><dt><a name="ParsedArgs-concat"><strong>concat</strong></a>(self)</dt><dd><tt>#&nbsp;concat&nbsp;command</tt></dd></dl>
+
+<dl><dt><a name="ParsedArgs-convert"><strong>convert</strong></a>(self)</dt><dd><tt>#&nbsp;convert&nbsp;command</tt></dd></dl>
+
+<dl><dt><a name="ParsedArgs-get_args_dict"><strong>get_args_dict</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="ParsedArgs-replicate"><strong>replicate</strong></a>(self)</dt><dd><tt>#&nbsp;replicate&nbsp;command</tt></dd></dl>
+
+<dl><dt><a name="ParsedArgs-split"><strong>split</strong></a>(self)</dt><dd><tt>#&nbsp;split&nbsp;command</tt></dd></dl>
+
+<dl><dt><a name="ParsedArgs-summary"><strong>summary</strong></a>(self)</dt><dd><tt>#&nbsp;summary&nbsp;command</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-main"><strong>main</strong></a>()</dt></dl>
+ <dl><dt><a name="-run"><strong>run</strong></a>()</dt></dl>
+</td></tr></table>
+</body></html>

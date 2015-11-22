@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 #   Program to calculate various statistics on a multiple sequence alignment
+#   and allow efficient manipulation of phylogenomic data sets
 
 #   Copyright (C) 2015 Marek Borowiec
 
@@ -27,7 +28,7 @@ Current statistics include the number of taxa, alignment length, total number
 of matrix cells, overall number of undetermined characters, percent of missing 
 data, AT and GC contents (for DNA alignments), number and proportion of 
 variable sites, number and proportion of parsimony informative sites,
-and counts of all characters from the relevant alphabet.
+and counts of all characters present in the relevant (nucleotide or amino acid) alphabet.
 """
 
 
@@ -38,33 +39,68 @@ from collections import defaultdict
 
 class ParsedArgs:
 
-    def get_args():
-        # parse arguments from the command line
+    def __init__(self):
         parser = argparse.ArgumentParser(
-            description="Alignment manipulation and summary statistics"
+            usage='''AMAS <command> [<args>]
+
+The AMAS commands are:
+  concat      Concatenate input alignments
+  convert     Convert to other file format
+  replicate   Create replicate data sets for phylogenetic jackknife
+  split       Split alignment according to a partitions file
+  summary     Write alignment summary
+
+Use AMAS <command> -h for help with arguments of the command of interest
+'''
         )
-        # create new group of 'required named arguments' to override
-        # argparse default behavior of classifying required flags as optional
-        required_named = parser.add_argument_group('required named arguments')
-        required_named.add_argument(
+
+        parser.add_argument(
+            "command", 
+            help="Subcommand to run"
+        )
+
+        # parse_args defaults to [1:] for args, but you need to
+        # exclude the rest of the args too, or validation will fail
+        self.args = parser.parse_args(sys.argv[1:2])
+        if not hasattr(self, self.args.command):
+            print('Unrecognized command')
+            parser.print_help()
+            exit(1)
+        # use dispatch pattern to invoke method with same name
+        getattr(self, self.args.command)()
+
+    # define required arguments for every command
+    def add_common_args(self, parser):
+
+        requiredNamed = parser.add_argument_group('required arguments')
+        parser.add_argument(
+            "-e",
+            "--check-align",
+            dest = "check_align",
+            action = "store_true",
+            default = False,
+            help = "Check if input sequences are aligned. Default: no check"
+        )
+        
+        requiredNamed.add_argument(
             "-i",
             "--in-files",
-            nargs = "*",
+            nargs = "+",
             type = str,
             dest = "in_files",
             required = True,
             help = """Alignment files to be taken as input.
             You can specify multiple files using wildcards (e.g. --in-files *fasta)"""
         )
-        required_named.add_argument(
+        requiredNamed.add_argument(
             "-f",
             "--in-format",
             dest = "in_format",
             required = True,
             choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
-            help="The format of input alignment"
+            help = "The format of input alignment"
         )
-        required_named.add_argument(
+        requiredNamed.add_argument(
             "-d",
             "--data-type",
             dest = "data_type",
@@ -72,41 +108,30 @@ class ParsedArgs:
             choices = ["aa", "dna"],
             help = "Type of data"
         )
+
+    # summary command
+    def summary(self):
+        parser = argparse.ArgumentParser(
+            description="Write alignment summary",
+        )
+
         parser.add_argument(
-            "-c",
-            "--concat",
-            dest = "concat",
-            action = "store_true",
-            help = "Concatenate input alignments"
-        ) 
-        parser.add_argument(
-            "-s",
-            "--summary",
-            dest = "summary",
-            action = "store_true",
-            help = "Print alignment summary"
-        ) 
-        parser.add_argument(
-            "-v",
-            "--convert",
-            dest = "convert",
-            action = "store_true",
-            help = "Convert to other file format"
-        ) 
-        parser.add_argument(
-            "-l",
-            "--split",
-            dest = "split",
-            help = "File name for partitions to be used for alignment splitting."
-        ) 
-        parser.add_argument(
-            "-r",
-            "--replicate",
-            nargs = 2,
-            type = int,
-            dest = "replicate",
-            help = "Create replicate data sets for phylogenetic jackknife [replicates, no alignments for each replicate]"
-        ) 
+            "-o",
+            "--summary-out",
+            dest = "summary_out",
+            default = "summary.txt",
+            help = "File name for the alignment summary. Default: 'summary.txt'"
+        )
+        # add shared arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
+    # concat command
+    def concat(self):
+        parser = argparse.ArgumentParser(
+            description="Concatenate input alignments"
+        )
         parser.add_argument(
             "-p",
             "--concat-part",
@@ -122,11 +147,49 @@ class ParsedArgs:
             help = "File name for the concatenated alignment. Default: 'concatenated.out'"
         )
         parser.add_argument(
-            "-o",
-            "--summary-out",
-            dest = "summary_out",
-            default = "summary.txt",
-            help = "File name for the alignment summary. Default: 'summary.txt'"
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            default = "fasta",
+            help = "File format for the output alignment. Default: fasta"
+        ) 
+        # add shared arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
+    # convert command
+    def convert(self):
+        parser = argparse.ArgumentParser(
+            description="Convert to other file format",
+        )
+        parser.add_argument(
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            default = "fasta",
+            help = "File format for the output alignment. Default: fasta"
+        )
+        # add shared arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
+    # replicate command
+    def replicate(self):
+        parser = argparse.ArgumentParser(
+            description="Create replicate datasets for phylogenetic jackknife",
+        )
+        parser.add_argument(
+            "-r",
+            "--rep-aln",
+            nargs = 2,
+            type = int,
+            dest = "replicate_args",
+            help = "Create replicate data sets for phylogenetic jackknife [replicates, no alignments for each replicate]",
+            required = True
         ) 
         parser.add_argument(
             "-u",
@@ -136,16 +199,44 @@ class ParsedArgs:
             default = "fasta",
             help = "File format for the output alignment. Default: fasta"
         ) 
-        parser.add_argument(
-            "-e",
-            "--check-align",
-            dest = "check_align",
-            action = "store_true",
-            default = False,
-            help = "Check if input sequences are aligned. Default: no check"
-        )
+        # add shared arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
 
-        return parser.parse_args()
+    # split command
+    def split(self):
+        parser = argparse.ArgumentParser(
+            description="Split alignment according to a partitions file",
+        )
+        parser.add_argument(
+            "-l",
+            "--split-file",
+            dest = "split_file",
+            help = "File name for partitions to be used for alignment splitting.",
+            required = True
+        )
+        parser.add_argument(
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            default = "fasta",
+            help = "File format for the output alignment. Default: fasta"
+        ) 
+        # add shared arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
+    def get_args_dict(self):
+
+        command = self.args.__dict__
+        arguments = getattr(self, self.args.command)().__dict__
+        argument_dictionary = command.copy()
+        argument_dictionary.update(arguments)
+        
+        return argument_dictionary
     
 
 class FileHandler:
@@ -367,7 +458,7 @@ class FileParser:
 
     def partitions_parse(self):
         # parse partitions file using regex
-        matches = re.finditer(r"(\s+)?([^ =]+)[ =]+([\\0-9, -]+)", self.in_file_lines, re.MULTILINE)
+        matches = re.finditer(r"^(\s+)?([^ =]+)[ =]+([\\0-9, -]+)", self.in_file_lines, re.MULTILINE)
         
         # initiate list to store dictionaries with lists
         # of slice positions as values
@@ -645,17 +736,16 @@ class MetaAlignment():
         self.in_files = kwargs.get("in_files")
         self.in_format = kwargs.get("in_format")
         self.data_type = kwargs.get("data_type")
-        self.concat = kwargs.get("concat", False)
+        self.command = kwargs.get("command")
         self.concat_out = kwargs.get("concat_out", "concatenated.out")
-        self.convert = kwargs.get("convert", False)
-        self.summary = kwargs.get("summary", False)
-        self.replicate = kwargs.get("replicate", False)
-        self.split = kwargs.get("split", False)
         self.check_align = kwargs.get("check_align", False)
      
-        if self.replicate:
-            self.no_replicates = self.replicate[0]
-            self.no_loci = self.replicate[1]
+        if self.command == "replicate":
+            self.no_replicates = kwargs.get("replicate_args")[0]
+            self.no_loci = kwargs.get("replicate_args")[1]
+
+        if self.command == "split":
+            self.split = kwargs.get("split_file")
        
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()           
@@ -866,7 +956,7 @@ class MetaAlignment():
             # split dictionary values to a list of string, each n chars long
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
             # in case there are unwanted spaces in taxon names
-            taxon = taxon.replace(" ","_")
+            taxon = taxon.replace(" ","_").strip("'")
             fasta_string += ">" + taxon + "\n"
             for element in seq:
                 fasta_string += element + "\n"
@@ -885,7 +975,7 @@ class MetaAlignment():
         header = str(len(source_dict)) + " " + str(seq_length)
         phylip_string = header + "\n"
         for taxon, seq in sorted(source_dict.items()):
-            taxon = taxon.replace(" ","_")
+            taxon = taxon.replace(" ","_").strip("'")
             # left-justify taxon names relative to sequences
             phylip_string += taxon.ljust(pad_longest_name, ' ') + seq + "\n"
  
@@ -907,7 +997,7 @@ class MetaAlignment():
         
         for taxon, seq in sorted(source_dict.items()):
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
-            taxon = taxon.replace(" ","_")
+            taxon = taxon.replace(" ","_").strip("'")
             phylip_int_string += taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
         phylip_int_string += "\n"
 
@@ -937,7 +1027,7 @@ class MetaAlignment():
           "  GAP = - MISSING = ?;\n\tMATRIX\n"
 
         for taxon, seq in sorted(source_dict.items()):
-            taxon = taxon.replace(" ","_")
+            taxon = taxon.replace(" ","_").strip("'")
             nexus_string += "\t" + taxon.ljust(pad_longest_name, ' ') + seq + "\n"
         nexus_string += "\n;\n\nEND;"
         
@@ -968,7 +1058,7 @@ class MetaAlignment():
         # first need to create list of seq strings chunks n characters-long
         for taxon, seq in sorted(source_dict.items()):
             seq = [seq[i:i+n] for i in range(0, len(seq), n)]
-            taxon = taxon.replace(" ","_")
+            taxon = taxon.replace(" ","_").strip("'")
             nexus_int_string += "\t" + taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
 
         nexus_int_string += "\n"
@@ -1107,7 +1197,6 @@ class MetaAlignment():
         elif action == "split":
 
             list_of_alignments = self.get_partitioned(self.split)
-
             file_counter = 0
 
             for item in list_of_alignments:
@@ -1136,33 +1225,32 @@ class MetaAlignment():
 
             print("Wrote " + str(file_counter) + " " + str(file_format) + " files from partitions provided")
 
+
 def main():
     
     # initialize parsed arguments and meta alignment objects
     kwargs = run()
     meta_aln = MetaAlignment(**kwargs)
        
-    if meta_aln.summary:
+    if meta_aln.command == "summary":
         meta_aln.write_summaries(kwargs["summary_out"])
-    if meta_aln.convert:
+    if meta_aln.command == "convert":
         meta_aln.write_out("convert", kwargs["out_format"])
-    if meta_aln.concat:
+    if meta_aln.command == "concat":
         meta_aln.write_out("concat", kwargs["out_format"])
         meta_aln.write_partitions(kwargs["concat_part"])
-    if meta_aln.replicate:
+    if meta_aln.command == "replicate":
         meta_aln.write_out("replicate", kwargs["out_format"])
-    if meta_aln.split:
+    if meta_aln.command == "split":
         meta_aln.write_out("split", kwargs["out_format"])
-    # print instructions when no action is specified
-    if not meta_aln.summary and not meta_aln.convert and not meta_aln.concat and not meta_aln.replicate and not meta_aln.split:
-        print("""You need to specify at least one action with -v (--convert) for format converions,
--c (--concat) for concatenation, -s (--summary) for alignment summaries\n, -r (--replicate) for replicate data sets, or -l (--split) for splitting to partitions""")     
-
+  
 def run():
 
     # initialize parsed arguments
-    config = ParsedArgs.get_args()
-    return config.__dict__
+    config = ParsedArgs()
+    # get arguments
+    config_dict = config.get_args_dict()
+    return config_dict
     
 if __name__ == '__main__':
         
