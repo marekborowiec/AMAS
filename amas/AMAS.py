@@ -860,8 +860,7 @@ class MetaAlignment():
     def write_summaries(self, file_name):
         # write summaries to file
 
-        if path.exists(file_name):
-            print("WARNING: You are overwriting '" + file_name + "'")
+        self.file_overwrite_error(file_name)        
 
         summary_file = open(file_name, "w")
         summary_out = self.get_summaries()
@@ -1094,8 +1093,7 @@ class MetaAlignment():
     def write_partitions(self, file_name):
         # write partitions file for concatenated alignment
 
-         if path.exists(file_name):
-             print("WARNING: You are overwriting '" + file_name + "'")
+         self.file_overwrite_error(file_name)        
             
          part_file = open(file_name, "w")
          part_file.write(self.print_partitions())
@@ -1177,8 +1175,7 @@ class MetaAlignment():
             for alignment in self.get_replicate(self.no_replicates, self.no_loci):
                 file_name = "replicate" + str(file_counter) + "_" + str(self.no_loci) + "-loci" + extension
 
-                if path.exists(file_name):
-                    print("WARNING: You are overwriting '" + file_name + "'")
+                self.file_overwrite_error(file_name)        
                 
                 self.write_formatted_file(file_format, file_name, alignment)
 
@@ -1197,8 +1194,7 @@ class MetaAlignment():
                 file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
                 alignment = list(item.values())[0]
 
-                if path.exists(file_name):
-                    print("WARNING: You are overwriting '" + file_name + "'")
+                self.file_overwrite_error(file_name)        
                 
                 self.write_formatted_file(file_format, file_name, alignment)
 
