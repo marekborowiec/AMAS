@@ -32,7 +32,7 @@ and counts of all characters present in the relevant (nucleotide or amino acid) 
 """
 
 
-import argparse, multiprocessing, re, sys
+import argparse, functools, multiprocessing, re, sys
 from random import sample
 from os import path
 from collections import defaultdict
@@ -81,6 +81,13 @@ Use AMAS <command> -h for help with arguments of the command of interest
             default = False,
             help = "Check if input sequences are aligned. Default: no check"
         )
+        parser.add_argument(
+            "-c",
+            "--cores",
+            dest = "cores",
+            default = 1,
+            help = "Number of cores used. Default: 1"
+        )
         
         requiredNamed.add_argument(
             "-i",
@@ -120,13 +127,6 @@ Use AMAS <command> -h for help with arguments of the command of interest
             dest = "summary_out",
             default = "summary.txt",
             help = "File name for the alignment summary. Default: 'summary.txt'"
-        )
-        parser.add_argument(
-            "-c",
-            "--cores",
-            dest = "cores",
-            default = 1,
-            help = "Number of cores used. Default: 1"
         )
         # add shared arguments
         self.add_common_args(parser)
@@ -1094,8 +1094,8 @@ class MetaAlignment():
          part_file.write(self.print_partitions())
          print("Wrote partitions for the concatenated file to '" + file_name + "'")
 
-    def write_out(self, action, file_format):
-        # write other output files depending on action 
+    def get_extension(self, file_format):
+    # get proper extension string
         if file_format == "phylip":
             extension = "-out.phy"
         elif file_format == "phylip-int":
@@ -1106,56 +1106,66 @@ class MetaAlignment():
             extension = "-out.nex"
         elif file_format == "nexus-int":
             extension = "-out.int-nex"
+        
+        return extension
+
+    def file_overwrite_error(self, file_name):
+
+        if path.exists(file_name):
+            print("WARNING: You are overwriting '" + file_name + "'")
+
+    def write_formatted_file(self, file_format, file_name, alignment):
+        
+        out_file = open(file_name, "w")
+        if file_format == "phylip":
+            out_file.write(self.print_phylip(alignment))
+        elif file_format == "fasta":
+            out_file.write(self.print_fasta(alignment))
+        elif file_format == "phylip-int":
+            out_file.write(self.print_phylip_int(alignment))
+        elif file_format == "nexus":
+            out_file.write(self.print_nexus(alignment))
+        elif file_format == "nexus-int":
+            out_file.write(self.print_nexus_int(alignment))
+        out_file.close()
+
+    def get_alignment_name(self, i, extension):
+
+        file_name = self.alignment_objects[i].get_name() + extension
+        return file_name
+
+    def write_concat(self, file_format):
+
+        concatenated_alignment = self.get_concatenated(self.parsed_alignments)[0]
+        file_name = self.concat_out
+        self.file_overwrite_error(file_name)
+        self.write_formatted_file(file_format, file_name, concatenated_alignment)
+        
+        print("Wrote concatenated sequences to " + file_format + " file '" + file_name + "'")
+
+    def write_convert(self, index, alignment, file_format, extension):
+
+        file_name = self.get_alignment_name(index, extension)
+        self.file_overwrite_error(file_name)        
+        self.write_formatted_file(file_format, file_name, alignment)
+
+    def write_out(self, action, file_format):
+        # write other output files depending on action 
+        extension = self.get_extension(file_format)
 
         if action == "concat":
-            
-            concatenated_alignment = self.get_concatenated(self.parsed_alignments)[0]
-            file_name = self.concat_out
-
-            if path.exists(file_name):
-                print("WARNING: You are overwriting '" + file_name + "'")
-           
-            concatenated_file = open(file_name, "w")
-            if file_format == "phylip":
-                concatenated_file.write(self.print_phylip(concatenated_alignment))
-            elif file_format == "fasta":
-                concatenated_file.write(self.print_fasta(concatenated_alignment))
-            elif file_format == "phylip-int":
-                concatenated_file.write(self.print_phylip_int(concatenated_alignment))
-            elif file_format == "nexus":
-                concatenated_file.write(self.print_nexus(concatenated_alignment))
-            elif file_format == "nexus-int":
-                concatenated_file.write(self.print_nexus_int(concatenated_alignment))
-            concatenated_file.close()
-            print("Wrote concatenated sequences to " + file_format + " file '" + file_name + "'")
+        
+            self.write_concat(file_format)    
 
         elif action == "convert":
-    
-            # start a counter to keep track of files to be converted
-            file_counter = 0
-    
-            for alignment in self.parsed_alignments:
-                file_name = self.alignment_objects[file_counter].get_name() + extension
+        
+            length = list(range(len(self.alignment_objects)))
+            print(length)
 
-                if path.exists(file_name):
-                    print("WARNING: You are overwriting '" + file_name + "'")
-                
-                converted_file = open(file_name, "w")
-                if file_format == "phylip":
-                    converted_file.write(self.print_phylip(alignment))
-                elif file_format == "fasta":
-                    converted_file.write(self.print_fasta(alignment))
-                elif file_format == "phylip-int":
-                    converted_file.write(self.print_phylip_int(alignment))
-                elif file_format == "nexus":
-                    converted_file.write(self.print_nexus(alignment))
-                elif file_format == "nexus-int":
-                    converted_file.write(self.print_nexus_int(alignment))
-                converted_file.close()
-
-                file_counter += 1
+            for i, alignment in enumerate(self.parsed_alignments):
+                self.write_convert(i, alignment, file_format, extension)
             
-            print("Converted " + str(file_counter) + " files from " + self.in_format + " to " + file_format)
+            print("Converted " + str(i + 1) + " files from " + self.in_format + " to " + file_format)
 
         elif action == "replicate":
 
@@ -1167,19 +1177,7 @@ class MetaAlignment():
                 if path.exists(file_name):
                     print("WARNING: You are overwriting '" + file_name + "'")
                 
-                replicate_file = open(file_name, "w")
-
-                if file_format == "phylip":
-                    replicate_file.write(self.print_phylip(alignment))
-                elif file_format == "fasta":
-                    replicate_file.write(self.print_fasta(alignment))
-                elif file_format == "phylip-int":
-                    replicate_file.write(self.print_phylip_int(alignment))
-                elif file_format == "nexus":
-                    replicate_file.write(self.print_nexus(alignment))
-                elif file_format == "nexus-int":
-                    replicate_file.write(self.print_nexus_int(alignment))
-                replicate_file.close()
+                self.write_formatted_file(file_format, file_name, alignment)
 
                 file_counter += 1
 
@@ -1199,19 +1197,7 @@ class MetaAlignment():
                 if path.exists(file_name):
                     print("WARNING: You are overwriting '" + file_name + "'")
                 
-                from_partition_file = open(file_name, "w")
-
-                if file_format == "phylip":
-                    from_partition_file.write(self.print_phylip(alignment))
-                elif file_format == "fasta":
-                    from_partition_file.write(self.print_fasta(alignment))
-                elif file_format == "phylip-int":
-                    from_partition_file.write(self.print_phylip_int(alignment))
-                elif file_format == "nexus":
-                    from_partition_file.write(self.print_nexus(alignment))
-                elif file_format == "nexus-int":
-                    from_partition_file.write(self.print_nexus_int(alignment))
-                from_partition_file.close()
+                self.write_formatted_file(file_format, file_name, alignment)
 
                 file_counter += 1
 
