@@ -32,7 +32,7 @@ and counts of all characters present in the relevant (nucleotide or amino acid) 
 """
 
 
-import argparse, re, sys
+import argparse, multiprocessing, re, sys
 from random import sample
 from os import path
 from collections import defaultdict
@@ -114,13 +114,19 @@ Use AMAS <command> -h for help with arguments of the command of interest
         parser = argparse.ArgumentParser(
             description="Write alignment summary",
         )
-
         parser.add_argument(
             "-o",
             "--summary-out",
             dest = "summary_out",
             default = "summary.txt",
             help = "File name for the alignment summary. Default: 'summary.txt'"
+        )
+        parser.add_argument(
+            "-c",
+            "--cores",
+            dest = "cores",
+            default = 1,
+            help = "Number of cores used. Default: 1"
         )
         # add shared arguments
         self.add_common_args(parser)
@@ -709,6 +715,7 @@ class MetaAlignment():
         self.command = kwargs.get("command")
         self.concat_out = kwargs.get("concat_out", "concatenated.out")
         self.check_align = kwargs.get("check_align", False)
+        self.cores = kwargs.get("cores")
      
         if self.command == "replicate":
             self.no_replicates = kwargs.get("replicate_args")[0]
@@ -828,9 +835,17 @@ class MetaAlignment():
             header = aa_header + freq_header
         elif self.data_type == "dna":
             header = dna_header + freq_header
- 
-        summaries = [alignment.get_summary() for alignment in alignments]            
+
+        if int(self.cores) == 1:
+            summaries = [alignment.get_summary() for alignment in alignments]            
+        elif int(self.cores) > 1:
+            pool = multiprocessing.Pool(int(self.cores))
+            summaries = pool.map(self.summarize_alignments, alignments)
         return header, summaries
+
+    def summarize_alignments(self, alignment):
+        summary = alignment.get_summary()
+        return summary
 
 
     def write_summaries(self, file_name):
