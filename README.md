@@ -113,8 +113,13 @@ python3 AMAS.py replicate -r 200 100 -d dna -f phylip -i *phy -u phylip
 
 
 # AMAS as a Python module
-Using `AMAS` inside your Python pipeline gives you much more flexibility in how the input and output are being processed. All the major functions of the command line interface can recreated using `AMAS` as a module. Following installation from [pip](https://pip.pypa.io/en/latest/installing.html) you can import it with:
+Using `AMAS` inside your Python pipeline gives you much more flexibility in how the input and output are being processed. All the major functions of the command line interface can recreated using `AMAS` as a module. Following installation from [pip](https://pip.pypa.io/en/latest/installing.html) use:
+```
+pydoc amas.AMAS
+```
+To access detailed help on the classes and functions available. 
 
+You can import `AMAS` to your script with:
 ```python
 from amas import AMAS
 ```
