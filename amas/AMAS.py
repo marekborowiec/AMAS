@@ -768,7 +768,7 @@ class MetaAlignment():
         return parsed_alignments
 
     def get_partitioned(self, partitions_file):
-
+        # partition alignment according to a partitions file
         partitions = self.get_partitions(partitions_file)
 
         alignment = self.parsed_alignments[0]
@@ -836,6 +836,7 @@ class MetaAlignment():
         elif self.data_type == "dna":
             header = dna_header + freq_header
 
+        # use multiprocessing if more than one core specified
         if int(self.cores) == 1:
             summaries = [alignment.get_summary() for alignment in alignments]            
         elif int(self.cores) > 1:
@@ -844,6 +845,7 @@ class MetaAlignment():
         return header, summaries
 
     def summarize_alignments(self, alignment):
+        # helper function to summarize alignments
         summary = alignment.get_summary()
         return summary
 
