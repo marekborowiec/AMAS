@@ -83,6 +83,13 @@ By default `AMAS` will write a file with the summary of the alignment in `summar
 
 The statistics calculated include the number of taxa, alignment length, total number of matrix cells, overall number of undetermined characters, percent of missing data, AT and GC contents (for DNA alignments), number and proportion of variable sites, number and proportion of parsimony informative sites, and counts of all characters present in the relevant alphabet.
 
+If you have many files that you want to summarize in one run, you can use multiple cores of your computer to process them in parallel. The `summary` command supports `-c` or `--cores` with which you can specify the number of cores to be used:
+
+```
+python3 AMAS.py summary -f phylip -d dna -i *phy -c 12
+```
+In the above, we specified 12 cores. Note that this won't improve computing time if you are summarizing only one large file.   
+
 ### Converting among formats
 To convert all nucleotide fasta files with a `.fas` extension in a directory to nexus alignments, you could use:
 ```
