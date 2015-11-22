@@ -1094,18 +1094,38 @@ class MetaAlignment():
          part_file.write(self.print_partitions())
          print("Wrote partitions for the concatenated file to '" + file_name + "'")
 
+    def write_converted(self, alignment):
+
+        file_name = self.alignment_objects[self.file_counter].get_name() + self.extension
+
+        if path.exists(file_name):
+            print("WARNING: You are overwriting '" + file_name + "'")
+        
+        converted_file = open(file_name, "w")
+        if self.file_format == "phylip":
+            converted_file.write(self.print_phylip(alignment))
+        elif self.file_format == "fasta":
+            converted_file.write(self.print_fasta(alignment))
+        elif self.file_format == "phylip-int":
+            converted_file.write(self.print_phylip_int(alignment))
+        elif self.file_format == "nexus":
+            converted_file.write(self.print_nexus(alignment))
+        elif self.file_format == "nexus-int":
+            converted_file.write(self.print_nexus_int(alignment))
+        converted_file.close()
+
     def write_out(self, action, file_format):
         # write other output files depending on action 
-        if file_format == "phylip":
-            extension = "-out.phy"
-        elif file_format == "phylip-int":
-            extension = "-out.int-phy"
-        elif file_format == "fasta":
-            extension = "-out.fas"
-        elif file_format == "nexus":
-            extension = "-out.nex"
-        elif file_format == "nexus-int":
-            extension = "-out.int-nex"
+        if self.file_format == "phylip":
+            self.extension = "-out.phy"
+        elif self.file_format == "phylip-int":
+            self.extension = "-out.int-phy"
+        elif self.file_format == "fasta":
+            self.extension = "-out.fas"
+        elif self.file_format == "nexus":
+            self.extension = "-out.nex"
+        elif self.file_format == "nexus-int":
+            self.extension = "-out.int-nex"
 
         if action == "concat":
             
@@ -1132,26 +1152,10 @@ class MetaAlignment():
         elif action == "convert":
     
             # start a counter to keep track of files to be converted
-            file_counter = 0
+            self.file_counter = 0
     
             for alignment in self.parsed_alignments:
-                file_name = self.alignment_objects[file_counter].get_name() + extension
-
-                if path.exists(file_name):
-                    print("WARNING: You are overwriting '" + file_name + "'")
-                
-                converted_file = open(file_name, "w")
-                if file_format == "phylip":
-                    converted_file.write(self.print_phylip(alignment))
-                elif file_format == "fasta":
-                    converted_file.write(self.print_fasta(alignment))
-                elif file_format == "phylip-int":
-                    converted_file.write(self.print_phylip_int(alignment))
-                elif file_format == "nexus":
-                    converted_file.write(self.print_nexus(alignment))
-                elif file_format == "nexus-int":
-                    converted_file.write(self.print_nexus_int(alignment))
-                converted_file.close()
+                self.write_converted(alignment)
 
                 file_counter += 1
             
