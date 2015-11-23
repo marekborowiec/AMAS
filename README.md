@@ -10,7 +10,7 @@ If your system doesn't have a Python version 3.0 or newer, you will need to [dow
 ```
 sudo apt-get install python3
 ```
-To use `AMAS` as a Python package you can get it with  [pip](https://pip.pypa.io/en/latest/installing.html) from the [Python Package Index](https://pypi.python.org/pypi/amas/):
+To use `AMAS` as a Python module you can get it with  [pip](https://pip.pypa.io/en/latest/installing.html) from the [Python Package Index](https://pypi.python.org/pypi/amas/):
 ```
 pip install amas
 ```
@@ -38,11 +38,11 @@ optional arguments:
   -h, --help  show this help message and exit
 ```
 
-To show help for individual commands, use `AMAS.py <command> -h` or `--help`.
+To show help for individual commands, use `AMAS.py <command> -h` or `AMAS.py <command> --help`.
 
 ## Examples
-For every `AMAS.py` run on the command line you need to specify action with `concat`, `convert`, `replicate`, `split`, or `summary` for the input to be processed. 
-Additionally, you need to provide three required arguments. The order in which the arguments are given does not matter:
+For every `AMAS.py` run on the command line you need to specify action with `concat`, `convert`, `replicate`, `split`, or `summary` for the input to be processed.
+Additionally, you need to provide three arguments required for all commands. The order in which the arguments are given does not matter:
 
 1) input file name(s) with `-i` (or in long version: `--in-files`),
 
@@ -62,7 +62,7 @@ If you have many files that you want to input in one run, you can use multiple c
 ```
 python3 AMAS.py summary -f phylip -d dna -i *phy -c 12
 ```
-In the above, we specified 12 cores. Note that this won't improve computing time if you working with only one or very few files. The parallel processing is only used for the file parsing step and calculating alignment summaries.   
+In the above, we specified 12 cores. Note that this won't improve computing time if you're working with only one or very few files. The parallel processing is only used for the file parsing step and calculating alignment summaries.   
 
 IMPORTANT! `AMAS` is fast and powerful, but be careful: it assumes you know what you are doing and will not prevent you overwriting a file. It will, however, print out a warning if this has happened. `AMAS` was also written to work with aligned data and some of the output generated from unaligned sequences won't make sense. Because of computing efficiency `AMAS` by default does not check if input sequences are aligned. You can turn this option on with `-e` or `--check-align`.
 
@@ -113,7 +113,7 @@ In the above one input file `concat.nex` was provided for splitting with `split`
 If this was the `partitions.txt` file from the example command above, `AMAS` would write three output files called `concat_AApos1&2.nex`, `concat_AApos3.nex`, and `concat_28SautapoInDels.nex`. The partitions file will be parsed correctly as long as there is no text prior to the partition name (`CHARSET AApos1&2` or `DNA, AApos1&2` will not work) and commas separate ranges or individual sites in each partition.
 
 ### Creating replicate data sets
-With `AMAS` you can create concatenated alignments from a proportion of randomly chosen alignments that can be used for, for example, a phylogenetic jackknife analysis. Say you have 1000 phylip files, each containing a single aligned locus, and you want to create 200 replicate phylip alignments, each built from 100 loci randomly chosen from all the input files. You can do this by supplying the `-r` or `--rep-aln` followed by the number of replicates (in this case `200`) and number of alignments (`100`). Remember to supply the output format with `-u` if you want it to be other than fasta:
+With `AMAS` you can create concatenated alignments from a proportion of randomly chosen alignments that can be used for, for example, a phylogenetic jackknife analysis. Say you have 1000 phylip files, each containing a single aligned locus, and you want to create 200 replicate phylip alignments, each built from 100 loci randomly chosen from all the input files. You can do this by specifying `replicate` command and following it with `-r` or `--rep-aln` followed by the number of replicates (in this case `200`) and number of alignments (`100`). Remember to supply the output format with `-u` if you want it to be other than `fasta`:
 ```
 python3 AMAS.py replicate -r 200 100 -d dna -f phylip -i *phy -u phylip
 ```
@@ -124,7 +124,7 @@ Using `AMAS` inside your Python pipeline gives you much more flexibility in how 
 ```
 pydoc amas.AMAS
 ```
-To access detailed help on the classes and functions available. 
+To access detailed documentation for the classes and functions available.
 
 You can import `AMAS` to your script with:
 ```python
