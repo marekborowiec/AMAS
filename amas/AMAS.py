@@ -1092,9 +1092,7 @@ class MetaAlignment():
 
     def write_partitions(self, file_name):
         # write partitions file for concatenated alignment
-
          self.file_overwrite_error(file_name)        
-            
          part_file = open(file_name, "w")
          part_file.write(self.print_partitions())
          print("Wrote partitions for the concatenated file to '" + file_name + "'")
@@ -1170,8 +1168,8 @@ class MetaAlignment():
 
         elif action == "replicate":
 
-            for i, alignment in enumerate(self.get_replicate(self.no_replicates, self.no_loci):
-                file_name = "replicate" + str(file_counter + 1) + "_" + str(self.no_loci) + "-loci" + extension
+            for i, alignment in enumerate(self.get_replicate(self.no_replicates, self.no_loci)):
+                file_name = "replicate" + str(i + 1) + "_" + str(self.no_loci) + "-loci" + extension
                 self.file_overwrite_error(file_name)                        
                 self.write_formatted_file(file_format, file_name, alignment)
 
