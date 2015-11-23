@@ -279,7 +279,6 @@ class FileParser:
             r"^>(.*[^$])([^>]*)",
             self.in_file_lines, re.MULTILINE
         )
-
         records = {}
  
         for match in matches:
@@ -319,24 +318,22 @@ class FileParser:
         )
         # initiate lists for taxa names and sequence strings on separate lines
         taxa = [match.group(2).replace("\n","") for match in name_matches]
-        print(taxa)
+
         sequences = []
         # initiate a dictionary for the name:sequence records
         records = {}
-        add_to_sequences = sequences.append
+
         for counter, match in enumerate(seq_matches):
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
-            add_to_sequences(seq_match)
+            sequences.append(seq_match)
 
         for taxon_no in range(len(taxa)):
             sequence = ""
             sequence = [sequences[index] for index in range(counter,len(sequences),len(taxa))]
-            print(sequence)
             records[taxa[taxon_no]] = sequence
-        print(records)
-        return records
 
+        return records
         
     def nexus_parse(self):
         # use regex to parse names and sequences in sequential nexus files
@@ -365,8 +362,8 @@ class FileParser:
         return records
         
     def nexus_interleaved_parse(self):
-        # use regex to parse names and sequences in sequential nexus files
-        # find the matrix block
+    # use regex to parse names and sequences in sequential nexus files
+    # find the matrix block
         matches = re.finditer(
             r"(\s+)?(MATRIX\n|matrix\n|MATRIX\r\n|matrix\r\n)(.*?;)",
             self.in_file_lines, re.DOTALL
@@ -406,7 +403,6 @@ class FileParser:
             records[taxa[taxon_no]] = full_length_sequence
 
         return records
-
     def translate_ambiguous(self, seq):
         # translate ambiguous characters from curly bracket format
         # to single letter format 
@@ -430,18 +426,19 @@ class FileParser:
         # initiate list to store dictionaries with lists
         # of slice positions as values
         partitions = []
-        
+        add_to_partitions = partitions.append
         for match in matches:
             # initiate dictionary of partition name as key
             dict_of_dicts = {}
             # and list of dictionaries with slice positions
             list_of_dicts = []
+            add_to_list_of_dicts = list_of_dicts.append
             # get parition name and numbers from parsed partition strings
             partition_name = match.group(2)
             numbers = match.group(3)
             # find all numbers that will be used to parse positions
             positions = re.findall(r"([^ ,]+)", numbers)
-        
+            
             for position in positions:
                 # create dictionary for slicing input sequence
                 # conditioning on whether positions are represented
@@ -461,10 +458,10 @@ class FileParser:
                 elif "\\" not in position:
                     pos_dict["stride"] = 1
         
-                list_of_dicts.append(pos_dict)
+                add_to_list_of_dicts(pos_dict)
                 
             dict_of_dicts[partition_name] = list_of_dicts 
-            partitions.append(dict_of_dicts)
+            add_to_partitions(dict_of_dicts)
 
         return partitions
 
@@ -636,10 +633,10 @@ class Alignment:
     def get_counts(self):
         # get counts of each character in the used alphabet
         counts = []
-        
+        add_to_counts = counts.append
         for char in self.alphabet:
             count = sum(seq.count(char) for seq in self.list_of_seqs)
-            counts.append({char : count})
+            add_to_counts({char : count})
         return counts
 
     def check_data_type(self):
@@ -752,9 +749,10 @@ class MetaAlignment():
     def get_parsed_alignments(self):
         # get parsed dictionaries with taxa and sequences
         parsed_alignments = []
+        add_to_parsed_alignments = parsed_alignments.append
         for alignment in self.alignment_objects:
             parsed = alignment.parsed_aln
-            parsed_alignments.append(parsed)
+            add_to_parsed_alignments(parsed)
             # checking if every seq has the same length or if parsed is not empty; exit if false
             if self.check_align == True:
                 equal = all(x == [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))][0] 
@@ -777,7 +775,7 @@ class MetaAlignment():
 
         # initiate list of newly partitioned alignments 
         list_of_parts = []
-        
+        add_to_list_of_parts = list_of_parts.append
         for partition in partitions:
             # loop over all parsed partitions, adding taxa and sliced sequences
             for name, elements in partition.items():    
@@ -790,7 +788,7 @@ class MetaAlignment():
                         new_seq = new_seq + seq[dictionary["start"]:dictionary["stop"]:dictionary["stride"]]
                         new_dict[taxon] = new_seq
             # add partition name : dict of taxa and sequences to the list
-            list_of_parts.append({name : new_dict})
+            add_to_list_of_parts({name : new_dict})
     
         return list_of_parts
 
@@ -866,6 +864,7 @@ class MetaAlignment():
     def get_replicate(self, no_replicates, no_loci):
         # construct replicate data sets for phylogenetic jackknife
         replicates = []
+        add_to_replicates = replicates.append
         counter = 1
         for replicate in range(no_replicates):
             
@@ -877,7 +876,7 @@ class MetaAlignment():
 
             random_alignments = sample(self.parsed_alignments, no_loci)
             concat_replicate = self.get_concatenated(random_alignments)[0]
-            replicates.append(concat_replicate)
+            add_to_replicates(concat_replicate)
             counter += 1
         
         return replicates 
