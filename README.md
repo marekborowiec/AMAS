@@ -57,6 +57,13 @@ For example:
 python3 AMAS.py concat -i gene1.nex gene2.nex -f nexus -d dna
 ```
 
+If you have many files that you want to input in one run, you can use multiple cores of your computer to process them in parallel. The `summary` command supports `-c` or `--cores` with which you can specify the number of cores to be used:
+
+```
+python3 AMAS.py summary -f phylip -d dna -i *phy -c 12
+```
+In the above, we specified 12 cores. Note that this won't improve computing time if you working with only one or very few files. The parallel processing is only used for the file parsing step and calculating alignment summaries.   
+
 IMPORTANT! `AMAS` is fast and powerful, but be careful: it assumes you know what you are doing and will not prevent you overwriting a file. It will, however, print out a warning if this has happened. `AMAS` was also written to work with aligned data and some of the output generated from unaligned sequences won't make sense. Because of computing efficiency `AMAS` by default does not check if input sequences are aligned. You can turn this option on with `-e` or `--check-align`.
 
 ### Concatenating alignments
@@ -82,13 +89,6 @@ python3 AMAS.py summary -f fasta -d aa -i my_aln.fasta my_aln2.fasta
 By default `AMAS` will write a file with the summary of the alignment in `summary.txt`. You can change the name of this file with `-o` or `--summary-out`. You can also summarize a single or multiple sequence alignments at once. 
 
 The statistics calculated include the number of taxa, alignment length, total number of matrix cells, overall number of undetermined characters, percent of missing data, AT and GC contents (for DNA alignments), number and proportion of variable sites, number and proportion of parsimony informative sites, and counts of all characters present in the relevant alphabet.
-
-If you have many files that you want to summarize in one run, you can use multiple cores of your computer to process them in parallel. The `summary` command supports `-c` or `--cores` with which you can specify the number of cores to be used:
-
-```
-python3 AMAS.py summary -f phylip -d dna -i *phy -c 12
-```
-In the above, we specified 12 cores. Note that this won't improve computing time if you are summarizing only one large file.   
 
 ### Converting among formats
 To convert all nucleotide fasta files with a `.fas` extension in a directory to nexus alignments, you could use:
