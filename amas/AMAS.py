@@ -69,9 +69,8 @@ Use AMAS <command> -h for help with arguments of the command of interest
         # use dispatch pattern to invoke method with same name
         getattr(self, self.args.command)()
 
-    # define required arguments for every command
     def add_common_args(self, parser):
-
+        # define required arguments for every command
         requiredNamed = parser.add_argument_group('required arguments')
         parser.add_argument(
             "-e",
@@ -82,6 +81,7 @@ Use AMAS <command> -h for help with arguments of the command of interest
             help = "Check if input sequences are aligned. Default: no check"
         )
         parser.add_argument(
+        # parallelization is used for file parsing and calculating summary stats
             "-c",
             "--cores",
             dest = "cores",
@@ -116,8 +116,8 @@ Use AMAS <command> -h for help with arguments of the command of interest
             help = "Type of data"
         )
 
-    # summary command
     def summary(self):
+       # summary command
         parser = argparse.ArgumentParser(
             description="Write alignment summary",
         )
@@ -133,8 +133,8 @@ Use AMAS <command> -h for help with arguments of the command of interest
         args = parser.parse_args(sys.argv[2:])
         return args
 
-    # concat command
     def concat(self):
+        # concat command
         parser = argparse.ArgumentParser(
             description="Concatenate input alignments"
         )
@@ -165,8 +165,8 @@ Use AMAS <command> -h for help with arguments of the command of interest
         args = parser.parse_args(sys.argv[2:])
         return args
 
-    # convert command
     def convert(self):
+        # convert command
         parser = argparse.ArgumentParser(
             description="Convert to other file format",
         )
@@ -183,8 +183,8 @@ Use AMAS <command> -h for help with arguments of the command of interest
         args = parser.parse_args(sys.argv[2:])
         return args
 
-    # replicate command
     def replicate(self):
+        # replicate command
         parser = argparse.ArgumentParser(
             description="Create replicate datasets for phylogenetic jackknife",
         )
@@ -210,8 +210,8 @@ Use AMAS <command> -h for help with arguments of the command of interest
         args = parser.parse_args(sys.argv[2:])
         return args
 
-    # split command
     def split(self):
+        # split command
         parser = argparse.ArgumentParser(
             description="Split alignment according to a partitions file",
         )
@@ -274,7 +274,7 @@ class FileParser:
             self.in_file_lines = handle.read().rstrip("\r\n")    
 
     def fasta_parse(self):
-    # use regex to parse names and sequences in sequential fasta files
+        # use regex to parse names and sequences in sequential fasta files
         matches = re.finditer(
             r"^>(.*[^$])([^>]*)",
             self.in_file_lines, re.MULTILINE
@@ -291,7 +291,7 @@ class FileParser:
         return records
     
     def phylip_parse(self):
-    # use regex to parse names and sequences in sequential phylip files
+        # use regex to parse names and sequences in sequential phylip files
         matches = re.finditer(
             r"^(\s+)?(\S+)\s+([A-Za-z*?.{}-]+)",
             self.in_file_lines, re.MULTILINE
@@ -308,7 +308,7 @@ class FileParser:
         return records    
 
     def phylip_interleaved_parse(self):
-    # use regex to parse names and sequences in interleaved phylip files
+        # use regex to parse names and sequences in interleaved phylip files
         name_matches = re.finditer(
             r"^(\s+)?(\S+)[ \t]+[A-Za-z*?.{}-]+",
             self.in_file_lines, re.MULTILINE
@@ -344,8 +344,8 @@ class FileParser:
 
         
     def nexus_parse(self):
-    # use regex to parse names and sequences in sequential nexus files
-    # find the matrix block
+        # use regex to parse names and sequences in sequential nexus files
+        # find the matrix block
         matches = re.finditer(
             r"(\s+)?(MATRIX\n|matrix\n|MATRIX\r\n|matrix\r\n)(.*?;)",
             self.in_file_lines, re.DOTALL
@@ -370,8 +370,8 @@ class FileParser:
         return records
         
     def nexus_interleaved_parse(self):
-    # use regex to parse names and sequences in sequential nexus files
-    # find the matrix block
+        # use regex to parse names and sequences in sequential nexus files
+        # find the matrix block
         matches = re.finditer(
             r"(\s+)?(MATRIX\n|matrix\n|MATRIX\r\n|matrix\r\n)(.*?;)",
             self.in_file_lines, re.DOTALL
@@ -413,8 +413,8 @@ class FileParser:
         return records
 
     def translate_ambiguous(self, seq):
-    # translate ambiguous characters from curly bracket format
-    # to single letter format 
+        # translate ambiguous characters from curly bracket format
+        # to single letter format 
         seq = seq.replace("{GT}","K")
         seq = seq.replace("{AC}","M")
         seq = seq.replace("{AG}","R")
@@ -441,10 +441,10 @@ class FileParser:
             dict_of_dicts = {}
             # and list of dictionaries with slice positions
             list_of_dicts = []
-            # get parition name and numbers from parsed partiion strings
+            # get parition name and numbers from parsed partition strings
             partition_name = match.group(2)
             numbers = match.group(3)
-        
+            # find all numbers that will be used to parse positions
             positions = re.findall(r"([^ ,]+)", numbers)
         
             for position in positions:
@@ -468,8 +468,7 @@ class FileParser:
         
                 list_of_dicts.append(pos_dict)
                 
-            dict_of_dicts[partition_name] = list_of_dicts
- 
+            dict_of_dicts[partition_name] = list_of_dicts 
             partitions.append(dict_of_dicts)
 
         return partitions
@@ -478,13 +477,11 @@ class FileParser:
 class Alignment:
     """Gets in parsed sequences as input and summarizes their stats"""
     
-    def __init__(self, in_file, in_format, data_type):
-    
-    # initialize alignment class with parsed records and alignment name as arguments,
-    # create empty lists for list of sequences, sites without
-    # ambiguous or missing characters, and initialize variable for the number
-    # of parsimony informative sites
-
+    def __init__(self, in_file, in_format, data_type):    
+        # initialize alignment class with parsed records and alignment name as arguments,
+        # create empty lists for list of sequences, sites without
+        # ambiguous or missing characters, and initialize variable for the number
+        # of parsimony informative sites
         self.in_file = in_file
         self.in_format = in_format
         self.data_type = data_type
@@ -500,7 +497,7 @@ class Alignment:
         return aln_input
 
     def get_parsed_aln(self):
-    # parse according to the given format
+        # parse according to the given format
         aln_input = self.get_aln_input()
         if self.in_format == "fasta":
             parsed_aln = aln_input.fasta_parse()
@@ -516,8 +513,8 @@ class Alignment:
         return parsed_aln
         
     def summarize_alignment(self):
-    # call methods to create sequences list, matrix, sites without ambiguous or
-    # missing characters; get and summarize alignment statistics
+        # call methods to create sequences list, matrix, sites without ambiguous or
+        # missing characters; get and summarize alignment statistics
         summary = []
         self.list_of_seqs = self.seq_grabber()
         self.matrix = self.matrix_creator()
@@ -538,7 +535,7 @@ class Alignment:
         return summary
 
     def get_char_summary(self):
-    # get summary of frequencies for all characters
+        # get summary of frequencies for all characters
         characters = []
         counts = []
         
@@ -549,26 +546,26 @@ class Alignment:
         return characters, counts
      
     def seq_grabber(self):
-    # create a list of sequences from parsed dictionary of names and seqs 
+        # create a list of sequences from parsed dictionary of names and seqs 
         list_of_seqs = [seq for name, seq in self.parsed_aln.items()]
         return list_of_seqs
 
                
     def matrix_creator(self):
-    # decompose character matrix into a two-dimensional list
+        # decompose character matrix into a two-dimensional list
         matrix = [list(sequence) for sequence in self.list_of_seqs]
         return matrix
 
     def get_column(self, i):
-    # get site from the character matrix
+        # get site from the character matrix
         return [row[i] for row in self.matrix]
         
     def all_same(self, site):
-    # check if all elements of a site are the same
+        # check if all elements of a site are the same
         return all(base == site[0] for base in site)
         
     def get_sites_no_missing_ambiguous(self):
-    # get each site without missing or ambiguous characters
+        # get each site without missing or ambiguous characters
         no_missing_ambiguous_sites = []  
         for column in range(self.get_alignment_length()):
             site = self.get_column(column)
@@ -577,16 +574,16 @@ class Alignment:
         return no_missing_ambiguous_sites
         
     def get_variable(self):
-    # if all elements of a site without missing or ambiguous characters 
-    # are not the same, consider it variable
+        # if all elements of a site without missing or ambiguous characters 
+        # are not the same, consider it variable
         variable = len([site for site in self.no_missing_ambiguous \
          if not self.all_same(site)])      
         return variable
     
     def get_parsimony_informative(self):
-    # if the count for a unique character in a site is at least two, 
-    # and there are at least two such characters in a site without missing
-    # or ambiguous characters, consider it parsimony informative
+        # if the count for a unique character in a site is at least two, 
+        # and there are at least two such characters in a site without missing
+        # or ambiguous characters, consider it parsimony informative
         parsimony_informative = 0
         for site in self.no_missing_ambiguous:
             unique_chars = set(site)
@@ -599,41 +596,48 @@ class Alignment:
         return parsimony_informative
     
     def get_prop_variable(self):
-    # get proportion of variable sites to all sites
+        # get proportion of variable sites to all sites
         prop_variable = self.variable_sites / len(self.list_of_seqs[0])
         return round(prop_variable, 3)
         
     def get_prop_parsimony(self):
-    # get proportion of parsimony informative sites to all sites
+        # get proportion of parsimony informative sites to all sites
         prop_parsimony = self.parsimony_informative / len(self.list_of_seqs[0])
         return round(prop_parsimony, 3)
 
     def get_name(self):
+        # get input file name
         in_filename = path.basename(self.in_file)
         return in_filename
         
     def get_taxa_no(self):
+        # get number of taxa
         return len(self.list_of_seqs)
     
     def get_alignment_length(self):
+        # get alignment length by just checking the first seq length
+        # this assumes that all sequences are of equal length
         return len(self.list_of_seqs[0])
 
     def get_matrix_cells(self):
+    # count all matrix cells
         self.all_matrix_cells = len(self.list_of_seqs) \
          * len(self.list_of_seqs[0])
         return self.all_matrix_cells
 
     def get_missing_percent(self):
+        # get missing percent
         missing_percent = round((self.missing / self.all_matrix_cells * 100), 3)
         return missing_percent
         
     def get_missing(self):
+        # count missing characters from the list of missing
         self.missing = sum(sum(seq.count(char) for seq in self.list_of_seqs) \
          for char in self.missing_chars)
         return self.missing
     
     def get_counts(self):
-    # get counts of each character in the used alphabet
+        # get counts of each character in the used alphabet
         counts = []
         
         for char in self.alphabet:
@@ -642,7 +646,7 @@ class Alignment:
         return counts
 
     def check_data_type(self):
-    # check if the data type is correct
+        # check if the data type is correct
         self.check = any(any(char in self.non_alphabet for char in seq) \
          for seq in self.list_of_seqs)
         if self.check is True:
@@ -660,6 +664,7 @@ class AminoAcidAlignment(Alignment):
     non_alphabet = ["O"]
 
     def get_summary(self):
+        # get alignment summary specific to amino acids
         data = self.summarize_alignment()
         new_data = data + list(self.get_char_summary()[1])
         
@@ -677,15 +682,15 @@ class DNAAlignment(Alignment):
     non_alphabet = ["E", "F", "I", "L", "P", "Q", "J", "Z", ".", "*"]    
 
     def get_summary(self):
+        # get alignment summarry specific to nucleotide
         data = self.summarize_alignment()
-        
         new_data = data + self.get_atgc_content() \
          + list(self.get_char_summary()[1])
         
         return new_data
         
     def get_atgc_content(self):
-    # get AC and GC contents
+        # get AC and GC contents
         atgc_content = []
         
         at_count = sum((seq.count("A") + seq.count("T") + seq.count("W")) \
@@ -703,7 +708,6 @@ class MetaAlignment():
     """Class of multiple sequence alignments"""
  
     def __init__(self, **kwargs):
-
         # set defaults and get values from kwargs
         self.in_files = kwargs.get("in_files")
         self.in_format = kwargs.get("in_format")
@@ -724,14 +728,13 @@ class MetaAlignment():
         self.parsed_alignments = self.get_parsed_alignments()           
 
     def get_partitions(self, partitions_file):
-        
+        # parse and get partitions from partitions file 
         partitions = FileParser(partitions_file)
         parsed_partitions = partitions.partitions_parse()
         
         return parsed_partitions
 
     def get_alignment_object(self, alignment):
-
         # parse according to the given alphabet
         if self.data_type == "aa":
             aln = AminoAcidAlignment(alignment, self.in_format, self.data_type)
@@ -755,7 +758,7 @@ class MetaAlignment():
         for alignment in self.alignment_objects:
             parsed = alignment.parsed_aln
             parsed_alignments.append(parsed)
-        # checking if every seq has the same length or if parsed is not empty; exit if false
+            # checking if every seq has the same length or if parsed is not empty; exit if false
             if self.check_align == True:
                 equal = all(x == [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))][0] 
                  for x in [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))])
@@ -773,7 +776,6 @@ class MetaAlignment():
     def get_partitioned(self, partitions_file):
         # partition alignment according to a partitions file
         partitions = self.get_partitions(partitions_file)
-
         alignment = self.parsed_alignments[0]
 
         # initiate list of newly partitioned alignments 
@@ -884,7 +886,7 @@ class MetaAlignment():
         return replicates 
 
     def get_concatenated(self, alignments):
-
+        # concatenate muntiple input alignments
         # create empty dictionary of lists
         concatenated = defaultdict(list)
 
@@ -937,8 +939,7 @@ class MetaAlignment():
         return concatenated, partitions
 
     def print_fasta(self, source_dict):
-        # print fasta-formatted string from a dictionary
-        
+        # print fasta-formatted string from a dictionary        
         fasta_string = ""
         # each sequence line will have 80 characters 
         n = 80
@@ -956,7 +957,6 @@ class MetaAlignment():
 
     def print_phylip(self, source_dict):
         # print phylip-formatted string from a dictionary
-
         taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
         # figure out the max length of a taxon for nice padding of sequences
@@ -973,8 +973,7 @@ class MetaAlignment():
         return phylip_string
 
     def print_phylip_int(self, source_dict):
-        # print phylip interleaved-formatted string from a dictionary
-        
+        # print phylip interleaved-formatted string from a dictionary        
         taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
         pad_longest_name = len(max(taxa_list, key=len)) + 3
@@ -1001,8 +1000,7 @@ class MetaAlignment():
         return phylip_int_string
 
     def print_nexus(self, source_dict):
-        # print nexus-formatted string from a dictionary
-        
+        # print nexus-formatted string from a dictionary    
         if self.data_type == "aa":
             data_type = "PROTEIN"
         elif self.data_type == "dna":
@@ -1091,7 +1089,7 @@ class MetaAlignment():
          print("Wrote partitions for the concatenated file to '" + file_name + "'")
 
     def get_extension(self, file_format):
-    # get proper extension string
+        # get proper extension string
         if file_format == "phylip":
             extension = "-out.phy"
         elif file_format == "phylip-int":
@@ -1106,12 +1104,12 @@ class MetaAlignment():
         return extension
 
     def file_overwrite_error(self, file_name):
-    # print warning when overwriting a file
+        # print warning when overwriting a file
         if path.exists(file_name):
             print("WARNING: You are overwriting '" + file_name + "'")
 
     def write_formatted_file(self, file_format, file_name, alignment):
-        
+        # write the correct format string into a file        
         out_file = open(file_name, "w")
         if file_format == "phylip":
             out_file.write(self.print_phylip(alignment))
@@ -1126,12 +1124,12 @@ class MetaAlignment():
         out_file.close()
 
     def get_alignment_name(self, i, extension):
-
+        # get file name
         file_name = self.alignment_objects[i].get_name() + extension
         return file_name
 
     def write_concat(self, file_format):
-
+        # write concatenated alignment into a file
         concatenated_alignment = self.get_concatenated(self.parsed_alignments)[0]
         file_name = self.concat_out
         self.file_overwrite_error(file_name)
@@ -1140,37 +1138,37 @@ class MetaAlignment():
         print("Wrote concatenated sequences to " + file_format + " file '" + file_name + "'")
 
     def write_convert(self, index, alignment, file_format, extension):
-
+        # write converted alignment into a file
         file_name = self.get_alignment_name(index, extension)
         self.file_overwrite_error(file_name)        
+        self.write_formatted_file(file_format, file_name, alignment)
+
+    def write_replicate(self, index, alignment, file_format, extension):
+        # write replicate alignment into a file
+        file_name = "replicate" + str(index + 1) + "_" + str(self.no_loci) + "-loci" + extension
+        self.file_overwrite_error(file_name)                        
         self.write_formatted_file(file_format, file_name, alignment)
 
     def write_out(self, action, file_format):
         # write other output files depending on action 
         extension = self.get_extension(file_format)
 
-        if action == "concat":
-        
+        if action == "concat":        
             self.write_concat(file_format)    
 
-        elif action == "convert":
-        
+        elif action == "convert":        
             length = len(self.alignment_objects)
             [self.write_convert(i, alignment, file_format, extension) for i, alignment in enumerate(self.parsed_alignments)]
             print("Converted " + str(length) + " files from " + self.in_format + " to " + file_format)
 
         elif action == "replicate":
-
-            for i, alignment in enumerate(self.get_replicate(self.no_replicates, self.no_loci)):
-                file_name = "replicate" + str(i + 1) + "_" + str(self.no_loci) + "-loci" + extension
-                self.file_overwrite_error(file_name)                        
-                self.write_formatted_file(file_format, file_name, alignment)
+            [self.write_replicate(i, alignment, file_format, extension) \
+             for i, alignment in enumerate(self.get_replicate(self.no_replicates, self.no_loci))]
 
             print("Constructed " + str(self.no_replicates) + " replicate data sets, each from " \
              + str(self.no_loci) + " alignments")
 
         elif action == "split":
-
             list_of_alignments = self.get_partitioned(self.split)
 
             for i, item in enumerate(list_of_alignments):
