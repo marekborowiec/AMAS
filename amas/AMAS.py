@@ -236,7 +236,7 @@ Use AMAS <command> -h for help with arguments of the command of interest
         return args
 
     def get_args_dict(self):
-
+    # store arguments in a dictionary
         command = self.args.__dict__
         arguments = getattr(self, self.args.command)().__dict__
         argument_dictionary = command.copy()
@@ -318,17 +318,13 @@ class FileParser:
             self.in_file_lines, re.MULTILINE
         )
         # initiate lists for taxa names and sequence strings on separate lines
-        taxa = []
+        taxa = [match.group(2).replace("\n","") for match in name_matches]
         sequences = []
         # initiate a dictionary for the name:sequence records
         records = {}
         # initiate a counter to keep track of sequences strung together
         # from separate lines
         counter = 0
-        
-        for match in name_matches:
-            name_match = match.group(2).replace("\n","")
-            taxa.append(name_match)
 
         for match in seq_matches:
             seq_match = match.group(3).replace("\n","").upper()
@@ -785,16 +781,13 @@ class MetaAlignment():
         
         for partition in partitions:
             # loop over all parsed partitions, adding taxa and sliced sequences
-            for name, elements in partition.items():
-        
+            for name, elements in partition.items():    
                 new_dict = {}
          
                 for taxon, seq in alignment.items():
-         
                     new_seq = ""
          
                     for dictionary in elements:
-        
                         new_seq = new_seq + seq[dictionary["start"]:dictionary["stop"]:dictionary["stride"]]
                         new_dict[taxon] = new_seq
             # add partition name : dict of taxa and sequences to the list
@@ -1219,4 +1212,3 @@ def run():
 if __name__ == '__main__':
         
         main()
-
