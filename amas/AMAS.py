@@ -1149,8 +1149,16 @@ class MetaAlignment():
         self.file_overwrite_error(file_name)                        
         self.write_formatted_file(file_format, file_name, alignment)
 
+    def write_split(self, index, item, file_format, extension):
+        # write split alignments from partitions file
+        # bad practice with the dicts; figure out better solution
+        file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
+        alignment = list(item.values())[0]
+        self.file_overwrite_error(file_name)        
+        self.write_formatted_file(file_format, file_name, alignment)
+
     def write_out(self, action, file_format):
-        # write other output files depending on action 
+        # write other output files depending on command (action) 
         extension = self.get_extension(file_format)
 
         if action == "concat":        
@@ -1158,7 +1166,8 @@ class MetaAlignment():
 
         elif action == "convert":        
             length = len(self.alignment_objects)
-            [self.write_convert(i, alignment, file_format, extension) for i, alignment in enumerate(self.parsed_alignments)]
+            [self.write_convert(i, alignment, file_format, extension) \
+             for i, alignment in enumerate(self.parsed_alignments)]
             print("Converted " + str(length) + " files from " + self.in_format + " to " + file_format)
 
         elif action == "replicate":
@@ -1170,15 +1179,10 @@ class MetaAlignment():
 
         elif action == "split":
             list_of_alignments = self.get_partitioned(self.split)
-
-            for i, item in enumerate(list_of_alignments):
-            # bad practice with the dicts; figure out better solution
-                file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
-                alignment = list(item.values())[0]
-                self.file_overwrite_error(file_name)        
-                self.write_formatted_file(file_format, file_name, alignment)
-
-            print("Wrote " + str(i + 1) + " " + str(file_format) + " files from partitions provided")
+            length = len(list_of_alignments)
+            [self.write_split(i, item, file_format, extension) \
+             for i, item in enumerate(list_of_alignments)]
+            print("Wrote " + str(length) + " " + str(file_format) + " files from partitions provided")
 
 
 def main():
