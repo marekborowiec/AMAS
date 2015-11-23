@@ -1115,7 +1115,7 @@ class MetaAlignment():
         return extension
 
     def file_overwrite_error(self, file_name):
-
+    # print warning when overwriting a file
         if path.exists(file_name):
             print("WARNING: You are overwriting '" + file_name + "'")
 
@@ -1170,16 +1170,10 @@ class MetaAlignment():
 
         elif action == "replicate":
 
-            file_counter = 1
-
-            for alignment in self.get_replicate(self.no_replicates, self.no_loci):
-                file_name = "replicate" + str(file_counter) + "_" + str(self.no_loci) + "-loci" + extension
-
-                self.file_overwrite_error(file_name)        
-                
+            for i, alignment in enumerate(self.get_replicate(self.no_replicates, self.no_loci):
+                file_name = "replicate" + str(file_counter + 1) + "_" + str(self.no_loci) + "-loci" + extension
+                self.file_overwrite_error(file_name)                        
                 self.write_formatted_file(file_format, file_name, alignment)
-
-                file_counter += 1
 
             print("Constructed " + str(self.no_replicates) + " replicate data sets, each from " \
              + str(self.no_loci) + " alignments")
@@ -1187,20 +1181,15 @@ class MetaAlignment():
         elif action == "split":
 
             list_of_alignments = self.get_partitioned(self.split)
-            file_counter = 0
 
-            for item in list_of_alignments:
+            for i, item in enumerate(list_of_alignments):
             # bad practice with the dicts; figure out better solution
                 file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
                 alignment = list(item.values())[0]
-
                 self.file_overwrite_error(file_name)        
-                
                 self.write_formatted_file(file_format, file_name, alignment)
 
-                file_counter += 1
-
-            print("Wrote " + str(file_counter) + " " + str(file_format) + " files from partitions provided")
+            print("Wrote " + str(i + 1) + " " + str(file_format) + " files from partitions provided")
 
 
 def main():
@@ -1232,3 +1221,4 @@ def run():
 if __name__ == '__main__':
         
         main()
+
