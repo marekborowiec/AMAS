@@ -323,11 +323,11 @@ class FileParser:
         sequences = []
         # initiate a dictionary for the name:sequence records
         records = {}
-
+        add_to_sequences = sequences.append
         for counter, match in enumerate(seq_matches):
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
-            sequences.append(seq_match)
+            add_to_sequences(seq_match)
 
         for taxon_no in range(len(taxa)):
             sequence = ""
@@ -533,11 +533,12 @@ class Alignment:
         # get summary of frequencies for all characters
         characters = []
         counts = []
-        
+        add_to_chars = characters.append
+        add_to_counts = counts.append
         for item in self.get_counts():
             for char, count in item.items():
-                characters.append(str(char))
-                counts.append(str(count))
+                add_to_chars(str(char))
+                add_to_counts(str(count))
         return characters, counts
      
     def seq_grabber(self):
@@ -557,22 +558,24 @@ class Alignment:
         
     def all_same(self, site):
         # check if all elements of a site are the same
-        return all(base == site[0] for base in site)
-        
+         return not site or site.count(site[0]) == len(site)
+
     def get_sites_no_missing_ambiguous(self):
         # get each site without missing or ambiguous characters
-        no_missing_ambiguous_sites = []  
-        for column in range(self.get_alignment_length()):
-            site = self.get_column(column)
-            site = [char for char in site if char not in self.missing_ambiguous_chars]
-            no_missing_ambiguous_sites.append(site)
-        return no_missing_ambiguous_sites
+         no_missing_ambiguous_sites = []
+         add_to_no_mis_amb = no_missing_ambiguous_sites.append
+
+         for column in range(self.get_alignment_length()):
+             site = self.get_column(column)
+             new_site = [char for char in site if char not in self.missing_ambiguous_chars]
+             add_to_no_mis_amb(new_site)
+         return no_missing_ambiguous_sites
         
     def get_variable(self):
         # if all elements of a site without missing or ambiguous characters 
         # are not the same, consider it variable
         variable = len([site for site in self.no_missing_ambiguous \
-         if not self.all_same(site)])      
+         if not self.all_same(site)])
         return variable
     
     def get_parsimony_informative(self):
@@ -582,7 +585,6 @@ class Alignment:
         parsimony_informative = 0
         for site in self.no_missing_ambiguous:
             unique_chars = set(site)
-            
             pattern = [base for base in unique_chars if site.count(base) >= 2]
             no_patterns = len(pattern)
             
@@ -889,7 +891,7 @@ class MetaAlignment():
         # you need this to insert empty seqs in
         # the concatenated alignment
         all_taxa = []
-
+        taxa_append = all
         for alignment in alignments:
             for taxon in alignment.keys():
                 if taxon not in all_taxa:
