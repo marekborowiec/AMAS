@@ -319,27 +319,22 @@ class FileParser:
         )
         # initiate lists for taxa names and sequence strings on separate lines
         taxa = [match.group(2).replace("\n","") for match in name_matches]
+        print(taxa)
         sequences = []
         # initiate a dictionary for the name:sequence records
         records = {}
-        # initiate a counter to keep track of sequences strung together
-        # from separate lines
-        counter = 0
 
-        for match in seq_matches:
+        for counter, match in enumerate(seq_matches):
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             sequences.append(seq_match)
 
         for taxon_no in range(len(taxa)):
             sequence = ""
-
-            for index in range(counter,len(sequences),len(taxa)):
-                sequence += sequences[index] 
-           
+            sequence = [sequences[index] for index in range(counter,len(sequences),len(taxa))]
+            print(sequence)
             records[taxa[taxon_no]] = sequence
-            counter += 1 
-
+        print(records)
         return records
 
         
