@@ -308,7 +308,7 @@ class FileParser:
         return records    
 
     def phylip_interleaved_parse(self):
-        # use regex to parse names and sequences in interleaved phylip files
+    # use regex to parse names and sequences in interleaved phylip files
         name_matches = re.finditer(
             r"^(\s+)?(\S+)[ \t]+[A-Za-z*?.{}-]+",
             self.in_file_lines, re.MULTILINE
@@ -318,25 +318,32 @@ class FileParser:
             self.in_file_lines, re.MULTILINE
         )
         # initiate lists for taxa names and sequence strings on separate lines
-        taxa = [match.group(2).replace("\n","") for match in name_matches]
-        print(taxa)
+        taxa = []
         sequences = []
         # initiate a dictionary for the name:sequence records
         records = {}
+        # initiate a counter to keep track of sequences strung together
+        # from separate lines
+        counter = 0
+        
+        for match in name_matches:
+            name_match = match.group(2).replace("\n","")
+            taxa.append(name_match)
 
-        for counter, match in enumerate(seq_matches):
+        for match in seq_matches:
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             sequences.append(seq_match)
 
         for taxon_no in range(len(taxa)):
             sequence = ""
-            sequence = [sequences[index] for index in range(counter,len(sequences),len(taxa))]
-            print(sequence)
-            records[taxa[taxon_no]] = sequence
-        print(records)
-        return records
 
+            for index in range(counter,len(sequences),len(taxa)):
+                sequence += sequences[index] 
+           
+            records[taxa[taxon_no]] = sequence
+            counter += 1 
+        return records
         
     def nexus_parse(self):
         # use regex to parse names and sequences in sequential nexus files
