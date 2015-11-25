@@ -415,17 +415,18 @@ class FileParser:
     def translate_ambiguous(self, seq):
         # translate ambiguous characters from curly bracket format
         # to single letter format 
-        seq = seq.replace("{GT}","K")
-        seq = seq.replace("{AC}","M")
-        seq = seq.replace("{AG}","R")
-        seq = seq.replace("{CT}","Y")
-        seq = seq.replace("{CG}","S")
-        seq = seq.replace("{AT}","W")
-        seq = seq.replace("{CGT}","B")
-        seq = seq.replace("{ACG}","V")
-        seq = seq.replace("{ACT}","H")
-        seq = seq.replace("{AGT}","D")
-        seq = seq.replace("{GATC}","N")
+        if "{"  in seq and "}" in seq:
+            seq = seq.replace("{GT}","K")
+            seq = seq.replace("{AC}","M")
+            seq = seq.replace("{AG}","R")
+            seq = seq.replace("{CT}","Y")
+            seq = seq.replace("{CG}","S")
+            seq = seq.replace("{AT}","W")
+            seq = seq.replace("{CGT}","B")
+            seq = seq.replace("{ACG}","V")
+            seq = seq.replace("{ACT}","H")
+            seq = seq.replace("{AGT}","D")
+            seq = seq.replace("{GATC}","N")
         return seq
 
     def partitions_parse(self):
@@ -769,8 +770,8 @@ class MetaAlignment():
                 if equal is False:
                     print("ERROR: Sequences in input are of varying lengths. Be sure to align them first.")
                     sys.exit()
-            empty = len(list(parsed.keys()))
-            if empty == 0:
+
+            if not parsed.keys():
                 print("ERROR: Parsed sequences are empty. "\
                  "Are you sure you specified the right input format and/or that all input files are valid alignments?")
                 sys.exit()
