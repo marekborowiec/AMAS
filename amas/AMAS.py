@@ -1184,6 +1184,7 @@ class MetaAlignment():
              + str(self.no_loci) + " alignments")
 
         elif action == "split":
+
             list_of_alignments = self.get_partitioned(self.split)
             length = len(list_of_alignments)
             [self.write_split(i, item, file_format, extension) \
