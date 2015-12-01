@@ -79,8 +79,6 @@ python3 AMAS.py concat -f fasta -d aa -i *phy -u nexus
 ```
 Alignments to be concatenated need not have identical sets of taxa before processing: the concatenated alignment will be populated with missing data where a given locus is missing a taxon. However, if every file to be concatenated includes only unique names (for example species name plus sequence name: `D_melanogaster_NW_001845408.1` in one alignment, `D_melanogaster_NW_001848855.1` in other alignment etc.), you will first need to trim those names so that sequences from one taxon have equivalents in all files.   
 
-Note that it takes `AMAS` longer to write an interleaved file than a sequential one, which may be an issue if you are concatenating to a large alignment on a laptop or an older desktop computer.
-
 ### Getting alignment statistics
 This is an example of how you can summarize two protein fasta alignments by running:
 ```

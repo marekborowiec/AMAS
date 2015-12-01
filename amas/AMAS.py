@@ -1016,23 +1016,26 @@ class MetaAlignment():
         seq_length = len(next(iter(source_dict.values())))
         header = str(len(source_dict)) + " " + str(seq_length)
         phylip_int_string = header + "\n\n"
-        seq = []
+        # this will be a list of tuples to hold taxa names and sequences
+        seq_matrix = []
         
         # each sequence line will have 500 characters
         n = 500
         
+        # recreate sequence matrix
+        add_to_matrix = seq_matrix.append
         for taxon, seq in sorted(source_dict.items()):
-            seq = [seq[i:i+n] for i in range(0, len(seq), n)]
-            taxon = taxon.replace(" ","_").strip("'")
-            phylip_int_string += taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
-        phylip_int_string += "\n"
+            add_to_matrix((taxon, [seq[i:i+n] for i in range(0, len(seq), n)]))
 
-        for element in range(len(seq[1:])):
-            for taxon, seq in sorted(source_dict.items()):
-                seq = [seq[i:i+n] for i in range(0, len(seq), n)]
-                phylip_int_string += seq[element + 1] + "\n"
+        first_seq = seq_matrix[0][1]
+        for index, item in enumerate(first_seq):
+            for taxon, sequence in seq_matrix:
+                if index == 0:
+                    phylip_int_string += taxon.ljust(pad_longest_name, ' ') + sequence[index] + "\n"
+                else:
+                    phylip_int_string += sequence[index] + "\n"
             phylip_int_string += "\n"
-
+         
         return phylip_int_string
 
     def print_nexus(self, source_dict):
@@ -1071,8 +1074,8 @@ class MetaAlignment():
         pad_longest_name = len(max(taxa_list, key=len)) + 3
         seq_length = len(next(iter(source_dict.values())))
         header = str(len(source_dict)) + " " + str(seq_length)
-        # create empty list for seq fragments
-        seq = []
+        # this will be a list of tuples to hold taxa names and sequences
+        seq_matrix = []
         
         nexus_int_string = "#NEXUS\n\nBEGIN DATA;\n\tDIMENSIONS  NTAX=" +\
          str(no_taxa) + " NCHAR=" + str(seq_length) + ";\n\tFORMAT   INTERLEAVE" +\
@@ -1080,21 +1083,18 @@ class MetaAlignment():
 
         n = 500
         
-        # first need to create list of seq strings chunks n characters-long
+        # recreate sequence matrix
+        add_to_matrix = seq_matrix.append
         for taxon, seq in sorted(source_dict.items()):
-            seq = [seq[i:i+n] for i in range(0, len(seq), n)]
-            taxon = taxon.replace(" ","_").strip("'")
-            nexus_int_string += "\t" + taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
+            add_to_matrix((taxon, [seq[i:i+n] for i in range(0, len(seq), n)]))
 
-        nexus_int_string += "\n"
-
-        # now use the length of that initial seq list to loop over
-        # for each taxon and sequence
-        for element in range(len(seq[1:])):
-            for taxon, seq in sorted(source_dict.items()):
-                seq = [seq[i:i+n] for i in range(0, len(seq), n)]
-                nexus_int_string += "\t" + taxon.ljust(pad_longest_name, ' ') +\
-                 seq[element + 1] + "\n"
+        first_seq = seq_matrix[0][1]
+        for index, item in enumerate(first_seq):
+            for taxon, sequence in seq_matrix:
+                if index == 0:
+                    nexus_int_string += taxon.ljust(pad_longest_name, ' ') + sequence[index] + "\n"
+                else:
+                    nexus_int_string += sequence[index] + "\n"
             nexus_int_string += "\n"
 
         nexus_int_string += "\n;\n\nEND;"
