@@ -412,6 +412,7 @@ class FileParser:
             records[taxa[taxon_no]] = full_length_sequence
 
         return records
+
     def translate_ambiguous(self, seq):
         # translate ambiguous characters from curly bracket format
         # to single letter format 
