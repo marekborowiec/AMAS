@@ -442,6 +442,7 @@ class FileParser:
                 sys.exit()
 
         return records
+
     def translate_ambiguous(self, seq):
         # translate ambiguous characters from curly bracket format
         # to single letter format 
@@ -657,17 +658,20 @@ class Alignment:
     # count all matrix cells
         self.all_matrix_cells = len(self.list_of_seqs) \
          * len(self.list_of_seqs[0])
+
         return self.all_matrix_cells
 
     def get_missing_percent(self):
         # get missing percent
         missing_percent = round((self.missing / self.all_matrix_cells * 100), 3)
+
         return missing_percent
         
     def get_missing(self):
         # count missing characters from the list of missing
         self.missing = sum(sum(seq.count(char) for seq in self.list_of_seqs) \
          for char in self.missing_chars)
+
         return self.missing
     
     def get_counts(self):
@@ -677,6 +681,7 @@ class Alignment:
         for char in self.alphabet:
             count = sum(seq.count(char) for seq in self.list_of_seqs)
             add_to_counts({char : count})
+
         return counts
 
     def check_data_type(self):
@@ -736,6 +741,7 @@ class DNAAlignment(Alignment):
         gc_content = str(round(1 - float(at_content), 3))
         
         atgc_content.extend((at_content, gc_content))
+
         return atgc_content
 
 class MetaAlignment():
@@ -784,6 +790,7 @@ class MetaAlignment():
         elif int(self.cores) > 1:
             pool = mp.Pool(int(self.cores))
             alignments = pool.map(self.get_alignment_object, self.in_files)
+
         return alignments
 
     def get_parsed_alignments(self):
