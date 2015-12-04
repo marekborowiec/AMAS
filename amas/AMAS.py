@@ -382,9 +382,6 @@ class FileParser:
         sequences = []
         # initiate a dictionary for the name:sequence records
         records = {}
-        # initiate a counter to keep track of sequences strung together
-        # from separate lines
-        counter = 0
 
         for match in matches:
             matrix_match = match.group(3)
@@ -395,21 +392,22 @@ class FileParser:
             )
 
             for match in seq_matches:
-                name_match = match.group(2).replace("\n","")
+                name_match = match.group(2)
                 if name_match not in taxa:
                     taxa.append(name_match)
-                seq_match = match.group(3).replace("\n","").upper()
-                seq_match = self.translate_ambiguous(seq_match)
+                seq_match = match.group(3)
+                
                 sequences.append(seq_match)
+
+        # initiate a counter to keep track of sequences strung together
+        # from separate lines
+        counter = 0
 
         for taxon_no in range(len(taxa)):
 
-            full_length_sequence = ""
-            for index in range(counter,len(sequences),len(taxa)):
-                full_length_sequence += sequences[index]
-            
+            full_length_sequence = "".join([sequences[index] for index in range(counter,len(sequences),len(taxa))])    
+            records[taxa[taxon_no]] = self.translate_ambiguous(full_length_sequence).replace("\n","").upper()
             counter += 1 
-            records[taxa[taxon_no]] = full_length_sequence
 
         return records
 
