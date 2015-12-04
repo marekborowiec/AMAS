@@ -287,12 +287,6 @@ class FileParser:
             seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
 
-        empty = len(list(records.keys()))
-        if empty == 0:
-            print("ERROR: Parsed sequences are empty. "\
-             "Are you sure you specified the right input format and/or that all input files are valid alignments?")
-            sys.exit()
-
         return records
     
     def phylip_parse(self):
@@ -309,12 +303,6 @@ class FileParser:
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             records[name_match] = seq_match
-
-        empty = len(list(records.keys()))
-        if empty == 0:
-            print("ERROR: Parsed sequences are empty. "\
-             "Are you sure you specified the right input format and/or that all input files are valid alignments?")
-            sys.exit()
 
         return records    
 
@@ -354,12 +342,6 @@ class FileParser:
             records[taxa[taxon_no]] = sequence
             counter += 1 
 
-        empty = len(list(records.keys()))
-        if empty == 0:
-            print("ERROR: Parsed sequences are empty. "\
-             "Are you sure you specified the right input format and/or that all input files are valid alignments?")
-            sys.exit()
-
         return records
         
     def nexus_parse(self):
@@ -385,12 +367,6 @@ class FileParser:
                 seq_match = match.group(3).replace("\n","").upper()
                 seq_match = self.translate_ambiguous(seq_match)
                 records[name_match] = seq_match
-
-        empty = len(list(records.keys()))
-        if empty == 0:
-            print("ERROR: Parsed sequences are empty. "\
-             "Are you sure you specified the right input format and/or that all input files are valid alignments?")
-            sys.exit()
 
         return records
         
@@ -435,14 +411,7 @@ class FileParser:
             counter += 1 
             records[taxa[taxon_no]] = full_length_sequence
 
-            empty = len(list(records.keys()))
-            if empty == 0:
-                print("ERROR: Parsed sequences are empty. "\
-                 "Are you sure you specified the right input format and/or that all input files are valid alignments?")
-                sys.exit()
-
         return records
-
     def translate_ambiguous(self, seq):
         # translate ambiguous characters from curly bracket format
         # to single letter format 
@@ -658,20 +627,17 @@ class Alignment:
     # count all matrix cells
         self.all_matrix_cells = len(self.list_of_seqs) \
          * len(self.list_of_seqs[0])
-
         return self.all_matrix_cells
 
     def get_missing_percent(self):
         # get missing percent
         missing_percent = round((self.missing / self.all_matrix_cells * 100), 3)
-
         return missing_percent
         
     def get_missing(self):
         # count missing characters from the list of missing
         self.missing = sum(sum(seq.count(char) for seq in self.list_of_seqs) \
          for char in self.missing_chars)
-
         return self.missing
     
     def get_counts(self):
@@ -681,7 +647,6 @@ class Alignment:
         for char in self.alphabet:
             count = sum(seq.count(char) for seq in self.list_of_seqs)
             add_to_counts({char : count})
-
         return counts
 
     def check_data_type(self):
@@ -741,7 +706,6 @@ class DNAAlignment(Alignment):
         gc_content = str(round(1 - float(at_content), 3))
         
         atgc_content.extend((at_content, gc_content))
-
         return atgc_content
 
 class MetaAlignment():
@@ -790,7 +754,6 @@ class MetaAlignment():
         elif int(self.cores) > 1:
             pool = mp.Pool(int(self.cores))
             alignments = pool.map(self.get_alignment_object, self.in_files)
-
         return alignments
 
     def get_parsed_alignments(self):
@@ -805,7 +768,7 @@ class MetaAlignment():
                 equal = all(x == [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))][0] 
                  for x in [len(list(parsed.values())[i]) for i in range(0,len(list(parsed.values())))])
                 if equal is False:
-                    print("ERROR: Sequences in input are of varying lengths. Make sure to align them first and specify the correct inpur format with '-f'.")
+                    print("ERROR: Sequences in input are of varying lengths. Be sure to align them first.")
                     sys.exit()
 
             if not parsed.keys():
@@ -1023,26 +986,23 @@ class MetaAlignment():
         seq_length = len(next(iter(source_dict.values())))
         header = str(len(source_dict)) + " " + str(seq_length)
         phylip_int_string = header + "\n\n"
-        # this will be a list of tuples to hold taxa names and sequences
-        seq_matrix = []
+        seq = []
         
         # each sequence line will have 500 characters
         n = 500
         
-        # recreate sequence matrix
-        add_to_matrix = seq_matrix.append
         for taxon, seq in sorted(source_dict.items()):
-            add_to_matrix((taxon, [seq[i:i+n] for i in range(0, len(seq), n)]))
+            seq = [seq[i:i+n] for i in range(0, len(seq), n)]
+            taxon = taxon.replace(" ","_").strip("'")
+            phylip_int_string += taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
+        phylip_int_string += "\n"
 
-        first_seq = seq_matrix[0][1]
-        for index, item in enumerate(first_seq):
-            for taxon, sequence in seq_matrix:
-                if index == 0:
-                    phylip_int_string += taxon.ljust(pad_longest_name, ' ') + sequence[index] + "\n"
-                else:
-                    phylip_int_string += sequence[index] + "\n"
+        for element in range(len(seq[1:])):
+            for taxon, seq in sorted(source_dict.items()):
+                seq = [seq[i:i+n] for i in range(0, len(seq), n)]
+                phylip_int_string += seq[element + 1] + "\n"
             phylip_int_string += "\n"
-         
+
         return phylip_int_string
 
     def print_nexus(self, source_dict):
@@ -1081,8 +1041,8 @@ class MetaAlignment():
         pad_longest_name = len(max(taxa_list, key=len)) + 3
         seq_length = len(next(iter(source_dict.values())))
         header = str(len(source_dict)) + " " + str(seq_length)
-        # this will be a list of tuples to hold taxa names and sequences
-        seq_matrix = []
+        # create empty list for seq fragments
+        seq = []
         
         nexus_int_string = "#NEXUS\n\nBEGIN DATA;\n\tDIMENSIONS  NTAX=" +\
          str(no_taxa) + " NCHAR=" + str(seq_length) + ";\n\tFORMAT   INTERLEAVE" +\
@@ -1090,18 +1050,21 @@ class MetaAlignment():
 
         n = 500
         
-        # recreate sequence matrix
-        add_to_matrix = seq_matrix.append
+        # first need to create list of seq strings chunks n characters-long
         for taxon, seq in sorted(source_dict.items()):
-            add_to_matrix((taxon, [seq[i:i+n] for i in range(0, len(seq), n)]))
+            seq = [seq[i:i+n] for i in range(0, len(seq), n)]
+            taxon = taxon.replace(" ","_").strip("'")
+            nexus_int_string += "\t" + taxon.ljust(pad_longest_name, ' ') + seq[0] + "\n"
 
-        first_seq = seq_matrix[0][1]
-        for index, item in enumerate(first_seq):
-            for taxon, sequence in seq_matrix:
-                if index == 0:
-                    nexus_int_string += taxon.ljust(pad_longest_name, ' ') + sequence[index] + "\n"
-                else:
-                    nexus_int_string += sequence[index] + "\n"
+        nexus_int_string += "\n"
+
+        # now use the length of that initial seq list to loop over
+        # for each taxon and sequence
+        for element in range(len(seq[1:])):
+            for taxon, seq in sorted(source_dict.items()):
+                seq = [seq[i:i+n] for i in range(0, len(seq), n)]
+                nexus_int_string += "\t" + taxon.ljust(pad_longest_name, ' ') +\
+                 seq[element + 1] + "\n"
             nexus_int_string += "\n"
 
         nexus_int_string += "\n;\n\nEND;"
