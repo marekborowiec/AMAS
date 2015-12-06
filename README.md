@@ -28,6 +28,7 @@ The AMAS commands are:
   replicate   Create replicate data sets for phylogenetic jackknife
   split       Split alignment according to a partitions file
   summary     Write alignment summary
+  remove      Remove taxa from alignment
 
 Use AMAS <command> -h for help with arguments of the command of interest
 
@@ -115,6 +116,13 @@ With `AMAS` you can create concatenated alignments from a proportion of randomly
 ```
 python3 AMAS.py replicate -r 200 100 -d dna -f phylip -i *phy -u phylip
 ```
+### Removing taxa/sequences from alignment
+It is possible to remove taxa from alignments:
+```
+python3 AMAS.py remove -x species1 species2 -d dna -f nexus -i *nex -u nexus-int -g no_species12_ 
+```
+The above will process all `nexus` files in the directory and remove taxa called `species1` and `species2`. The argument `-x` (the same as `--taxa-to-remove`) is followed by the names of sequences to be removed. Note that `AMAS` converts spaces into underscores and strips any quotes present in input sequence names before processing, so you may need to modify your names to remove accordingly. The argument `-g` (the same as `--out-prefix`) specifies a prefix to be added to output file names. The default prefix is 'reduced_'. You may want to realign your files after taxon removal.
+  
 ### Checking if input is aligned
 By specifying optional argument `-e` (`--check-align`), you can make `AMAS` check if your input files contain only aligned sequences. This option is disabled by default because it can substantially increase computation times in files with many taxa. Enabling this option also provides an additional check against misspecified input file format.
 
