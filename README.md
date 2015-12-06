@@ -102,7 +102,7 @@ If you have a partition file, you can split a concatenated alignment and write a
 ```
 python3 AMAS.py split -f nexus -d dna -i concat.nex -l partitions.txt -u nexus
 ```
-In the above one input file `concat.nex` was provided for splitting with `split` and partitions file `partitions.txt` with `-l` (same as `--split-file`). For splitting you should only use one input and one partition file at a time. This is an example partition file:
+In the above one input file `concat.nex` was provided for splitting with `split` and partitions file `partitions.txt` with `-l` (same as `--split-by`). For splitting you should only use one input and one partition file at a time. This is an example partition file:
 ```
   AApos1&2  =  1-604\3, 2-605\3
   AApos3  =  3-606\3
