@@ -49,6 +49,7 @@ The AMAS commands are:
   replicate   Create replicate data sets for phylogenetic jackknife
   split       Split alignment according to a partitions file
   summary     Write alignment summary
+  remove      Remove taxa from alignment
 
 Use AMAS <command> -h for help with arguments of the command of interest
 '''
@@ -229,11 +230,29 @@ Use AMAS <command> -h for help with arguments of the command of interest
             choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
             default = "fasta",
             help = "File format for the output alignment. Default: fasta"
-        ) 
+        )
         # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
         return args
+
+    def remove(self):
+        # remove taxa command
+        parser = argparse.ArgumentParser(
+            description="Remove taxa from alignment",
+        )
+        parser.add_argument(
+            "-x",
+            "--taxa-to-remove",
+            dest = "taxa_to_remove",
+            help = "Taxon/sequence names to be removed.",
+            required = True
+        )
+        # add shared arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
 
     def get_args_dict(self):
     # store arguments in a dictionary
