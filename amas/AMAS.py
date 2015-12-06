@@ -250,6 +250,14 @@ Use AMAS <command> -h for help with arguments of the command of interest
             help = "Taxon/sequence names to be removed.",
             required = True
         )
+        parser.add_argument(
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            default = "fasta",
+            help = "File format for the output alignment. Default: fasta"
+        )
         # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
@@ -754,13 +762,14 @@ class MetaAlignment():
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()        
 
-    def remove_taxa(self, species_to_remove):
+    def remove_taxa(self, alignment, species_to_remove):
         # remove taxa from alignment
-        if taxon not in alignment.keys():
-            print("ERROR: taxon " + taxon + " not found. Make sure to replace all taxon name spaces with underscores and that you are not using quotes.)
-            sys.exit()
-        else:
-            new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove}
+        for taxon in species_to_remove:
+            if taxon not in alignment.keys():
+                print("ERROR: Taxon '" + taxon + "' not found. Make sure to replace all taxon name spaces with underscores and that you are not using quotes.")
+                sys.exit()
+            else:
+                new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove}
 
         return new_alignment
 
@@ -1198,9 +1207,10 @@ class MetaAlignment():
 
     def write_reduced(self, index, alignment, file_format, extension):
         # write alignment with taxa removed into a file
+        reduced_alignment = self.remove_taxa(alignment, self.species_to_remove)
         file_name = "reduced_" + self.get_alignment_name(index, extension)
-        self.file_overwrite_error(file_name)                        
-        self.write_formatted_file(file_format, file_name, alignment)
+        self.file_overwrite_error(file_name)             
+        self.write_formatted_file(file_format, file_name, reduced_alignment)
 
     def write_out(self, action, file_format):
         # write other output files depending on command (action) 
@@ -1230,7 +1240,8 @@ class MetaAlignment():
             print("Wrote " + str(length) + " " + str(file_format) + " files from partitions provided")
 
         elif action == "remove":
-            list_of_alignments = self.get_partitioned()
+            list_of_alignments = self.parsed_alignments
+            length = len(list_of_alignments)
             [self.write_reduced(i, item, file_format, extension) \
              for i, item in enumerate(list_of_alignments)]
             print("Wrote " + str(length) + " " + str(file_format) + " files with reduced taxon set")
