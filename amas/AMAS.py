@@ -260,8 +260,8 @@ Use AMAS <command> -h for help with arguments of the command of interest
         )
         parser.add_argument(
             "-g",
-            "--out-file",
-            dest = "file_out",
+            "--out-prefix",
+            dest = "out_prefix",
             default = "reduced_",
             help = "File name prefix for the concatenated alignment. Default: 'reduced_'"
         )
@@ -765,7 +765,7 @@ class MetaAlignment():
 
         if self.command == "remove":
             self.species_to_remove = kwargs.get("taxa_to_remove")
-            self.reduced_file_prefix = kwargs.get("file_out")
+            self.reduced_file_prefix = kwargs.get("out_prefix")
 
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()        
