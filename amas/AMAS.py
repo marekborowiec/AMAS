@@ -217,8 +217,8 @@ Use AMAS <command> -h for help with arguments of the command of interest
         )
         parser.add_argument(
             "-l",
-            "--split-file",
-            dest = "split_file",
+            "--split-by",
+            dest = "split_by",
             help = "File name for partitions to be used for alignment splitting.",
             required = True
         )
@@ -725,7 +725,7 @@ class MetaAlignment():
             self.no_loci = kwargs.get("replicate_args")[1]
 
         if self.command == "split":
-            self.split = kwargs.get("split_file")
+            self.split = kwargs.get("split_by")
        
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()           
