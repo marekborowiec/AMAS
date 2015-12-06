@@ -258,6 +258,13 @@ Use AMAS <command> -h for help with arguments of the command of interest
             default = "fasta",
             help = "File format for the output alignment. Default: fasta"
         )
+        parser.add_argument(
+            "-g",
+            "--out-file",
+            dest = "file_out",
+            default = "reduced_",
+            help = "File name prefix for the concatenated alignment. Default: 'reduced_'"
+        )
         # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
@@ -758,6 +765,7 @@ class MetaAlignment():
 
         if self.command == "remove":
             self.species_to_remove = kwargs.get("taxa_to_remove")
+            self.reduced_file_prefix = kwargs.get("file_out")
 
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()        
@@ -1208,7 +1216,7 @@ class MetaAlignment():
     def write_reduced(self, index, alignment, file_format, extension):
         # write alignment with taxa removed into a file
         reduced_alignment = self.remove_taxa(alignment, self.species_to_remove)
-        file_name = "reduced_" + self.get_alignment_name(index, extension)
+        file_name = self.reduced_file_prefix + self.get_alignment_name(index, extension)
         self.file_overwrite_error(file_name)             
         self.write_formatted_file(file_format, file_name, reduced_alignment)
 
