@@ -244,6 +244,8 @@ Use AMAS <command> -h for help with arguments of the command of interest
         parser.add_argument(
             "-x",
             "--taxa-to-remove",
+            nargs = "+",
+            type = str,
             dest = "taxa_to_remove",
             help = "Taxon/sequence names to be removed.",
             required = True
@@ -745,9 +747,22 @@ class MetaAlignment():
 
         if self.command == "split":
             self.split = kwargs.get("split_by")
-       
+
+        if self.command == "remove":
+            self.species_to_remove = kwargs.get("taxa_to_remove")
+
         self.alignment_objects = self.get_alignment_objects()
-        self.parsed_alignments = self.get_parsed_alignments()           
+        self.parsed_alignments = self.get_parsed_alignments()        
+
+    def remove_taxa(self, species_to_remove):
+        # remove taxa from alignment
+        if taxon not in alignment.keys():
+            print("ERROR: taxon " + taxon + " not found. Make sure to replace all taxon name spaces with underscores and that you are not using quotes.)
+            sys.exit()
+        else:
+            new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove}
+
+        return new_alignment
 
     def get_partitions(self, partitions_file):
         # parse and get partitions from partitions file 
@@ -1181,6 +1196,12 @@ class MetaAlignment():
         self.file_overwrite_error(file_name)        
         self.write_formatted_file(file_format, file_name, alignment)
 
+    def write_reduced(self, index, alignment, file_format, extension):
+        # write alignment with taxa removed into a file
+        file_name = "reduced_" + self.get_alignment_name(index, extension)
+        self.file_overwrite_error(file_name)                        
+        self.write_formatted_file(file_format, file_name, alignment)
+
     def write_out(self, action, file_format):
         # write other output files depending on command (action) 
         extension = self.get_extension(file_format)
@@ -1202,13 +1223,17 @@ class MetaAlignment():
              + str(self.no_loci) + " alignments")
 
         elif action == "split":
-
             list_of_alignments = self.get_partitioned(self.split)
             length = len(list_of_alignments)
             [self.write_split(i, item, file_format, extension) \
              for i, item in enumerate(list_of_alignments)]
             print("Wrote " + str(length) + " " + str(file_format) + " files from partitions provided")
 
+        elif action == "remove":
+            list_of_alignments = self.get_partitioned()
+            [self.write_reduced(i, item, file_format, extension) \
+             for i, item in enumerate(list_of_alignments)]
+            print("Wrote " + str(length) + " " + str(file_format) + " files with reduced taxon set")
 
 def main():
     
@@ -1227,6 +1252,8 @@ def main():
         meta_aln.write_out("replicate", kwargs["out_format"])
     if meta_aln.command == "split":
         meta_aln.write_out("split", kwargs["out_format"])
+    if meta_aln.command == "remove":
+        meta_aln.write_out("remove", kwargs["out_format"])
   
 def run():
 
