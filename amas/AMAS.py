@@ -781,7 +781,7 @@ class MetaAlignment():
 
     def remove_unknown_chars(self, seq):
         # remove unknown characters from sequence
-        new_seq = seq.replace("?", "")
+        new_seq = seq.replace("?","").replace("-","")
         
         return new_seq
 
