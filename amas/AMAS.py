@@ -224,6 +224,14 @@ Use AMAS <command> -h for help with arguments of the command of interest
             required = True
         )
         parser.add_argument(
+            "-j",
+            "--remove-empty",
+            dest = "remove_empty",
+            action = "store_true",
+            default = False,
+            help = "Remove taxa with sequences composed of only undetermined characters? Default: Don't remove"
+        )
+        parser.add_argument(
             "-u",
             "--out-format",
             dest = "out_format",
@@ -450,18 +458,18 @@ class FileParser:
     def translate_ambiguous(self, seq):
         # translate ambiguous characters from curly bracket format
         # to single letter format 
-        if "{"  in seq and "}" in seq:
-            seq = seq.replace("{GT}","K")
-            seq = seq.replace("{AC}","M")
-            seq = seq.replace("{AG}","R")
-            seq = seq.replace("{CT}","Y")
-            seq = seq.replace("{CG}","S")
-            seq = seq.replace("{AT}","W")
-            seq = seq.replace("{CGT}","B")
-            seq = seq.replace("{ACG}","V")
-            seq = seq.replace("{ACT}","H")
-            seq = seq.replace("{AGT}","D")
-            seq = seq.replace("{GATC}","N")
+        seq = seq.replace("{GT}","K")
+        seq = seq.replace("{AC}","M")
+        seq = seq.replace("{AG}","R")
+        seq = seq.replace("{CT}","Y")
+        seq = seq.replace("{CG}","S")
+        seq = seq.replace("{AT}","W")
+        seq = seq.replace("{CGT}","B")
+        seq = seq.replace("{ACG}","V")
+        seq = seq.replace("{ACT}","H")
+        seq = seq.replace("{AGT}","D")
+        seq = seq.replace("{GATC}","N")
+
         return seq
 
     def partitions_parse(self):
@@ -762,22 +770,24 @@ class MetaAlignment():
 
         if self.command == "split":
             self.split = kwargs.get("split_by")
+            self.remove_empty = kwargs.get("remove_empty", False)
 
         if self.command == "remove":
             self.species_to_remove = kwargs.get("taxa_to_remove")
             self.reduced_file_prefix = kwargs.get("out_prefix")
 
         self.alignment_objects = self.get_alignment_objects()
-        self.parsed_alignments = self.get_parsed_alignments()        
+        self.parsed_alignments = self.get_parsed_alignments()
 
-    def remove_taxa(self, alignment, species_to_remove):
-        # remove taxa from alignment
-        for taxon in species_to_remove:
-            if taxon not in alignment.keys():
-                print("ERROR: Taxon '" + taxon + "' not found. Make sure to replace all taxon name spaces with underscores and that you are not using quotes.")
-                sys.exit()
-            else:
-                new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove}
+    def remove_unknown_chars(self, seq):
+        # remove unknown characters from sequence
+        new_seq = seq.replace("?", "")
+        
+        return new_seq
+
+    def remove_empty_sequences(self, split_alignment):
+        # remove taxa from alignment if they are composed of only empty sequences
+        new_alignment = {taxon : seq for taxon, seq in split_alignment.items() if self.remove_unknown_chars(seq)}
 
         return new_alignment
 
@@ -847,8 +857,14 @@ class MetaAlignment():
                     for dictionary in elements:
                         new_seq = new_seq + seq[dictionary["start"]:dictionary["stop"]:dictionary["stride"]]
                         new_dict[taxon] = new_seq
+
+            if self.remove_empty:
+            # check if remove empty sequences
+                no_empty_dict = self.remove_empty_sequences(new_dict)  
+                add_to_list_of_parts({name : no_empty_dict})
+            else:
             # add partition name : dict of taxa and sequences to the list
-            add_to_list_of_parts({name : new_dict})
+                add_to_list_of_parts({name : new_dict})
     
         return list_of_parts
 
@@ -993,6 +1009,17 @@ class MetaAlignment():
         concatenated = {taxon:''.join(seqs) for taxon, seqs in concatenated.items()}
         
         return concatenated, partitions
+
+    def remove_taxa(self, alignment, species_to_remove):
+        # remove taxa from alignment
+        for taxon in species_to_remove:
+            if taxon not in alignment.keys():
+                print("ERROR: Taxon '" + taxon + "' not found. Make sure to replace all taxon name spaces with underscores and that you are not using quotes.")
+                sys.exit()
+            else:
+                new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove}
+
+        return new_alignment
 
     def print_fasta(self, source_dict):
         # print fasta-formatted string from a dictionary        
