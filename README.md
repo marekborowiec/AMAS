@@ -189,6 +189,11 @@ concat_tuple = multi_meta_aln.get_concatenated(parsed_alns)
 concatenated_alignments = concat_tuple[0]
 concatenated_partitions = concat_tuple[1]
 ```
+Removing taxa from alignments is very easy:
+```python
+spp_to_remove = ["taxon1", "taxon2", "taxon3"]
+reduced_alns = multi_meta_aln.remove_taxa(spp_to_remove)
+```
 To print to file or convert among file formats use one of the `.print_format(parsed_alignment)` methods called with a parsed dictionary as an argument. These methods include `.print_fasta()`, `.print_nexus()`, `.print_nexus_int()`, `print_phylip()`, and `.print_phylip_int()`. They return an apporpriately formatted string.
 ```python
 for alignment in concatenated_alignments:
