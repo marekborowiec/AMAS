@@ -775,6 +775,7 @@ class MetaAlignment():
         if self.command == "remove":
             self.species_to_remove = kwargs.get("taxa_to_remove")
             self.reduced_file_prefix = kwargs.get("out_prefix")
+            self.check_taxa = kwargs.get("check_taxa", False)
 
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()
@@ -1010,14 +1011,13 @@ class MetaAlignment():
         
         return concatenated, partitions
 
-    def remove_taxa(self, alignment, species_to_remove):
+    def remove_taxa(self, alignment, species_to_remove, index):
         # remove taxa from alignment
         for taxon in species_to_remove:
             if taxon not in alignment.keys():
-                print("ERROR: Taxon '" + taxon + "' not found. Make sure to replace all taxon name spaces with underscores and that you are not using quotes.")
-                sys.exit()
-            else:
-                new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove}
+                print("WARNING: Taxon '" + taxon + "' not found in '" + self.get_alignment_name_no_ext(index) + "'. Make sure to replace all taxon name spaces with underscores and that you are not using quotes.")
+
+            new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove}
 
         return new_alignment
 
@@ -1209,6 +1209,13 @@ class MetaAlignment():
     def get_alignment_name(self, i, extension):
         # get file name
         file_name = self.alignment_objects[i].get_name() + extension
+
+        return file_name
+
+    def get_alignment_name_no_ext(self, i):
+        # get file name without extension
+        file_name = self.alignment_objects[i].get_name()
+
         return file_name
 
     def write_concat(self, file_format):
@@ -1222,7 +1229,7 @@ class MetaAlignment():
 
     def write_convert(self, index, alignment, file_format, extension):
         # write converted alignment into a file
-        file_name = self.get_alignment_name(index, extension)
+        file_name = self.get_alignment_name(index)
         self.file_overwrite_error(file_name)        
         self.write_formatted_file(file_format, file_name, alignment)
 
@@ -1242,7 +1249,7 @@ class MetaAlignment():
 
     def write_reduced(self, index, alignment, file_format, extension):
         # write alignment with taxa removed into a file
-        reduced_alignment = self.remove_taxa(alignment, self.species_to_remove)
+        reduced_alignment = self.remove_taxa(alignment, self.species_to_remove, index)
         file_name = self.reduced_file_prefix + self.get_alignment_name(index, extension)
         self.file_overwrite_error(file_name)             
         self.write_formatted_file(file_format, file_name, reduced_alignment)
