@@ -967,7 +967,6 @@ class MetaAlignment():
         # you need this to insert empty seqs in
         # the concatenated alignment
         all_taxa = []
-        taxa_append = all
         for alignment in alignments:
             for taxon in alignment.keys():
                 if taxon not in all_taxa:
@@ -1011,15 +1010,26 @@ class MetaAlignment():
         
         return concatenated, partitions
 
-    def remove_taxa(self, alignment, species_to_remove, index):
+    def remove_from_alignment(self, alignment, species_to_remove, index):
         # remove taxa from alignment
+        aln_name = self.get_alignment_name_no_ext(index)
         for taxon in species_to_remove:
             if taxon not in alignment.keys():
-                print("WARNING: Taxon '" + taxon + "' not found in '" + self.get_alignment_name_no_ext(index) + "'. Make sure to replace all taxon name spaces with underscores and that you are not using quotes.")
+                print("WARNING: Taxon '" + taxon + "' not found in '" + aln_name + "'.\nIf you expected it to be there, make sure to replace all taxon name spaces with underscores and that you are not using quotes.")
 
             new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove}
 
-        return new_alignment
+            aln_tuple = (aln_name, new_alignment)
+
+        return aln_tuple
+
+    def remove_taxa(self, species_to_remove):
+        new_alns = {}
+        for index, alignment in enumerate(self.parsed_alignments):
+            aln_name, aln_dict = self.remove_from_alignment(alignment, species_to_remove, index)
+            new_alns[aln_name] = aln_dict
+
+        return new_alns
 
     def print_fasta(self, source_dict):
         # print fasta-formatted string from a dictionary        
@@ -1247,12 +1257,14 @@ class MetaAlignment():
         self.file_overwrite_error(file_name)        
         self.write_formatted_file(file_format, file_name, alignment)
 
-    def write_reduced(self, index, alignment, file_format, extension):
+    def write_reduced(self, file_format):
         # write alignment with taxa removed into a file
-        reduced_alignment = self.remove_taxa(alignment, self.species_to_remove, index)
-        file_name = self.reduced_file_prefix + self.get_alignment_name(index, extension)
-        self.file_overwrite_error(file_name)             
-        self.write_formatted_file(file_format, file_name, reduced_alignment)
+        prefix = self.reduced_file_prefix
+        alns = self.remove_taxa(self.species_to_remove)
+        for file_name, aln_dict in alns.items():
+            out_file_name = prefix + file_name
+            self.file_overwrite_error(out_file_name)          
+            self.write_formatted_file(file_format, out_file_name, aln_dict)
 
     def write_out(self, action, file_format):
         # write other output files depending on command (action) 
@@ -1282,10 +1294,8 @@ class MetaAlignment():
             print("Wrote " + str(length) + " " + str(file_format) + " files from partitions provided")
 
         elif action == "remove":
-            list_of_alignments = self.parsed_alignments
-            length = len(list_of_alignments)
-            [self.write_reduced(i, item, file_format, extension) \
-             for i, item in enumerate(list_of_alignments)]
+
+            length = len(self.parsed_alignments)
             print("Wrote " + str(length) + " " + str(file_format) + " files with reduced taxon set")
 
 def main():
