@@ -1239,7 +1239,7 @@ class MetaAlignment():
 
     def write_convert(self, index, alignment, file_format, extension):
         # write converted alignment into a file
-        file_name = self.get_alignment_name(index)
+        file_name = self.get_alignment_name(index, extension)
         self.file_overwrite_error(file_name)        
         self.write_formatted_file(file_format, file_name, alignment)
 
