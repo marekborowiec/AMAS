@@ -1257,12 +1257,12 @@ class MetaAlignment():
         self.file_overwrite_error(file_name)        
         self.write_formatted_file(file_format, file_name, alignment)
 
-    def write_reduced(self, file_format):
+    def write_reduced(self, file_format, extension):
         # write alignment with taxa removed into a file
         prefix = self.reduced_file_prefix
         alns = self.remove_taxa(self.species_to_remove)
         for file_name, aln_dict in alns.items():
-            out_file_name = prefix + file_name
+            out_file_name = prefix + file_name + extension
             self.file_overwrite_error(out_file_name)          
             self.write_formatted_file(file_format, out_file_name, aln_dict)
 
@@ -1294,7 +1294,7 @@ class MetaAlignment():
             print("Wrote " + str(length) + " " + str(file_format) + " files from partitions provided")
 
         elif action == "remove":
-
+            self.write_reduced(file_format, extension)
             length = len(self.parsed_alignments)
             print("Wrote " + str(length) + " " + str(file_format) + " files with reduced taxon set")
 
