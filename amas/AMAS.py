@@ -35,7 +35,7 @@ and counts of all characters present in the relevant (nucleotide or amino acid) 
 import argparse, multiprocessing as mp, re, sys
 from random import sample
 from os import path
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 class ParsedArgs:
 
@@ -585,10 +585,13 @@ class Alignment:
         counts = []
         add_to_chars = characters.append
         add_to_counts = counts.append
-        for item in self.get_counts():
-            for char, count in item.items():
-                add_to_chars(str(char))
-                add_to_counts(str(count))
+        char_count_dicts = self.get_counts()
+        for char in self.alphabet:
+            add_to_chars(char)
+            if char in char_count_dicts.keys():
+                add_to_counts(str(char_count_dicts[char]))
+            else:
+                add_to_counts("0")
         return characters, counts
      
     def seq_grabber(self):
@@ -678,22 +681,29 @@ class Alignment:
         return missing_percent
         
     def get_missing(self):
-        # count missing characters from the list of missing
+        # count missing characters from the list of missing for all sequences
         self.missing = sum(self.get_missing_from_seq(seq) for seq in self.list_of_seqs)
         return self.missing
     
     def get_missing_from_seq(self, seq):
+        # count missing characters for individual sequence
         missing_count = sum(seq.count(char) for char in self.missing_chars)
         return missing_count
 
     def get_counts(self):
-        # get counts of each character in the used alphabet
-        counts = []
-        add_to_counts = counts.append
-        for char in self.alphabet:
-            count = sum(seq.count(char) for seq in self.list_of_seqs)
-            add_to_counts({char : count})
-        return counts
+        # get counts of each character in the used alphabet for all sequences
+        counters = [Counter(self.get_char_counts_from_seq(seq)) for seq in self.list_of_seqs]
+        print(counters)
+        all_counts = sum(counters, Counter())
+        counts_dict = dict(all_counts)
+        print(counts_dict)
+        return counts_dict
+
+    def get_char_counts_from_seq(self, seq):
+        # get all alphabet chars count for individual sequence
+        char_counts = {char : seq.count(char) for char in self.alphabet}
+        print(char_counts)
+        return char_counts
 
     def check_data_type(self):
         # check if the data type is correct
