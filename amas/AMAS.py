@@ -679,10 +679,13 @@ class Alignment:
         
     def get_missing(self):
         # count missing characters from the list of missing
-        self.missing = sum(sum(seq.count(char) for seq in self.list_of_seqs) \
-         for char in self.missing_chars)
+        self.missing = sum(self.get_missing_from_seq(seq) for seq in self.list_of_seqs)
         return self.missing
     
+    def get_missing_from_seq(self, seq):
+        missing_count = sum(seq.count(char) for char in self.missing_chars)
+        return missing_count
+
     def get_counts(self):
         # get counts of each character in the used alphabet
         counts = []
