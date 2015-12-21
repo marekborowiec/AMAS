@@ -568,6 +568,8 @@ class Alignment:
         self.prop_variable = self.get_prop_variable()
         self.parsimony_informative = self.get_parsimony_informative()
         self.prop_parsimony = self.get_prop_parsimony()
+        self.char_count_records = self.get_counts_from_parsed()
+        self.missing_records = self.get_missing_from_parsed()
         name = str(self.get_name())
         taxa_no = str(self.get_taxa_no())
         length = str(self.get_alignment_length())
@@ -675,29 +677,49 @@ class Alignment:
          * len(self.list_of_seqs[0])
         return self.all_matrix_cells
 
+    def get_missing(self):
+        # count missing characters from the list of missing for all sequences
+        self.missing = sum(count for taxon, count, percent in self.missing_records)
+        return self.missing
+
     def get_missing_percent(self):
         # get missing percent
         missing_percent = round((self.missing / self.all_matrix_cells * 100), 3)
         return missing_percent
         
-    def get_missing(self):
-        # count missing characters from the list of missing for all sequences
-        self.missing = sum(self.get_missing_from_seq(seq) for seq in self.list_of_seqs)
-        return self.missing
+    def get_missing_from_parsed(self):
+        # get missing count and percent from parsed alignment
+        # return a list of tuples with taxon name, count, and percent missing
+        self.missing_records = [(taxon, self.get_missing_from_seq(seq), self.get_missing_percent_from_seq(seq)) \
+         for taxon, seq in self.parsed_aln.items()]
+        return self.missing_records
     
     def get_missing_from_seq(self, seq):
         # count missing characters for individual sequence
         missing_count = sum(seq.count(char) for char in self.missing_chars)
         return missing_count
 
+    def get_missing_percent_from_seq(self, seq):
+        # get missing percent from individual sequence
+        missing_seq_percent = round((self.get_missing_from_seq(seq) / self.get_alignment_length() * 100), 3)
+        return missing_seq_percent
+
+
     def get_counts(self):
         # get counts of each character in the used alphabet for all sequences
-        counters = [Counter(self.get_char_counts_from_seq(seq)) for seq in self.list_of_seqs]
+        counters = [Counter(chars) for taxon, chars in self.char_count_records]
         all_counts = sum(counters, Counter())
         counts_dict = dict(all_counts)
         return counts_dict
 
-    def get_char_counts_from_seq(self, seq):
+    def get_counts_from_parsed(self):
+        # get counts of all characters from parsed alignment
+        # return a list of tuples with taxon name and counts
+        self.char_count_records = [(taxon, self.get_counts_from_seq(seq)) \
+         for taxon, seq in self.parsed_aln.items()]
+        return self.char_count_records
+
+    def get_counts_from_seq(self, seq):
         # get all alphabet chars count for individual sequence
         char_counts = {char : seq.count(char) for char in self.alphabet}
         return char_counts
@@ -748,18 +770,25 @@ class DNAAlignment(Alignment):
         
     def get_atgc_content(self):
         # get AC and GC contents for all sequences
+        # AT content is the first element of AT, GC content tuple
+        # returned by get_atgc_from_seq()
+        self.get_atgc_from_parsed()
+        at_content = round(sum(atgc[0] for taxon, atgc in self.atgc_records) \
+         / self.get_taxa_no(), 3)
+        print(at_content)
+        gc_content = round(1 - float(at_content), 3)
         
-        at_count = sum((seq.count("A") + seq.count("T") + seq.count("W")) \
-         for seq in self.list_of_seqs)
-        gc_count = sum((seq.count("G") + seq.count("C") + seq.count("S")) \
-         for seq in self.list_of_seqs)
-        # AT content is the first element of tuple returned by get_atgc_from_seq
-        at_content = str(round(sum(self.get_atgc_from_seq(seq)[0] \
-         for seq in self.list_of_seqs) / len(self.list_of_seqs), 3))
-        gc_content = str(round(1 - float(at_content), 3))
-        
-        atgc_content = [at_content, gc_content]
+        atgc_content = [str(at_content), str(gc_content)]
         return atgc_content
+
+    def get_atgc_from_parsed(self):
+        # get AT and GC contents from parsed alignment dictionary
+        # return a list of tuples with taxon name, AT content, and GC content
+        self.atgc_records = [(taxon, self.get_atgc_from_seq(seq)) \
+         for taxon, seq in self.parsed_aln.items()]
+        print(sorted(self.atgc_records))
+        return self.atgc_records
+        
 
     def get_atgc_from_seq(self, seq):
         # get AT and GC contents from individual sequences
@@ -770,8 +799,7 @@ class DNAAlignment(Alignment):
         at_content = round(at_count / (at_count + gc_count), 3)
         gc_content = round(1 - float(at_content), 3)
 
-        atgc_content = (at_content, gc_content)
-        return atgc_content
+        return at_content, gc_content
 
 class MetaAlignment():
     """Class of multiple sequence alignments"""
