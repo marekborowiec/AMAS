@@ -597,7 +597,8 @@ class Alignment:
         lengths = (length for i in range(taxa_no))
         name = self.get_name()
         names = (name for i in range(taxa_no))
-        taxa_names = (taxon for taxon, missing_count, missing_percent in self.missing_records)
+        taxa_names = (taxon.replace(" ","_").replace(".","_").replace("'","") \
+         for taxon, missing_count, missing_percent in self.missing_records)
         missing = (missing_count for taxon, missing_count, missing_percent in self.missing_records)
         missing_percent = (missing_percent for taxon, missing_count, missing_percent in self.missing_records)
         self.check_data_type()
@@ -623,7 +624,6 @@ class Alignment:
     def get_taxon_char_summary(self):
         # get summary of frequencies for all characters
         records = (self.append_count(char_dict) for taxon, char_dict in self.char_count_records)
-
         return records
 
     def append_count(self, char_dict):
@@ -787,9 +787,11 @@ class AminoAcidAlignment(Alignment):
         return new_data
 
     def get_taxa_summary(self):
-        # get alignment summary by taxon specific to amino acids
+        # get per-taxon/sequence alignment summary specific to amino acids
         data = self.summarize_alignment_by_taxa()
-        new_data = list(data) + list(self.get_char_summary()[1])
+        aa_summary = (data, self.get_taxon_char_summary())
+        zipped_list = list(zip(*aa_summary))
+        new_data = [list(data_tupl) + chars for data_tupl, chars in zipped_list]
         return new_data
            
 class DNAAlignment(Alignment):
@@ -810,10 +812,11 @@ class DNAAlignment(Alignment):
         return new_data
         
     def get_taxa_summary(self):
-        # get alignment summary specific to amino acids
+        # get per-taxon/sequence alignment summary specific to nucleotides
         data = self.summarize_alignment_by_taxa()
-        zipped_list = list(zip(data, self.get_taxon_char_summary()))
-        new_data = [list(tupl) + lst for tupl, lst in zipped_list]
+        dna_summary = (data, self.get_list_from_atgc(), self.get_taxon_char_summary())
+        zipped_list = list(zip(*dna_summary))
+        new_data = [list(data_tupl) + list(atgc) + chars for data_tupl, atgc, chars in zipped_list]
         return new_data
 
     def get_atgc_content(self):
@@ -828,14 +831,17 @@ class DNAAlignment(Alignment):
         atgc_content = [str(at_content), str(gc_content)]
         return atgc_content
 
+    def get_list_from_atgc(self):
+        records = (atgc for taxon, atgc in self.atgc_records)
+        return records
+
     def get_atgc_from_parsed(self):
         # get AT and GC contents from parsed alignment dictionary
         # return a list of tuples with taxon name, AT content, and GC content
-        self.atgc_records = [(taxon, self.get_atgc_from_seq(seq)) \
-         for taxon, seq in self.parsed_aln.items()]
+        self.atgc_records = sorted([(taxon, self.get_atgc_from_seq(seq)) \
+         for taxon, seq in self.parsed_aln.items()])
         return self.atgc_records
         
-
     def get_atgc_from_seq(self, seq):
         # get AT and GC contents from individual sequences
 
@@ -1042,26 +1048,21 @@ class MetaAlignment():
             "Taxon_name",
             "Sequence_length",
             "Undetermined_characters",
-            "Missing_percent"
+            "Missing_percent",
             "AT_content",
             "GC_content"
         ]
 
         alignments = self.alignment_objects
         parsed_alignments = self.parsed_alignments
-        freq_header = [char for char in alignments[0].alphabet]
+        freq_header = alignments[0].alphabet
         
         if self.data_type == "aa":
             header = aa_header + freq_header
         elif self.data_type == "dna":
             header = dna_header + freq_header
-
-        # use multiprocessing if more than one core specified
-        if int(self.cores) == 1:
-            summaries = [alignment.get_taxa_summary() for alignment in alignments]            
-        elif int(self.cores) > 1:
-            pool = mp.Pool(int(self.cores))
-            summaries = pool.map(self.summarize_alignments_taxa(), alignments)
+        summaries =  [alignment.get_taxa_summary() for alignment in alignments]
+           
         return header, summaries
 
     def summarize_alignments_taxa(self, alignment):
@@ -1083,23 +1084,19 @@ class MetaAlignment():
         summary_file.close()
         print("Wrote summaries to file '" + file_name + "'")
 
-    def write_taxa_summary(self, in_file_name):
-        # write by-taxon summaries to file
-        out_file_name = in_file_name + "-seq-summary.txt"
-        self.file_overwrite_error(out_file_name)
-        summary_file = open(out_file_name, "w")
-        summary_out = self.get_taxon_summaries()
-        header = '\t'.join(summary_out[0])
-        summary = summary_out[1]
-        #print(header)
-        #print(summary)
-        summary_file.write(header + '\n')
-        summary_file.write('\n'.join(summary))
-        summary_file.close()
-
     def write_taxa_summaries(self):
-        
-        [self.write_taxa_summary(file_name) for file_name in self.in_files]
+        # write by-taxon summaries to file
+        for index, in_file_name in enumerate(self.in_files):
+            out_file_name = in_file_name + "-seq-summary.txt"
+            self.file_overwrite_error(out_file_name)
+            summary_file = open(out_file_name, "w")
+            summary_out = self.get_taxon_summaries()
+            header = '\t'.join(summary_out[0])
+            summ = [[str(col) for col in element] for element in summary_out[1][index]]            
+            new_summ = ['\t'.join(row) for row in summ]
+            summary_file.write(header + '\n')
+            summary_file.write('\n'.join(new_summ))
+            summary_file.close()
        
     def get_replicate(self, no_replicates, no_loci):
         # construct replicate data sets for phylogenetic jackknife
@@ -1470,7 +1467,7 @@ def main():
     if meta_aln.command == "summary":
         meta_aln.write_summaries(kwargs["summary_out"])
     if meta_aln.by_taxon_summary:
-        print('printing taxon summaries')
+        print('Printing taxon summaries')
         meta_aln.write_taxa_summaries()
     if meta_aln.command == "convert":
         meta_aln.write_out("convert", kwargs["out_format"])
