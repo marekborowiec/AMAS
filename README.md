@@ -63,7 +63,9 @@ If you have many files that you want to input in one run, you can use multiple c
 ```
 python3 AMAS.py summary -f phylip -d dna -i *phy -c 12
 ```
-In the above, we specified 12 cores. Note that this won't improve computing time if you're working with only one or very few files. The parallel processing is only used for the file parsing step and calculating alignment summaries.   
+In the above, we specified 12 cores. Note that this won't improve computing time if you're working with only one or very few files. The parallel processing is only used for the file parsing step and calculating alignment summaries.
+
+In addition to overall alignment summaries, you can also print statistics calculated on a sequence (taxon) by sequence basis. Use `-s` or `--by-taxon` flag to turn it on. `AMAS` in this mode will print out one file with overall alignment summaries and a file with taxon summaries for each input alignment.
 
 IMPORTANT! `AMAS` is fast and powerful, but be careful: it assumes you know what you are doing and will not prevent you overwriting a file. It will, however, print out a warning if this has happened. `AMAS` was also written to work with aligned data and some of the output generated from unaligned sequences won't make sense. Because of computing efficiency `AMAS` by default does not check if input sequences are aligned. You can turn this option on with `-e` or `--check-align`.
 
