@@ -693,16 +693,13 @@ class Alignment:
     def get_counts(self):
         # get counts of each character in the used alphabet for all sequences
         counters = [Counter(self.get_char_counts_from_seq(seq)) for seq in self.list_of_seqs]
-        print(counters)
         all_counts = sum(counters, Counter())
         counts_dict = dict(all_counts)
-        print(counts_dict)
         return counts_dict
 
     def get_char_counts_from_seq(self, seq):
         # get all alphabet chars count for individual sequence
         char_counts = {char : seq.count(char) for char in self.alphabet}
-        print(char_counts)
         return char_counts
 
     def check_data_type(self):
@@ -750,18 +747,30 @@ class DNAAlignment(Alignment):
         return new_data
         
     def get_atgc_content(self):
-        # get AC and GC contents
-        atgc_content = []
+        # get AC and GC contents for all sequences
         
         at_count = sum((seq.count("A") + seq.count("T") + seq.count("W")) \
          for seq in self.list_of_seqs)
         gc_count = sum((seq.count("G") + seq.count("C") + seq.count("S")) \
          for seq in self.list_of_seqs)
-        
-        at_content = str(round(at_count / (at_count + gc_count), 3))
+        # AT content is the first element of tuple returned by get_atgc_from_seq
+        at_content = str(round(sum(self.get_atgc_from_seq(seq)[0] \
+         for seq in self.list_of_seqs) / len(self.list_of_seqs), 3))
         gc_content = str(round(1 - float(at_content), 3))
         
-        atgc_content.extend((at_content, gc_content))
+        atgc_content = [at_content, gc_content]
+        return atgc_content
+
+    def get_atgc_from_seq(self, seq):
+        # get AT and GC contents from individual sequences
+
+        at_count = seq.count("A") + seq.count("T") + seq.count("W")
+        gc_count = seq.count("G") + seq.count("C") + seq.count("S")
+        
+        at_content = round(at_count / (at_count + gc_count), 3)
+        gc_content = round(1 - float(at_content), 3)
+
+        atgc_content = (at_content, gc_content)
         return atgc_content
 
 class MetaAlignment():
