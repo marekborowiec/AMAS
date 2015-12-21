@@ -577,9 +577,28 @@ class Alignment:
         missing = str(self.get_missing())
         missing_percent = str(self.get_missing_percent())
         self.check_data_type()
+        self.summarize_alignment_by_taxa()
         summary = [name, taxa_no, length, cells, missing, missing_percent, \
          str(self.variable_sites), str(self.prop_variable), str(self.parsimony_informative), str(self.prop_parsimony)]
         return summary
+
+    def summarize_alignment_by_taxa(self):
+        # get summary for all taxa/sequences in alignment
+        per_taxon_summary = []
+        taxa_no = self.get_taxa_no()
+        length = self.get_alignment_length()
+        lengths = (length for i in range(taxa_no))
+        name = self.get_name()
+        names = (name for i in range(taxa_no))
+        taxa_names = (taxon for taxon, missing_count, missing_percent in self.missing_records)
+        missing = (missing_count for taxon, missing_count, missing_percent in self.missing_records)
+        missing_percent = (missing_percent for taxon, missing_count, missing_percent in self.missing_records)
+        self.check_data_type()
+        per_taxon_summary = (names, taxa_names, lengths, missing, missing_percent)
+        zipped = list(zip(*per_taxon_summary))
+        for element in zipped:
+            print(element)
+        return per_taxon_summary
 
     def get_char_summary(self):
         # get summary of frequencies for all characters
@@ -690,8 +709,8 @@ class Alignment:
     def get_missing_from_parsed(self):
         # get missing count and percent from parsed alignment
         # return a list of tuples with taxon name, count, and percent missing
-        self.missing_records = [(taxon, self.get_missing_from_seq(seq), self.get_missing_percent_from_seq(seq)) \
-         for taxon, seq in self.parsed_aln.items()]
+        self.missing_records = sorted([(taxon, self.get_missing_from_seq(seq), self.get_missing_percent_from_seq(seq)) \
+         for taxon, seq in self.parsed_aln.items()])
         return self.missing_records
     
     def get_missing_from_seq(self, seq):
@@ -704,7 +723,6 @@ class Alignment:
         missing_seq_percent = round((self.get_missing_from_seq(seq) / self.get_alignment_length() * 100), 3)
         return missing_seq_percent
 
-
     def get_counts(self):
         # get counts of each character in the used alphabet for all sequences
         counters = [Counter(chars) for taxon, chars in self.char_count_records]
@@ -715,8 +733,8 @@ class Alignment:
     def get_counts_from_parsed(self):
         # get counts of all characters from parsed alignment
         # return a list of tuples with taxon name and counts
-        self.char_count_records = [(taxon, self.get_counts_from_seq(seq)) \
-         for taxon, seq in self.parsed_aln.items()]
+        self.char_count_records = sorted([(taxon, self.get_counts_from_seq(seq)) \
+         for taxon, seq in self.parsed_aln.items()])
         return self.char_count_records
 
     def get_counts_from_seq(self, seq):
@@ -749,6 +767,12 @@ class AminoAcidAlignment(Alignment):
         
         return new_data
 
+    def get_taxa_summary(self):
+        # get alignment summary specific to amino acids
+        data = self.summarize_alignment_by_taxa()
+        new_data = data + list(self.get_char_summary()[1])
+        
+        return new_data
            
 class DNAAlignment(Alignment):
     """Alphabets specific to DNA alignments"""
@@ -768,6 +792,13 @@ class DNAAlignment(Alignment):
         
         return new_data
         
+    def get_taxa_summary(self):
+        # get alignment summary specific to amino acids
+        data = self.summarize_alignment_by_taxa()
+        new_data = data + list(self.get_char_summary()[1])
+        
+        return new_data
+
     def get_atgc_content(self):
         # get AC and GC contents for all sequences
         # AT content is the first element of AT, GC content tuple
@@ -775,7 +806,6 @@ class DNAAlignment(Alignment):
         self.get_atgc_from_parsed()
         at_content = round(sum(atgc[0] for taxon, atgc in self.atgc_records) \
          / self.get_taxa_no(), 3)
-        print(at_content)
         gc_content = round(1 - float(at_content), 3)
         
         atgc_content = [str(at_content), str(gc_content)]
@@ -786,7 +816,6 @@ class DNAAlignment(Alignment):
         # return a list of tuples with taxon name, AT content, and GC content
         self.atgc_records = [(taxon, self.get_atgc_from_seq(seq)) \
          for taxon, seq in self.parsed_aln.items()]
-        print(sorted(self.atgc_records))
         return self.atgc_records
         
 
@@ -973,6 +1002,49 @@ class MetaAlignment():
         summary = alignment.get_summary()
         return summary
 
+    def get_taxon_summaries(self):
+        # get per-sequence summaries for all alignment objects
+
+        # define different headers for aa and dna alignments
+        aa_header = [
+            "Alignment_name",
+            "Taxon_name",
+            "Sequence_length",
+            "Undetermined_characters",
+            "Missing_percent"
+        ]
+
+        dna_header = [
+            "Alignment_name",
+            "Taxon_name",
+            "Sequence_length",
+            "Undetermined_characters",
+            "Missing_percent"
+            "AT_content",
+            "GC_content"
+        ]
+
+        alignments = self.alignment_objects
+        parsed_alignments = self.parsed_alignments
+        freq_header = [char for char in alignments[0].alphabet]
+        
+        if self.data_type == "aa":
+            header = aa_header + freq_header
+        elif self.data_type == "dna":
+            header = dna_header + freq_header
+
+        # use multiprocessing if more than one core specified
+        if int(self.cores) == 1:
+            summaries = [alignment.get_taxa_summary() for alignment in alignments]            
+        elif int(self.cores) > 1:
+            pool = mp.Pool(int(self.cores))
+            summaries = pool.map(self.summarize_alignments_taxa, alignments)
+        return header, summaries
+
+    def summarize_alignments_taxa(self, alignment):
+        # helper function to summarize alignments by taxon
+        summary = alignment.get_taxa_summary()
+        return summary
 
     def write_summaries(self, file_name):
         # write summaries to file
