@@ -129,6 +129,14 @@ Use AMAS <command> -h for help with arguments of the command of interest
             default = "summary.txt",
             help = "File name for the alignment summary. Default: 'summary.txt'"
         )
+        parser.add_argument(
+            "-s",
+            "--by-taxon",
+            dest = "by_taxon_summary",
+            action = "store_true",
+            default = False,
+            help = "In addition to alignment summary, write by sequence/taxon summaries. Default: Don't write"
+        )
         # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
@@ -144,7 +152,7 @@ Use AMAS <command> -h for help with arguments of the command of interest
             "--concat-part",
             dest = "concat_part",
             default = "partitions.txt",
-            help = "File name for the concatenated alignment partitions. Default: 'partitions.txt'"
+            help = "File name for th0e concatenated alignment partitions. Default: 'partitions.txt'"
         ) 
         parser.add_argument(
             "-t",
@@ -577,7 +585,6 @@ class Alignment:
         missing = str(self.get_missing())
         missing_percent = str(self.get_missing_percent())
         self.check_data_type()
-        self.summarize_alignment_by_taxa()
         summary = [name, taxa_no, length, cells, missing, missing_percent, \
          str(self.variable_sites), str(self.prop_variable), str(self.parsimony_informative), str(self.prop_parsimony)]
         return summary
@@ -596,9 +603,7 @@ class Alignment:
         self.check_data_type()
         per_taxon_summary = (names, taxa_names, lengths, missing, missing_percent)
         zipped = list(zip(*per_taxon_summary))
-        for element in zipped:
-            print(element)
-        return per_taxon_summary
+        return zipped
 
     def get_char_summary(self):
         # get summary of frequencies for all characters
@@ -614,6 +619,21 @@ class Alignment:
             else:
                 add_to_counts("0")
         return characters, counts
+
+    def get_taxon_char_summary(self):
+        # get summary of frequencies for all characters
+        records = (self.append_count(char_dict) for taxon, char_dict in self.char_count_records)
+
+        return records
+
+    def append_count(self, char_dict):
+        count_list = []
+        for char in self.alphabet:
+            if char in char_dict.keys():
+                count_list.append(char_dict[char])
+            else:
+                count_list.append(0)
+        return count_list
      
     def seq_grabber(self):
         # create a list of sequences from parsed dictionary of names and seqs 
@@ -764,14 +784,12 @@ class AminoAcidAlignment(Alignment):
         # get alignment summary specific to amino acids
         data = self.summarize_alignment()
         new_data = data + list(self.get_char_summary()[1])
-        
         return new_data
 
     def get_taxa_summary(self):
-        # get alignment summary specific to amino acids
+        # get alignment summary by taxon specific to amino acids
         data = self.summarize_alignment_by_taxa()
-        new_data = data + list(self.get_char_summary()[1])
-        
+        new_data = list(data) + list(self.get_char_summary()[1])
         return new_data
            
 class DNAAlignment(Alignment):
@@ -789,14 +807,13 @@ class DNAAlignment(Alignment):
         data = self.summarize_alignment()
         new_data = data + self.get_atgc_content() \
          + list(self.get_char_summary()[1])
-        
         return new_data
         
     def get_taxa_summary(self):
         # get alignment summary specific to amino acids
         data = self.summarize_alignment_by_taxa()
-        new_data = data + list(self.get_char_summary()[1])
-        
+        zipped_list = list(zip(data, self.get_taxon_char_summary()))
+        new_data = [list(tupl) + lst for tupl, lst in zipped_list]
         return new_data
 
     def get_atgc_content(self):
@@ -825,8 +842,13 @@ class DNAAlignment(Alignment):
         at_count = seq.count("A") + seq.count("T") + seq.count("W")
         gc_count = seq.count("G") + seq.count("C") + seq.count("S")
         
-        at_content = round(at_count / (at_count + gc_count), 3)
-        gc_content = round(1 - float(at_content), 3)
+        try:
+            at_content = round(at_count / (at_count + gc_count), 3)
+            gc_content = round(1 - float(at_content), 3)
+
+        except ZeroDivisionError:
+            at_content = 0
+            gc_content = 0
 
         return at_content, gc_content
 
@@ -842,6 +864,7 @@ class MetaAlignment():
         self.concat_out = kwargs.get("concat_out", "concatenated.out")
         self.check_align = kwargs.get("check_align", False)
         self.cores = kwargs.get("cores")
+        self.by_taxon_summary = kwargs.get("by_taxon_summary")
      
         if self.command == "replicate":
             self.no_replicates = kwargs.get("replicate_args")[0]
@@ -1038,7 +1061,7 @@ class MetaAlignment():
             summaries = [alignment.get_taxa_summary() for alignment in alignments]            
         elif int(self.cores) > 1:
             pool = mp.Pool(int(self.cores))
-            summaries = pool.map(self.summarize_alignments_taxa, alignments)
+            summaries = pool.map(self.summarize_alignments_taxa(), alignments)
         return header, summaries
 
     def summarize_alignments_taxa(self, alignment):
@@ -1058,7 +1081,25 @@ class MetaAlignment():
         summary_file.write(header + '\n')
         summary_file.write('\n'.join(new_summ))
         summary_file.close()
-        print("Wrote summaries to file '" + file_name + "'") 
+        print("Wrote summaries to file '" + file_name + "'")
+
+    def write_taxa_summary(self, in_file_name):
+        # write by-taxon summaries to file
+        out_file_name = in_file_name + "-seq-summary.txt"
+        self.file_overwrite_error(out_file_name)
+        summary_file = open(out_file_name, "w")
+        summary_out = self.get_taxon_summaries()
+        header = '\t'.join(summary_out[0])
+        summary = summary_out[1]
+        #print(header)
+        #print(summary)
+        summary_file.write(header + '\n')
+        summary_file.write('\n'.join(summary))
+        summary_file.close()
+
+    def write_taxa_summaries(self):
+        
+        [self.write_taxa_summary(file_name) for file_name in self.in_files]
        
     def get_replicate(self, no_replicates, no_loci):
         # construct replicate data sets for phylogenetic jackknife
@@ -1428,6 +1469,9 @@ def main():
        
     if meta_aln.command == "summary":
         meta_aln.write_summaries(kwargs["summary_out"])
+    if meta_aln.by_taxon_summary:
+        print('printing taxon summaries')
+        meta_aln.write_taxa_summaries()
     if meta_aln.command == "convert":
         meta_aln.write_out("convert", kwargs["out_format"])
     if meta_aln.command == "concat":
