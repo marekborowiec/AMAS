@@ -569,6 +569,7 @@ class Alignment:
         # call methods to create sequences list, matrix, sites without ambiguous or
         # missing characters; get and summarize alignment statistics
         summary = []
+        self.length = str(self.get_alignment_length())
         self.matrix = self.matrix_creator()
         self.no_missing_ambiguous = self.get_sites_no_missing_ambiguous()
         self.variable_sites = self.get_variable()
@@ -579,12 +580,11 @@ class Alignment:
         self.missing_records = self.get_missing_from_parsed()
         name = str(self.get_name())
         taxa_no = str(self.get_taxa_no())
-        length = str(self.get_alignment_length())
         cells = str(self.get_matrix_cells())
         missing = str(self.get_missing())
         missing_percent = str(self.get_missing_percent())
         self.check_data_type()
-        summary = [name, taxa_no, length, cells, missing, missing_percent, \
+        summary = [name, taxa_no, self.length, cells, missing, missing_percent, \
          str(self.variable_sites), str(self.prop_variable), str(self.parsimony_informative), str(self.prop_parsimony)]
         return summary
 
@@ -592,8 +592,8 @@ class Alignment:
         # get summary for all taxa/sequences in alignment
         per_taxon_summary = []
         taxa_no = self.get_taxa_no()
-        length = self.get_alignment_length()
-        lengths = (length for i in range(taxa_no))
+        self.length = self.get_alignment_length()
+        lengths = (self.length for i in range(taxa_no))
         name = self.get_name()
         names = (name for i in range(taxa_no))
         taxa_names = (taxon.replace(" ","_").replace(".","_").replace("'","") \
@@ -681,12 +681,12 @@ class Alignment:
     
     def get_prop_variable(self):
         # get proportion of variable sites to all sites
-        prop_variable = self.variable_sites / len(next(iter(self.parsed_aln.values())))
+        prop_variable = self.variable_sites / int(self.length)
         return round(prop_variable, 3)
         
     def get_prop_parsimony(self):
         # get proportion of parsimony informative sites to all sites
-        prop_parsimony = self.parsimony_informative / len(next(iter(self.parsed_aln.values())))
+        prop_parsimony = self.parsimony_informative / int(self.length)
         return round(prop_parsimony, 3)
 
     def get_name(self):
@@ -706,7 +706,7 @@ class Alignment:
     def get_matrix_cells(self):
     # count all matrix cells
         self.all_matrix_cells = len(self.parsed_aln.values()) \
-         * len(next(iter(self.parsed_aln.values())))
+         * int(self.length)
         return self.all_matrix_cells
 
     def get_missing(self):
