@@ -569,7 +569,6 @@ class Alignment:
         # call methods to create sequences list, matrix, sites without ambiguous or
         # missing characters; get and summarize alignment statistics
         summary = []
-        self.list_of_seqs = self.seq_grabber()
         self.matrix = self.matrix_creator()
         self.no_missing_ambiguous = self.get_sites_no_missing_ambiguous()
         self.variable_sites = self.get_variable()
@@ -635,15 +634,9 @@ class Alignment:
                 count_list.append(0)
         return count_list
      
-    def seq_grabber(self):
-        # create a list of sequences from parsed dictionary of names and seqs 
-        list_of_seqs = [seq for name, seq in self.parsed_aln.items()]
-        return list_of_seqs
-
-               
     def matrix_creator(self):
         # decompose character matrix into a two-dimensional list
-        matrix = [list(sequence) for sequence in self.list_of_seqs]
+        matrix = [list(sequence) for sequence in self.parsed_aln.values()]
         return matrix
 
     def get_column(self, i):
@@ -688,12 +681,12 @@ class Alignment:
     
     def get_prop_variable(self):
         # get proportion of variable sites to all sites
-        prop_variable = self.variable_sites / len(self.list_of_seqs[0])
+        prop_variable = self.variable_sites / len(next(iter(self.parsed_aln.values())))
         return round(prop_variable, 3)
         
     def get_prop_parsimony(self):
         # get proportion of parsimony informative sites to all sites
-        prop_parsimony = self.parsimony_informative / len(self.list_of_seqs[0])
+        prop_parsimony = self.parsimony_informative / len(next(iter(self.parsed_aln.values())))
         return round(prop_parsimony, 3)
 
     def get_name(self):
@@ -703,17 +696,17 @@ class Alignment:
         
     def get_taxa_no(self):
         # get number of taxa
-        return len(self.list_of_seqs)
+        return len(self.parsed_aln.values())
     
     def get_alignment_length(self):
         # get alignment length by just checking the first seq length
         # this assumes that all sequences are of equal length
-        return len(self.list_of_seqs[0])
+        return len(next(iter(self.parsed_aln.values())))
 
     def get_matrix_cells(self):
     # count all matrix cells
-        self.all_matrix_cells = len(self.list_of_seqs) \
-         * len(self.list_of_seqs[0])
+        self.all_matrix_cells = len(self.parsed_aln.values()) \
+         * len(next(iter(self.parsed_aln.values())))
         return self.all_matrix_cells
 
     def get_missing(self):
@@ -765,7 +758,7 @@ class Alignment:
     def check_data_type(self):
         # check if the data type is correct
         self.check = any(any(char in self.non_alphabet for char in seq) \
-         for seq in self.list_of_seqs)
+         for seq in self.parsed_aln.values())
         if self.check is True:
             print("WARNING: found non-" + self.data_type + " characters. "\
              "Are you sure you specified the right data type?")
