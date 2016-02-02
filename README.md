@@ -1,6 +1,12 @@
 # AMAS
 Alignment manipulation and summary statistics
 
+If you are using this program, please cite [this publication](https://peerj.com/articles/1660/):
+
+```
+Borowiec, M.L. 2016. AMAS: a fast tool for alignment manipulation and computing of summary statistics. PeerJ 4:e1660.
+```
+
 ## Installation
 
 You can download this repository zipped (button on the right-hand side of the screen) and use `AMAS.py` in the `amas` directory as a stand-alone program or clone it if you have [git installed](http://git-scm.com/book/en/v2/Getting-Started-Installing-Git) on your system.
