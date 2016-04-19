@@ -360,6 +360,10 @@ class FileParser:
 
     def phylip_interleaved_parse(self):
     # use regex to parse names and sequences in interleaved phylip files
+        tax_chars_matches = re.finditer(
+            r"^(\s+)?([0-9]+)[ \t]+([0-9]+)",
+            self.in_file_lines, re.MULTILINE
+        )
         name_matches = re.finditer(
             r"^(\s+)?(\S+)[ \t]+[A-Za-z*?.{}-]+",
             self.in_file_lines, re.MULTILINE
@@ -368,6 +372,12 @@ class FileParser:
             r"(^(\s+)?\S+[ \t]+|^)([A-Za-z*?.{}-]+)$",
             self.in_file_lines, re.MULTILINE
         )
+        # get number of taxa and chars
+        for match in tax_chars_matches:
+            tax_match = match.group(2)
+            chars_match = match.group(3)
+        #print(tax_match)
+        #print(chars_match)
         # initiate lists for taxa names and sequence strings on separate lines
         taxa = []
         sequences = []
@@ -385,6 +395,25 @@ class FileParser:
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             sequences.append(seq_match)
+        # try parsing PHYLUCE-style interleaved phylip
+        if len(taxa) != int(tax_match):
+            taxa = []
+            sequences = []
+            matches = re.finditer(
+                r"(^(\s+)?(\S+)( ){2,}|^\s+)([ A-Za-z*?.{}-]+)",
+                self.in_file_lines, re.MULTILINE
+            )
+            
+            for match in matches:
+                try:
+                    name_match = match.group(3).replace("\n","")
+                    taxa.append(name_match)
+                except AttributeError:
+                    pass
+                seq_match = match.group(5).replace("\n","").upper()
+                seq_match = "".join(seq_match.split())
+                seq_match = self.translate_ambiguous(seq_match)
+                sequences.append(seq_match)
 
         for taxon_no in range(len(taxa)):
             sequence = ""
@@ -393,7 +422,7 @@ class FileParser:
            
             records[taxa[taxon_no]] = sequence
             counter += 1 
-
+            
         return records
         
     def nexus_parse(self):
