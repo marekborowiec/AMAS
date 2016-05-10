@@ -495,6 +495,7 @@ class FileParser:
     def translate_ambiguous(self, seq):
         # translate ambiguous characters from curly bracket format
         # to single letter format 
+        # also remove spaces from sequences
         seq = seq.replace("{GT}","K")
         seq = seq.replace("{AC}","M")
         seq = seq.replace("{AG}","R")
@@ -506,6 +507,7 @@ class FileParser:
         seq = seq.replace("{ACT}","H")
         seq = seq.replace("{AGT}","D")
         seq = seq.replace("{GATC}","N")
+        seq = seq.replace(" ","")
 
         return seq
 
