@@ -34,7 +34,7 @@ and counts of all characters present in the relevant (nucleotide or amino acid) 
 
 import argparse, multiprocessing as mp, re, sys
 from random import sample
-from os import path
+from os import path, remove
 from collections import defaultdict, Counter
 
 class ParsedArgs:
@@ -1436,10 +1436,15 @@ class MetaAlignment():
     def write_split(self, index, item, file_format, extension):
         # write split alignments from partitions file
         # bad practice with the dicts; figure out better solution
-        file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
-        alignment = list(item.values())[0]
-        self.file_overwrite_error(file_name)        
-        self.write_formatted_file(file_format, file_name, alignment)
+        try:       
+            file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
+            alignment = list(item.values())[0]
+            self.file_overwrite_error(file_name)
+            self.write_formatted_file(file_format, file_name, alignment)
+        except ValueError:
+            print("WARNING: there was no data to write for file '" + file_name + "'. Perhaps a partition composed of missing data only?")
+            remove(file_name)
+            raise ValueError
 
     def write_reduced(self, file_format, extension):
         # write alignment with taxa removed into a file
@@ -1473,9 +1478,14 @@ class MetaAlignment():
         elif action == "split":
             list_of_alignments = self.get_partitioned(self.split)
             length = len(list_of_alignments)
-            [self.write_split(i, item, file_format, extension) \
-             for i, item in enumerate(list_of_alignments)]
-            print("Wrote " + str(length) + " " + str(file_format) + " files from partitions provided")
+            err_indx = 0
+            for i, item in enumerate(list_of_alignments):
+                try:
+                    self.write_split(i, item, file_format, extension)
+                except ValueError:
+                    err_indx += 1
+                    pass
+            print("Wrote " + str(length - err_indx) + " " + str(file_format) + " files from partitions provided")
 
         elif action == "remove":
             self.write_reduced(file_format, extension)
