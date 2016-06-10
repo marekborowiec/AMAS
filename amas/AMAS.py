@@ -1442,7 +1442,7 @@ class MetaAlignment():
             self.file_overwrite_error(file_name)
             self.write_formatted_file(file_format, file_name, alignment)
         except ValueError:
-            print("WARNING: there was no data to write for file '" + file_name + "'. Perhaps a partition composed of missing data only?")
+            print("WARNING: There was no data to write for file '" + file_name + "'. Perhaps a partition composed of missing data only?")
             remove(file_name)
             raise ValueError
 
