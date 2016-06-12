@@ -121,6 +121,13 @@ If this was the `partitions.txt` file from the example command above, `AMAS` wou
 
 Sometimes after splitting you will have alignments with taxa that have only gaps `-` or missing data `?`. If you want to these to not be included in the output , add `-j` or `--remove-empty` to the command line.   
 
+### Translating a DNA alignment into aligned protein sequences
+You can translate a nucleotide alignment to amino acids with AMAS using one of the [NCBI translation tables](http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi). For example, to correctly translate an insect mitochondrial gene alignment that begins at a second codon position:
+```
+python3 AMAS.py translate -f nexus -d dna -i concat.nex --code 5 --reading-frame 2 --out-format
+```
+`--code` and `--reading-frame` are the same as `-b` and `-k` and are both set to 1 (the standard genetic code and the first character of alignment is the first codon position) by default. When translating `AMAS` will contract gaps `-` and missing `?`, such that `---` becomes `-` in the translated alignment. A warning will be printed if stop codons are found in a sequence and these are indicated as asterisks `*` in the output. See `AMAS.py translate -h` for more info.
+
 ### Creating replicate data sets
 With `AMAS` you can create concatenated alignments from a proportion of randomly chosen alignments that can be used for, for example, a phylogenetic jackknife analysis. Say you have 1000 phylip files, each containing a single aligned locus, and you want to create 200 replicate phylip alignments, each built from 100 loci randomly chosen from all the input files. You can do this by specifying `replicate` command and following it with `-r` or `--rep-aln` followed by the number of replicates (in this case `200`) and number of alignments (`100`). Remember to supply the output format with `-u` if you want it to be other than `fasta`:
 ```
@@ -165,7 +172,7 @@ The header is different for nucleotide and amino acid data. You may choose to sk
 ```python
 statistics = summaries[1]
 ```
-`.get_parsed_alignments()` returns a list of dictionaries where each dictionary is an alignment and where taxa are the keys and sequences are the values. This allows you to, for example, print only taxa names in each alignment:
+`.get_parsed_alignments()` returns a list of dictionaries where each dictionary is an alignment and where taxa are the keys and sequences are the values. This allows you to, for example, print only taxa names in each alignment or do other manipulation of the sequence data:
 ```python3 
 # get parsed dictionaties
 aln_dicts = multi_meta_aln.get_parsed_alignments()
@@ -175,6 +182,11 @@ for alignment in aln_dicts:
     for taxon_name in alignment.keys():
         print(taxon_name)
 ```
+Similar to the above example, it is also easy to get translated amino acid alignment as a list of dictionaries (one per input alignment):
+```python3 
+# get parsed dictionaties
+aln_dicts = multi_meta_aln.get_translated(2, 1) # 2: vertebrate mitochondrial genetic code and 1: reading frame starting at first character
+```  
 To split alignment use `.get_partitioned("your_partitions_file")` on a `MetaAlignment` with a single input file. `.get_partitioned()` returns a list of dictionaries of dictionaries, with `{ partition_name : { taxon : sequence } }` structure for each partition:
 ```python
 partitions = meta_aln.get_partitioned("partitions.txt")
