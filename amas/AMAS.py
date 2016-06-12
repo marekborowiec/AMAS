@@ -1769,6 +1769,9 @@ class MetaAlignment():
             print("Wrote " + str(length) + " " + str(file_format) + " files with reduced taxon set")
 
         elif action == "translate":
+            if self.data_type == "aa":
+                print("ERROR: cannot translate; you said your alignment already contains amino acids")
+                sys.exit()
             translated_alignment_dicts = self.get_translated(self.genetic_code, self.reading_frame)
             length = len(self.alignment_objects)
             [self.write_translated(i, alignment, file_format, extension) \
