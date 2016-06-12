@@ -252,6 +252,49 @@ Use AMAS <command> -h for help with arguments of the command of interest
         args = parser.parse_args(sys.argv[2:])
         return args
 
+    def translate(self):
+        # translate command
+        parser = argparse.ArgumentParser(
+            description="Translate a protein-coding DNA alignment into amino acids",
+        )
+        parser.add_argument(
+            "-b",
+            "--code",
+            type = int,
+            dest = "genetic_code",
+            choices = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 21, 22, 23, 24, 25, 26],
+            default = 1,
+            help = "NCBI genetic code to use: 1. The Standard Code, 2. The Vertebrate Mitochondrial Code, \
+3. The Yeast Mitochondrial Code, 4. The Mold, Protozoan, and Coelenterate Mitochondrial Code and the Mycoplasma/Spiroplasma Code, \
+5. The Invertebrate Mitochondrial Code, 6. The Ciliate, Dasycladacean and Hexamita Nuclear Code, \
+9. The Echinoderm and Flatworm Mitochondrial Code, 10. The Euplotid Nuclear Code, 11. The Bacterial, Archaeal and Plant Plastid Code, \
+12. The Alternative Yeast Nuclear Code, 13. The Ascidian Mitochondrial Code, 14. The Alternative Flatworm Mitochondrial Code, \
+16. Chlorophycean Mitochondrial Code, 21. Trematode Mitochondrial Code, 22. Scenedesmus obliquus Mitochondrial Code, \
+23. Thraustochytrium Mitochondrial Code, 24. Pterobranchia Mitochondrial Code, 25. Candidate Division SR1 and Gracilibacteria Code, \
+26. Pachysolen tannophilus Nuclear Code. Default: 1.",
+        )
+        parser.add_argument(
+            "-k",
+            "--reading-frame",
+            type = int,
+            dest = "reading_frame",
+            choices = [1, 2, 3],
+            default = 1,
+            help = "Number specifying reading frame; i.e. '2' means codons start at the second character of the alignment. Default: 1",
+        )
+        parser.add_argument(
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            default = "fasta",
+            help = "File format for the output alignment. Default: fasta"
+        )
+        # add shared arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
     def remove(self):
         # remove taxa command
         parser = argparse.ArgumentParser(
@@ -878,9 +921,275 @@ class MetaAlignment():
             self.reduced_file_prefix = kwargs.get("out_prefix")
             self.check_taxa = kwargs.get("check_taxa", False)
 
+        if self.command == "translate":
+            self.reading_frame = kwargs.get("reading_frame")
+            self.genetic_code = kwargs.get("genetic_code")
+
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()
 
+        # The code list:
+        self.codes_list = """
+        1. The Standard Code
+        2. The Vertebrate Mitochondrial Code
+        3. The Yeast Mitochondrial Code
+        4. The Mold, Protozoan, and Coelenterate Mitochondrial Code and the Mycoplasma/Spiroplasma Code
+        5. The Invertebrate Mitochondrial Code
+        6. The Ciliate, Dasycladacean and Hexamita Nuclear Code
+        9. The Echinoderm and Flatworm Mitochondrial Code
+        10. The Euplotid Nuclear Code
+        11. The Bacterial, Archaeal and Plant Plastid Code
+        12. The Alternative Yeast Nuclear Code
+        13. The Ascidian Mitochondrial Code
+        14. The Alternative Flatworm Mitochondrial Code
+        16. Chlorophycean Mitochondrial Code
+        21. Trematode Mitochondrial Code
+        22. Scenedesmus obliquus Mitochondrial Code
+        23. Thraustochytrium Mitochondrial Code
+        24. Pterobranchia Mitochondrial Code
+        25. Candidate Division SR1 and Gracilibacteria Code
+        26. Pachysolen tannophilus Nuclear Code
+        """
+        
+        # 1: The Standard Code
+        self.gencode_NCBI_1 = {
+        "TTT" : "F", # Phe
+        "TCT" : "S", # Ser
+        "TAT" : "Y", # Tyr
+        "TGT" : "C", # Cys
+        "TTC" : "F", # Phe
+        "TCC" : "S", # Ser
+        "TAC" : "Y", # Tyr
+        "TGC" : "C", # Cys
+        "TTA" : "L", # Leu
+        "TCA" : "S", # Ser
+        "TAA" : "*", # Ter
+        "TGA" : "*", # Ter
+        "TTG" : "L", # Leu i
+        "TCG" : "S", # Ser
+        "TAG" : "*", # Ter
+        "TGG" : "W", # Trp
+        "CTT" : "L", # Leu
+        "CCT" : "P", # Pro
+        "CAT" : "H", # His
+        "CGT" : "R", # Arg
+        "CTC" : "L", # Leu
+        "CCC" : "P", # Pro
+        "CAC" : "H", # His
+        "CGC" : "R", # Arg
+        "CTA" : "L", # Leu
+        "CCA" : "P", # Pro
+        "CAA" : "Q", # Gln
+        "CGA" : "R", # Arg
+        "CTG" : "L", # Leu i
+        "CCG" : "P", # Pro
+        "CAG" : "Q", # Gln
+        "CGG" : "R", # Arg
+        "ATT" : "I", # Ile
+        "ACT" : "T", # Thr
+        "AAT" : "N", # Asn
+        "AGT" : "S", # Ser
+        "ATC" : "I", # Ile
+        "ACC" : "T", # Thr
+        "AAC" : "N", # Asn
+        "AGC" : "S", # Ser
+        "ATA" : "I", # Ile
+        "ACA" : "T", # Thr
+        "AAA" : "K", # Lys
+        "AGA" : "R", # Arg
+        "ATG" : "M", # Met i
+        "ACG" : "T", # Thr
+        "AAG" : "K", # Lys
+        "AGG" : "R", # Arg
+        "GTT" : "V", # Val
+        "GCT" : "A", # Ala
+        "GAT" : "D", # Asp
+        "GGT" : "G", # Gly
+        "GTC" : "V", # Val
+        "GCC" : "A", # Ala
+        "GAC" : "D", # Asp
+        "GGC" : "G", # Gly
+        "GTA" : "V", # Val
+        "GCA" : "A", # Ala
+        "GAA" : "E", # Glu
+        "GGA" : "G", # Gly
+        "GTG" : "V", # Val
+        "GCG" : "A", # Ala
+        "GAG" : "E", # Glu
+        "GGG" : "G", # Gly
+        "---" : "-", # Gap
+        "???" : "?", # Unk
+        "NNN" : "X", # Unk
+        }
+        
+        # 2: The Vertebrate Mitochondrial Code
+        self.gencode_NCBI_2 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_2["AGA"] = "*" # Ter
+        self.gencode_NCBI_2["AGG"] = "*" # Ter
+        self.gencode_NCBI_2["ATA"] = "M" # Met
+        self.gencode_NCBI_2["TGA"] = "W" # Trp
+        
+        # 3: The Yeast Mitochondrial Code
+        self.gencode_NCBI_3 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_3["ATA"] = "M" # Met
+        self.gencode_NCBI_3["CTT"] = "T" # Thr
+        self.gencode_NCBI_3["CTC"] = "T" # Thr
+        self.gencode_NCBI_3["CTA"] = "T" # Thr
+        self.gencode_NCBI_3["CTG"] = "T" # Thr
+        self.gencode_NCBI_3["TGA"] = "W" # Trp
+        
+        del self.gencode_NCBI_3["CGA"]
+        del self.gencode_NCBI_3["CGC"]
+        
+        # 4: The Mold, Protozoan, and Coelenterate Mitochondrial Code and the Mycoplasma/Spiroplasma Code
+        self.gencode_NCBI_4 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_4["TGA"] = "W" # Trp
+        
+        # 5: The Invertebrate Mitochondrial Code
+        self.gencode_NCBI_5 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_5["AGA"] = "S" # Ser
+        self.gencode_NCBI_5["AGG"] = "S" # Ser
+        self.gencode_NCBI_5["ATA"] = "M" # Met
+        self.gencode_NCBI_5["TGA"] = "W" # Trp
+        
+        # 6: The Ciliate, Dasycladacean and Hexamita Nuclear Code
+        self.gencode_NCBI_6 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_6["TAA"] = "Q" # Gln
+        self.gencode_NCBI_6["TAG"] = "Q" # Gln
+        
+        # 9: The Echinoderm and Flatworm Mitochondrial Code
+        self.gencode_NCBI_9 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_9["AAA"] = "N" # Asn
+        self.gencode_NCBI_9["AGA"] = "S" # Ser
+        self.gencode_NCBI_9["AGG"] = "S" # Ser
+        self.gencode_NCBI_9["TGA"] = "W" # Trp
+        
+        # 10: The Euplotid Nuclear Code
+        self.gencode_NCBI_10 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_10["TGA"] = "C" # Cys
+        
+        # 11: The Bacterial, Archaeal and Plant Plastid Code
+        self.gencode_NCBI_11 = self.gencode_NCBI_1.copy()
+        
+        # 12: The Alternative Yeast Nuclear Code
+        self.gencode_NCBI_12 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_12["CTG"] = "S" # Ser
+        
+        # 13: The Ascidian Mitochondrial Code 
+        self.gencode_NCBI_13 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_13["AGA"] = "G" # Gly
+        self.gencode_NCBI_13["AGG"] = "G" # Gly
+        self.gencode_NCBI_13["ATA"] = "M" # Met
+        self.gencode_NCBI_13["TGA"] = "W" # Trp
+        
+        # 14: The Alternative Flatworm Mitochondrial Code
+        self.gencode_NCBI_14 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_14["AAA"] = "N" # Asn
+        self.gencode_NCBI_14["AGA"] = "S" # Ser
+        self.gencode_NCBI_14["AGG"] = "S" # Ser
+        self.gencode_NCBI_14["TAA"] = "Y" # Tyr
+        self.gencode_NCBI_14["TGA"] = "W" # Trp
+        
+        # 16: Chlorophycean Mitochondrial Code
+        self.gencode_NCBI_16 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_16["TAG"] = "L" # Leu
+        
+        # 21: Trematode Mitochondrial Code
+        self.gencode_NCBI_21 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_21["TGA"] = "W" # Trp
+        self.gencode_NCBI_21["ATA"] = "M" # Met
+        self.gencode_NCBI_21["AGA"] = "S" # Ser
+        self.gencode_NCBI_21["AGG"] = "S" # Ser
+        self.gencode_NCBI_21["AAA"] = "N" # Asn
+        
+        # 22: Scenedesmus obliquus Mitochondrial Code
+        self.gencode_NCBI_22 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_22["TCA"] = "*" # Ter
+        self.gencode_NCBI_22["TAG"] = "L" # Leu
+        
+        # 23: Thraustochytrium Mitochondrial Code
+        self.gencode_NCBI_23 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_23["TTA"] = "*" # Ter
+        
+        # 24: Pterobranchia Mitochondrial Code
+        self.gencode_NCBI_24 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_24["AGA"] = "S" # Ser
+        self.gencode_NCBI_24["AGG"] = "K" # Lys
+        self.gencode_NCBI_24["TGA"] = "W" # Trp
+        
+        # 25: Candidate Division SR1 and Gracilibacteria Code
+        self.gencode_NCBI_25 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_25["TGA"] = "G" # Gly
+        
+        # 26: Pachysolen tannophilus Nuclear Code
+        self.gencode_NCBI_26 = self.gencode_NCBI_1.copy()
+        self.gencode_NCBI_26["CTG"] = "A" # Ala
+        
+        self.codes = {
+        1 : self.gencode_NCBI_1,
+        2 : self.gencode_NCBI_2,
+        3 : self.gencode_NCBI_3,
+        4 : self.gencode_NCBI_4,
+        5 : self.gencode_NCBI_5,
+        6 : self.gencode_NCBI_6,
+        9 : self.gencode_NCBI_9,
+        10 : self.gencode_NCBI_10,
+        11 : self.gencode_NCBI_11,
+        12 : self.gencode_NCBI_12,
+        13 : self.gencode_NCBI_13,
+        14 : self.gencode_NCBI_14,
+        16 : self.gencode_NCBI_16,
+        21 : self.gencode_NCBI_21,
+        22 : self.gencode_NCBI_22,
+        23 : self.gencode_NCBI_23,
+        24 : self.gencode_NCBI_24,
+        25 : self.gencode_NCBI_25,
+        26 : self.gencode_NCBI_26
+        }
+
+    def translate_dna_to_aa(self, seq, translation_table, frame):
+    # translate DNA string into amino acids
+        # where the last codon starts
+        last_codon_start = len(seq) - 2
+        # where the first codon starts
+        if frame == 1:
+            first = 0
+        elif frame == 2:
+            first = 1
+        elif frame == 3:
+            first = 2
+        # create protein sequence by growing list
+        protein = []
+        add_to_protein = protein.append
+        for start in range(first, last_codon_start, 3):
+            codon = seq[start : start + 3]
+            aa = translation_table.get(codon.upper(), 'X')
+            add_to_protein(aa)           
+
+        return "".join(protein)
+
+    def translate_dict(self, source_dict):
+        #print(self.codes.get(str(1)))
+        translation_table = self.codes.get(self.genetic_code)
+        translated_dict = {}
+        for taxon, seq in sorted(source_dict.items()):
+            translated_seq = self.translate_dna_to_aa(seq, translation_table, self.reading_frame)
+            if "*" in translated_seq:
+                print("WARNING: stop codon(s), indicated as *, found in {} sequence".format(taxon)) 
+            translated_dict[taxon] = translated_seq    
+
+        return translated_dict
+
+    def get_translated(self, translation_table, reading_frame):
+
+        if int(self.cores) == 1:
+            translated_alignments = [self.translate_dict(alignment) for alignment in self.parsed_alignments]            
+        elif int(self.cores) > 1:
+            pool = mp.Pool(int(self.cores))
+            translated_alignments = pool.map(self.translate_dict, self.parsed_alignments)
+
+        return translated_alignments
+        
     def remove_unknown_chars(self, seq):
         # remove unknown characters from sequence
         new_seq = seq.replace("?","").replace("-","")
@@ -1250,7 +1559,7 @@ class MetaAlignment():
 
     def print_nexus(self, source_dict):
         # print nexus-formatted string from a dictionary    
-        if self.data_type == "aa":
+        if self.data_type == "aa" or self.command == "translate":
             data_type = "PROTEIN"
         elif self.data_type == "dna":
             data_type = "DNA"
@@ -1412,12 +1721,20 @@ class MetaAlignment():
 
     def write_reduced(self, file_format, extension):
         # write alignment with taxa removed into a file
-        prefix = self.reduced_file_prefix
+        prefix =  self.reduced_file_prefix
         alns = self.remove_taxa(self.species_to_remove)
         for file_name, aln_dict in alns.items():
             out_file_name = prefix + file_name + extension
             self.file_overwrite_error(out_file_name)          
             self.write_formatted_file(file_format, out_file_name, aln_dict)
+
+    def write_translated(self, index, alignment, file_format, extension):
+        # write alignments translated into amino acids
+        prefix = "translated_"
+        file_name = self.get_alignment_name(index, extension)
+        out_file_name = prefix + file_name + extension
+        self.file_overwrite_error(out_file_name)   
+        self.write_formatted_file(file_format, out_file_name, alignment)
 
     def write_out(self, action, file_format):
         # write other output files depending on command (action) 
@@ -1451,6 +1768,13 @@ class MetaAlignment():
             length = len(self.parsed_alignments)
             print("Wrote " + str(length) + " " + str(file_format) + " files with reduced taxon set")
 
+        elif action == "translate":
+            translated_alignment_dicts = self.get_translated(self.genetic_code, self.reading_frame)
+            length = len(self.alignment_objects)
+            [self.write_translated(i, alignment, file_format, extension) \
+             for i, alignment in enumerate(translated_alignment_dicts)]
+            print("Translated " + str(length) + " files to amino acid sequences")
+
 def main():
     
     # initialize parsed arguments and meta alignment objects
@@ -1460,7 +1784,7 @@ def main():
     if meta_aln.command == "summary":
         meta_aln.write_summaries(kwargs["summary_out"])
     if meta_aln.by_taxon_summary:
-        print('Printing taxon summaries')
+        print("Printing taxon summaries")
         meta_aln.write_taxa_summaries()
     if meta_aln.command == "convert":
         meta_aln.write_out("convert", kwargs["out_format"])
@@ -1473,6 +1797,8 @@ def main():
         meta_aln.write_out("split", kwargs["out_format"])
     if meta_aln.command == "remove":
         meta_aln.write_out("remove", kwargs["out_format"])
+    if meta_aln.command == "translate":
+        meta_aln.write_out("translate", kwargs["out_format"])
   
 def run():
 
