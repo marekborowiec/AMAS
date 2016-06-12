@@ -34,7 +34,7 @@ and counts of all characters present in the relevant (nucleotide or amino acid) 
 
 import argparse, multiprocessing as mp, re, sys
 from random import sample
-from os import path
+from os import path, remove
 from collections import defaultdict, Counter
 
 class ParsedArgs:
@@ -403,6 +403,10 @@ class FileParser:
 
     def phylip_interleaved_parse(self):
     # use regex to parse names and sequences in interleaved phylip files
+        tax_chars_matches = re.finditer(
+            r"^(\s+)?([0-9]+)[ \t]+([0-9]+)",
+            self.in_file_lines, re.MULTILINE
+        )
         name_matches = re.finditer(
             r"^(\s+)?(\S+)[ \t]+[A-Za-z*?.{}-]+",
             self.in_file_lines, re.MULTILINE
@@ -411,6 +415,12 @@ class FileParser:
             r"(^(\s+)?\S+[ \t]+|^)([A-Za-z*?.{}-]+)$",
             self.in_file_lines, re.MULTILINE
         )
+        # get number of taxa and chars
+        for match in tax_chars_matches:
+            tax_match = match.group(2)
+            chars_match = match.group(3)
+        #print(tax_match)
+        #print(chars_match)
         # initiate lists for taxa names and sequence strings on separate lines
         taxa = []
         sequences = []
@@ -428,6 +438,25 @@ class FileParser:
             seq_match = match.group(3).replace("\n","").upper()
             seq_match = self.translate_ambiguous(seq_match)
             sequences.append(seq_match)
+        # try parsing PHYLUCE-style interleaved phylip
+        if len(taxa) != int(tax_match):
+            taxa = []
+            sequences = []
+            matches = re.finditer(
+                r"(^(\s+)?(\S+)( ){2,}|^\s+)([ A-Za-z*?.{}-]+)",
+                self.in_file_lines, re.MULTILINE
+            )
+            
+            for match in matches:
+                try:
+                    name_match = match.group(3).replace("\n","")
+                    taxa.append(name_match)
+                except AttributeError:
+                    pass
+                seq_match = match.group(5).replace("\n","").upper()
+                seq_match = "".join(seq_match.split())
+                seq_match = self.translate_ambiguous(seq_match)
+                sequences.append(seq_match)
 
         for taxon_no in range(len(taxa)):
             sequence = ""
@@ -436,7 +465,7 @@ class FileParser:
            
             records[taxa[taxon_no]] = sequence
             counter += 1 
-
+            
         return records
         
     def nexus_parse(self):
@@ -509,6 +538,7 @@ class FileParser:
     def translate_ambiguous(self, seq):
         # translate ambiguous characters from curly bracket format
         # to single letter format 
+        # also remove spaces from sequences
         seq = seq.replace("{GT}","K")
         seq = seq.replace("{AC}","M")
         seq = seq.replace("{AG}","R")
@@ -520,6 +550,7 @@ class FileParser:
         seq = seq.replace("{ACT}","H")
         seq = seq.replace("{AGT}","D")
         seq = seq.replace("{GATC}","N")
+        seq = seq.replace(" ","")
 
         return seq
 
@@ -1714,10 +1745,15 @@ class MetaAlignment():
     def write_split(self, index, item, file_format, extension):
         # write split alignments from partitions file
         # bad practice with the dicts; figure out better solution
-        file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
-        alignment = list(item.values())[0]
-        self.file_overwrite_error(file_name)        
-        self.write_formatted_file(file_format, file_name, alignment)
+        try:       
+            file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
+            alignment = list(item.values())[0]
+            self.file_overwrite_error(file_name)
+            self.write_formatted_file(file_format, file_name, alignment)
+        except ValueError:
+            print("WARNING: There was no data to write for file '" + file_name + "'. Perhaps a partition composed of missing data only?")
+            remove(file_name)
+            raise ValueError
 
     def write_reduced(self, file_format, extension):
         # write alignment with taxa removed into a file
@@ -1759,9 +1795,14 @@ class MetaAlignment():
         elif action == "split":
             list_of_alignments = self.get_partitioned(self.split)
             length = len(list_of_alignments)
-            [self.write_split(i, item, file_format, extension) \
-             for i, item in enumerate(list_of_alignments)]
-            print("Wrote " + str(length) + " " + str(file_format) + " files from partitions provided")
+            err_indx = 0
+            for i, item in enumerate(list_of_alignments):
+                try:
+                    self.write_split(i, item, file_format, extension)
+                except ValueError:
+                    err_indx += 1
+                    pass
+            print("Wrote " + str(length - err_indx) + " " + str(file_format) + " files from partitions provided")
 
         elif action == "remove":
             self.write_reduced(file_format, extension)
