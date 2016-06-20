@@ -152,7 +152,7 @@ Use AMAS <command> -h for help with arguments of the command of interest
             "--concat-part",
             dest = "concat_part",
             default = "partitions.txt",
-            help = "File name for th0e concatenated alignment partitions. Default: 'partitions.txt'"
+            help = "File name for the concatenated alignment partitions. Default: 'partitions.txt'"
         ) 
         parser.add_argument(
             "-t",
@@ -168,6 +168,14 @@ Use AMAS <command> -h for help with arguments of the command of interest
             choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
             default = "fasta",
             help = "File format for the output alignment. Default: fasta"
+        )
+        parser.add_argument(
+            "-y",
+            "--part-format",
+            dest = "part_format",
+            choices = ["nexus", "raxml", "unspecified"],
+            default = "unspecified",
+            help = "Format of the partitions file. Default: 'unspecified'"
         ) 
         # add shared arguments
         self.add_common_args(parser)
@@ -1657,22 +1665,52 @@ class MetaAlignment():
         alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
         return sorted(a_list, key = alphanum_key)
 
-    def print_partitions(self):
+    def print_unspecified_partitions(self):
         # print partitions for concatenated alignment
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
         for key in part_list:
             part_string += key + "=" + str(part_dict[key]) + "\n"
-
         return part_string
 
-    def write_partitions(self, file_name):
+    def print_nexus_partitions(self):
+        # print partitions for concatenated alignment
+        part_string = ""
+        part_dict = self.get_concatenated(self.parsed_alignments)[1]
+        part_list = self.natural_sort(part_dict.keys())
+        # write beginning of nexus sets
+        part_string += "#NEXUS\n\n"
+        part_string += "Begin sets;\n"
+        for key in part_list:
+            part_string += "\tcharset " + key + "=" + str(part_dict[key]) + ";\n"
+        part_string += "End;"
+        return part_string
+
+    def print_raxml_partitions(self, data_type):
+        # print partitions for concatenated alignment
+        part_string = ""
+        part_dict = self.get_concatenated(self.parsed_alignments)[1]
+        part_list = self.natural_sort(part_dict.keys())
+        if data_type == "dna":
+            for key in part_list:
+                part_string += "DNA, " + key + "=" + str(part_dict[key]) + "\n"
+        if data_type == "aa":
+            for key in part_list:
+                part_string += "WAG, " + key + "=" + str(part_dict[key]) + "\n"
+        return part_string
+
+    def write_partitions(self, file_name, part_format):
         # write partitions file for concatenated alignment
-         self.file_overwrite_error(file_name)        
-         part_file = open(file_name, "w")
-         part_file.write(self.print_partitions())
-         print("Wrote partitions for the concatenated file to '" + file_name + "'")
+        self.file_overwrite_error(file_name)        
+        part_file = open(file_name, "w")
+        if part_format == "nexus":
+            part_file.write(self.print_nexus_partitions())
+        if part_format == "raxml":
+            part_file.write(self.print_raxml_partitions(self.data_type))
+        if part_format == "unspecified":
+            part_file.write(self.print_unspecified_partitions())
+        print("Wrote partitions for the concatenated file to '" + file_name + "'")
 
     def get_extension(self, file_format):
         # get proper extension string
@@ -1834,7 +1872,7 @@ def main():
         meta_aln.write_out("convert", kwargs["out_format"])
     if meta_aln.command == "concat":
         meta_aln.write_out("concat", kwargs["out_format"])
-        meta_aln.write_partitions(kwargs["concat_part"])
+        meta_aln.write_partitions(kwargs["concat_part"], kwargs["part_format"])
     if meta_aln.command == "replicate":
         meta_aln.write_out("replicate", kwargs["out_format"])
     if meta_aln.command == "split":
