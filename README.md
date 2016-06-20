@@ -84,10 +84,36 @@ By default the output will be written to two files: `partitions.txt`, containing
 
 Below is a command specifying the concatenated file output format as nexus with `-u nexus`:
 ```
-python3 AMAS.py concat -f fasta -d aa -i *phy -u nexus
+python3 AMAS.py concat -f fasta -d aa -i *fas -u nexus
 ```
 Alignments to be concatenated need not have identical sets of taxa before processing: the concatenated alignment will be populated with missing data where a given locus is missing a taxon. However, if every file to be concatenated includes only unique names (for example species name plus sequence name: `D_melanogaster_NW_001845408.1` in one alignment, `D_melanogaster_NW_001848855.1` in other alignment etc.), you will first need to trim those names so that sequences from one taxon have equivalents in all files.   
-
+In addition to the name, you can also specify the format of the partitions output file. By default, the format is the following:
+```
+AA = 1-605
+AK = 606-1200
+28S = 1201-1800
+```
+RAxML:
+```
+python3 AMAS.py concat -f phylip -d dna -i *phy --part-format raxml
+```
+```
+DNA, AA = 1-605
+DNA, AK = 606-1200
+DNA, 28S = 1201-1800
+```
+Nexus:
+```
+python3 AMAS.py concat -f phylip -d dna -i *phy --part-format nexus
+```
+```
+#NEXUS
+Begin sets;
+    charset AA = 1-605;
+    charset AK = 606-1200;
+    charset 28S = 1201-1800;
+End;
+```
 ### Getting alignment statistics
 This is an example of how you can summarize two protein fasta alignments by running:
 ```
