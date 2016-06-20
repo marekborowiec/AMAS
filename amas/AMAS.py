@@ -1671,7 +1671,7 @@ class MetaAlignment():
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
         for key in part_list:
-            part_string += key + "=" + str(part_dict[key]) + "\n"
+            part_string += key + " = " + str(part_dict[key]) + "\n"
         return part_string
 
     def print_nexus_partitions(self):
@@ -1683,7 +1683,7 @@ class MetaAlignment():
         part_string += "#NEXUS\n\n"
         part_string += "Begin sets;\n"
         for key in part_list:
-            part_string += "\tcharset " + key + "=" + str(part_dict[key]) + ";\n"
+            part_string += "\tcharset " + key + " = " + str(part_dict[key]) + ";\n"
         part_string += "End;"
         return part_string
 
@@ -1694,10 +1694,10 @@ class MetaAlignment():
         part_list = self.natural_sort(part_dict.keys())
         if data_type == "dna":
             for key in part_list:
-                part_string += "DNA, " + key + "=" + str(part_dict[key]) + "\n"
+                part_string += "DNA, " + key + " = " + str(part_dict[key]) + "\n"
         if data_type == "aa":
             for key in part_list:
-                part_string += "WAG, " + key + "=" + str(part_dict[key]) + "\n"
+                part_string += "WAG, " + key + " = " + str(part_dict[key]) + "\n"
         return part_string
 
     def write_partitions(self, file_name, part_format):
