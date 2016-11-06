@@ -279,7 +279,7 @@ Use AMAS <command> -h for help with arguments of the command of interest
 12. The Alternative Yeast Nuclear Code, 13. The Ascidian Mitochondrial Code, 14. The Alternative Flatworm Mitochondrial Code, \
 16. Chlorophycean Mitochondrial Code, 21. Trematode Mitochondrial Code, 22. Scenedesmus obliquus Mitochondrial Code, \
 23. Thraustochytrium Mitochondrial Code, 24. Pterobranchia Mitochondrial Code, 25. Candidate Division SR1 and Gracilibacteria Code, \
-26. Pachysolen tannophilus Nuclear Code. Default: 1.",
+26. Pachysolen tannophilus Nuclear Code. Default: 1."
         )
         parser.add_argument(
             "-k",
@@ -1528,7 +1528,11 @@ class MetaAlignment():
         new_alns = {}
         for index, alignment in enumerate(self.parsed_alignments):
             aln_name, aln_dict = self.remove_from_alignment(alignment, species_to_remove, index)
-            new_alns[aln_name] = aln_dict
+            # check if alignment is not empty:
+            if aln_dict:
+                new_alns[aln_name] = aln_dict
+            else:
+                print("ERROR: You asked to remove all taxa from the alignment " + aln_name + ". No output file will be written.")
 
         return new_alns
 
@@ -1801,6 +1805,7 @@ class MetaAlignment():
             out_file_name = prefix + file_name + extension
             self.file_overwrite_error(out_file_name)          
             self.write_formatted_file(file_format, out_file_name, aln_dict)
+        return len(alns)
 
     def write_translated(self, index, alignment, file_format, extension):
         # write alignments translated into amino acids
@@ -1843,9 +1848,9 @@ class MetaAlignment():
             print("Wrote " + str(length - err_indx) + " " + str(file_format) + " files from partitions provided")
 
         elif action == "remove":
-            self.write_reduced(file_format, extension)
-            length = len(self.parsed_alignments)
-            print("Wrote " + str(length) + " " + str(file_format) + " files with reduced taxon set")
+            aln_no = self.write_reduced(file_format, extension)
+            if aln_no:
+	            print("Wrote " + str(aln_no) + " " + str(file_format) + " files with reduced taxon set")
 
         elif action == "translate":
             if self.data_type == "aa":
