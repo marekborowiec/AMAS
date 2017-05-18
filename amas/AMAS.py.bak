@@ -358,7 +358,7 @@ class FileHandler:
         try:
             self.in_file = open(self.file_name, "r")
         except FileNotFoundError:
-            print(("ERROR: File '" + self.file_name + "' not found."))
+            print("ERROR: File '" + self.file_name + "' not found.")
             sys.exit()
         return self.in_file
 
@@ -696,7 +696,7 @@ class Alignment:
         char_count_dicts = self.get_counts()
         for char in self.alphabet:
             add_to_chars(char)
-            if char in list(char_count_dicts.keys()):
+            if char in char_count_dicts.keys():
                 add_to_counts(str(char_count_dicts[char]))
             else:
                 add_to_counts("0")
@@ -710,7 +710,7 @@ class Alignment:
     def append_count(self, char_dict):
         count_list = []
         for char in self.alphabet:
-            if char in list(char_dict.keys()):
+            if char in char_dict.keys():
                 count_list.append(char_dict[char])
             else:
                 count_list.append(0)
@@ -718,7 +718,7 @@ class Alignment:
      
     def matrix_creator(self):
         # decompose character matrix into a two-dimensional list
-        matrix = [list(sequence) for sequence in list(self.parsed_aln.values())]
+        matrix = [list(sequence) for sequence in self.parsed_aln.values()]
         return matrix
 
     def get_column(self, i):
@@ -778,16 +778,16 @@ class Alignment:
         
     def get_taxa_no(self):
         # get number of taxa
-        return len(list(self.parsed_aln.values()))
+        return len(self.parsed_aln.values())
     
     def get_alignment_length(self):
         # get alignment length by just checking the first seq length
         # this assumes that all sequences are of equal length
-        return len(next(iter(list(self.parsed_aln.values()))))
+        return len(next(iter(self.parsed_aln.values())))
 
     def get_matrix_cells(self):
     # count all matrix cells
-        self.all_matrix_cells = len(list(self.parsed_aln.values())) \
+        self.all_matrix_cells = len(self.parsed_aln.values()) \
          * int(self.length)
         return self.all_matrix_cells
 
@@ -805,7 +805,7 @@ class Alignment:
         # get missing count and percent from parsed alignment
         # return a list of tuples with taxon name, count, and percent missing
         self.missing_records = sorted([(taxon, self.get_missing_from_seq(seq), self.get_missing_percent_from_seq(seq)) \
-         for taxon, seq in list(self.parsed_aln.items())])
+         for taxon, seq in self.parsed_aln.items()])
         return self.missing_records
     
     def get_missing_from_seq(self, seq):
@@ -829,7 +829,7 @@ class Alignment:
         # get counts of all characters from parsed alignment
         # return a list of tuples with taxon name and counts
         self.char_count_records = sorted([(taxon, self.get_counts_from_seq(seq)) \
-         for taxon, seq in list(self.parsed_aln.items())])
+         for taxon, seq in self.parsed_aln.items()])
         return self.char_count_records
 
     def get_counts_from_seq(self, seq):
@@ -840,10 +840,10 @@ class Alignment:
     def check_data_type(self):
         # check if the data type is correct
         self.check = any(any(char in self.non_alphabet for char in seq) \
-         for seq in list(self.parsed_aln.values()))
+         for seq in self.parsed_aln.values())
         if self.check is True:
-            print(("WARNING: found non-" + self.data_type + " characters. "\
-             "Are you sure you specified the right data type?"))
+            print("WARNING: found non-" + self.data_type + " characters. "\
+             "Are you sure you specified the right data type?")
 
 
 class AminoAcidAlignment(Alignment):
@@ -914,7 +914,7 @@ class DNAAlignment(Alignment):
         # get AT and GC contents from parsed alignment dictionary
         # return a list of tuples with taxon name, AT content, and GC content
         self.atgc_records = sorted([(taxon, self.get_atgc_from_seq(seq)) \
-         for taxon, seq in list(self.parsed_aln.items())])
+         for taxon, seq in self.parsed_aln.items()])
         return self.atgc_records
         
     def get_atgc_from_seq(self, seq):
@@ -1214,7 +1214,7 @@ class MetaAlignment():
         for taxon, seq in sorted(source_dict.items()):
             translated_seq = self.translate_dna_to_aa(seq, translation_table, self.reading_frame)
             if "*" in translated_seq:
-                print(("WARNING: stop codon(s), indicated as *, found in {} sequence".format(taxon))) 
+                print("WARNING: stop codon(s), indicated as *, found in {} sequence".format(taxon)) 
             translated_dict[taxon] = translated_seq    
 
         return translated_dict
@@ -1237,7 +1237,7 @@ class MetaAlignment():
 
     def remove_empty_sequences(self, split_alignment):
         # remove taxa from alignment if they are composed of only empty sequences
-        new_alignment = {taxon : seq for taxon, seq in list(split_alignment.items()) if self.remove_unknown_chars(seq)}
+        new_alignment = {taxon : seq for taxon, seq in split_alignment.items() if self.remove_unknown_chars(seq)}
 
         return new_alignment
 
@@ -1281,9 +1281,9 @@ class MetaAlignment():
                     print("ERROR: Sequences in input are of varying lengths. Be sure to align them first.")
                     sys.exit()
 
-            if not list(parsed.keys()) or not any(parsed.values()):
-                print(("ERROR: Parsed sequences of " + alignment.in_file + " are empty. "\
-                 "Are you sure you specified the right input format and/or that input is a valid alignment?"))
+            if not parsed.keys() or not any(parsed.values()):
+                print("ERROR: Parsed sequences of " + alignment.in_file + " are empty. "\
+                 "Are you sure you specified the right input format and/or that input is a valid alignment?")
                 sys.exit()
  
         return parsed_alignments
@@ -1298,10 +1298,10 @@ class MetaAlignment():
         add_to_list_of_parts = list_of_parts.append
         for partition in partitions:
             # loop over all parsed partitions, adding taxa and sliced sequences
-            for name, elements in list(partition.items()):    
+            for name, elements in partition.items():    
                 new_dict = {}
          
-                for taxon, seq in list(alignment.items()):
+                for taxon, seq in alignment.items():
                     new_seq = ""
          
                     for dictionary in elements:
@@ -1423,7 +1423,7 @@ class MetaAlignment():
         summary_file.write(header + '\n')
         summary_file.write('\n'.join(new_summ))
         summary_file.close()
-        print(("Wrote summaries to file '" + file_name + "'"))
+        print("Wrote summaries to file '" + file_name + "'")
 
     def write_taxa_summaries(self):
         # write by-taxon summaries to file
@@ -1469,7 +1469,7 @@ class MetaAlignment():
         # the concatenated alignment
         all_taxa = []
         for alignment in alignments:
-            for taxon in list(alignment.keys()):
+            for taxon in alignment.keys():
                 if taxon not in all_taxa:
                     all_taxa.append(taxon)
 
@@ -1502,12 +1502,12 @@ class MetaAlignment():
 
             for taxon in all_taxa:
 
-                if taxon not in list(alignment.keys()):
+                if taxon not in alignment.keys():
                     concatenated[taxon].append(empty_seq)
                 else:
                     concatenated[taxon].append(alignment[taxon])
  
-        concatenated = {taxon:''.join(seqs) for taxon, seqs in list(concatenated.items())}
+        concatenated = {taxon:''.join(seqs) for taxon, seqs in concatenated.items()}
         
         return concatenated, partitions
 
@@ -1515,10 +1515,10 @@ class MetaAlignment():
         # remove taxa from alignment
         aln_name = self.get_alignment_name_no_ext(index)
         for taxon in species_to_remove:
-            if taxon not in list(alignment.keys()):
-                print(("WARNING: Taxon '" + taxon + "' not found in '" + aln_name + "'.\nIf you expected it to be there, make sure to replace all taxon name spaces with underscores and that you are not using quotes."))
+            if taxon not in alignment.keys():
+                print("WARNING: Taxon '" + taxon + "' not found in '" + aln_name + "'.\nIf you expected it to be there, make sure to replace all taxon name spaces with underscores and that you are not using quotes.")
 
-            new_alignment = {species: seq for species, seq in list(alignment.items()) if species not in species_to_remove}
+            new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove}
 
             aln_tuple = (aln_name, new_alignment)
 
@@ -1532,7 +1532,7 @@ class MetaAlignment():
             if aln_dict:
                 new_alns[aln_name] = aln_dict
             else:
-                print(("ERROR: You asked to remove all taxa from the alignment " + aln_name + ". No output file will be written."))
+                print("ERROR: You asked to remove all taxa from the alignment " + aln_name + ". No output file will be written.")
 
         return new_alns
 
@@ -1560,7 +1560,7 @@ class MetaAlignment():
         # figure out the max length of a taxon for nice padding of sequences
         pad_longest_name = len(max(taxa_list, key=len)) + 3
         # get sequence length from a random value
-        seq_length = len(next(iter(list(source_dict.values()))))
+        seq_length = len(next(iter(source_dict.values())))
         header = str(len(source_dict)) + " " + str(seq_length)
         phylip_string = header + "\n"
         for taxon, seq in sorted(source_dict.items()):
@@ -1575,7 +1575,7 @@ class MetaAlignment():
         taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
         pad_longest_name = len(max(taxa_list, key=len)) + 3
-        seq_length = len(next(iter(list(source_dict.values()))))
+        seq_length = len(next(iter(source_dict.values())))
         header = str(len(source_dict)) + " " + str(seq_length)
         phylip_int_string = header + "\n\n"
         # this will be a list of tuples to hold taxa names and sequences
@@ -1610,7 +1610,7 @@ class MetaAlignment():
         taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
         pad_longest_name = len(max(taxa_list, key=len)) + 3
-        seq_length = len(next(iter(list(source_dict.values()))))
+        seq_length = len(next(iter(source_dict.values())))
         header = str(len(source_dict)) + " " + str(seq_length)
         nexus_string = "#NEXUS\n\nBEGIN DATA;\n\tDIMENSIONS  NTAX=" + str(no_taxa) +\
          " NCHAR=" + str(seq_length) + ";\n\tFORMAT DATATYPE=" + data_type +\
@@ -1634,7 +1634,7 @@ class MetaAlignment():
         taxa_list = list(source_dict.keys())
         no_taxa = len(taxa_list)
         pad_longest_name = len(max(taxa_list, key=len)) + 3
-        seq_length = len(next(iter(list(source_dict.values()))))
+        seq_length = len(next(iter(source_dict.values())))
         header = str(len(source_dict)) + " " + str(seq_length)
         # this will be a list of tuples to hold taxa names and sequences
         seq_matrix = []
@@ -1673,7 +1673,7 @@ class MetaAlignment():
         # print partitions for concatenated alignment
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
-        part_list = self.natural_sort(list(part_dict.keys()))
+        part_list = self.natural_sort(part_dict.keys())
         for key in part_list:
             part_string += key + " = " + str(part_dict[key]) + "\n"
         return part_string
@@ -1682,7 +1682,7 @@ class MetaAlignment():
         # print partitions for concatenated alignment
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
-        part_list = self.natural_sort(list(part_dict.keys()))
+        part_list = self.natural_sort(part_dict.keys())
         # write beginning of nexus sets
         part_string += "#NEXUS\n\n"
         part_string += "Begin sets;\n"
@@ -1695,7 +1695,7 @@ class MetaAlignment():
         # print partitions for concatenated alignment
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
-        part_list = self.natural_sort(list(part_dict.keys()))
+        part_list = self.natural_sort(part_dict.keys())
         if data_type == "dna":
             for key in part_list:
                 part_string += "DNA, " + key + " = " + str(part_dict[key]) + "\n"
@@ -1714,7 +1714,7 @@ class MetaAlignment():
             part_file.write(self.print_raxml_partitions(self.data_type))
         if part_format == "unspecified":
             part_file.write(self.print_unspecified_partitions())
-        print(("Wrote partitions for the concatenated file to '" + file_name + "'"))
+        print("Wrote partitions for the concatenated file to '" + file_name + "'")
 
     def get_extension(self, file_format):
         # get proper extension string
@@ -1734,7 +1734,7 @@ class MetaAlignment():
     def file_overwrite_error(self, file_name):
         # print warning when overwriting a file
         if path.exists(file_name):
-            print(("WARNING: You are overwriting '" + file_name + "'"))
+            print("WARNING: You are overwriting '" + file_name + "'")
 
     def write_formatted_file(self, file_format, file_name, alignment):
         # write the correct format string into a file        
@@ -1770,7 +1770,7 @@ class MetaAlignment():
         self.file_overwrite_error(file_name)
         self.write_formatted_file(file_format, file_name, concatenated_alignment)
         
-        print(("Wrote concatenated sequences to " + file_format + " file '" + file_name + "'"))
+        print("Wrote concatenated sequences to " + file_format + " file '" + file_name + "'")
 
     def write_convert(self, index, alignment, file_format, extension):
         # write converted alignment into a file
@@ -1793,7 +1793,7 @@ class MetaAlignment():
             self.file_overwrite_error(file_name)
             self.write_formatted_file(file_format, file_name, alignment)
         except ValueError:
-            print(("WARNING: There was no data to write for file '" + file_name + "'. Perhaps a partition composed of missing data only?"))
+            print("WARNING: There was no data to write for file '" + file_name + "'. Perhaps a partition composed of missing data only?")
             remove(file_name)
             raise ValueError
 
@@ -1801,7 +1801,7 @@ class MetaAlignment():
         # write alignment with taxa removed into a file
         prefix =  self.reduced_file_prefix
         alns = self.remove_taxa(self.species_to_remove)
-        for file_name, aln_dict in list(alns.items()):
+        for file_name, aln_dict in alns.items():
             out_file_name = prefix + file_name + extension
             self.file_overwrite_error(out_file_name)          
             self.write_formatted_file(file_format, out_file_name, aln_dict)
@@ -1826,14 +1826,14 @@ class MetaAlignment():
             length = len(self.alignment_objects)
             [self.write_convert(i, alignment, file_format, extension) \
              for i, alignment in enumerate(self.parsed_alignments)]
-            print(("Converted " + str(length) + " files from " + self.in_format + " to " + file_format))
+            print("Converted " + str(length) + " files from " + self.in_format + " to " + file_format)
 
         elif action == "replicate":
             [self.write_replicate(i, alignment, file_format, extension) \
              for i, alignment in enumerate(self.get_replicate(self.no_replicates, self.no_loci))]
 
-            print(("Constructed " + str(self.no_replicates) + " replicate data sets, each from " \
-             + str(self.no_loci) + " alignments"))
+            print("Constructed " + str(self.no_replicates) + " replicate data sets, each from " \
+             + str(self.no_loci) + " alignments")
 
         elif action == "split":
             list_of_alignments = self.get_partitioned(self.split)
@@ -1845,12 +1845,12 @@ class MetaAlignment():
                 except ValueError:
                     err_indx += 1
                     pass
-            print(("Wrote " + str(length - err_indx) + " " + str(file_format) + " files from partitions provided"))
+            print("Wrote " + str(length - err_indx) + " " + str(file_format) + " files from partitions provided")
 
         elif action == "remove":
             aln_no = self.write_reduced(file_format, extension)
             if aln_no:
-	            print(("Wrote " + str(aln_no) + " " + str(file_format) + " files with reduced taxon set"))
+	            print("Wrote " + str(aln_no) + " " + str(file_format) + " files with reduced taxon set")
 
         elif action == "translate":
             if self.data_type == "aa":
@@ -1860,7 +1860,7 @@ class MetaAlignment():
             length = len(self.alignment_objects)
             [self.write_translated(i, alignment, file_format, extension) \
              for i, alignment in enumerate(translated_alignment_dicts)]
-            print(("Translated " + str(length) + " files to amino acid sequences"))
+            print("Translated " + str(length) + " files to amino acid sequences")
 
 def main():
     
