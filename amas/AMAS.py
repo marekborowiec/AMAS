@@ -838,9 +838,9 @@ class Alignment:
         return char_counts
 
     def check_data_type(self):
-        # check if the data type is correct
-        self.check = any(any(char in self.non_alphabet for char in seq) \
-         for seq in self.parsed_aln.values())
+        # check if the data type is correct; only one seq to save on computation
+        seq = next(iter(self.parsed_aln.values()))
+        self.check = any(char in self.non_alphabet for char in seq)
         if self.check is True:
             print("WARNING: found non-" + self.data_type + " characters. "\
              "Are you sure you specified the right data type?")
