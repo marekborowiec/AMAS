@@ -50,6 +50,7 @@ The AMAS commands are:
   split       Split alignment according to a partitions file
   summary     Write alignment summary
   remove      Remove taxa from alignment
+  translate   Translate DNA alignment into protein alignment
 
 Use AMAS <command> -h for help with arguments of the command of interest
 '''
@@ -427,8 +428,7 @@ class FileParser:
         for match in tax_chars_matches:
             tax_match = match.group(2)
             chars_match = match.group(3)
-        #print(tax_match)
-        #print(chars_match)
+
         # initiate lists for taxa names and sequence strings on separate lines
         taxa = []
         sequences = []
@@ -658,7 +658,6 @@ class Alignment:
         self.prop_variable = self.get_prop_variable()
         self.parsimony_informative = self.get_parsimony_informative()
         self.prop_parsimony = self.get_prop_parsimony()
-        self.char_count_records = self.get_counts_from_parsed()
         self.missing_records = self.get_missing_from_parsed()
         name = str(self.get_name())
         taxa_no = str(self.get_taxa_no())
@@ -674,6 +673,7 @@ class Alignment:
         # get summary for all taxa/sequences in alignment
         per_taxon_summary = []
         taxa_no = self.get_taxa_no()
+        self.missing_records = self.get_missing_from_parsed()
         self.length = self.get_alignment_length()
         lengths = (self.length for i in range(taxa_no))
         name = self.get_name()
@@ -704,7 +704,7 @@ class Alignment:
 
     def get_taxon_char_summary(self):
         # get summary of frequencies for all characters
-        records = (self.append_count(char_dict) for taxon, char_dict in self.char_count_records)
+        records = (self.append_count(char_dict) for taxon, char_dict in self.get_counts_from_parsed())
         return records
 
     def append_count(self, char_dict):
@@ -820,7 +820,7 @@ class Alignment:
 
     def get_counts(self):
         # get counts of each character in the used alphabet for all sequences
-        counters = [Counter(chars) for taxon, chars in self.char_count_records]
+        counters = [Counter(chars) for taxon, chars in self.get_counts_from_parsed()]
         all_counts = sum(counters, Counter())
         counts_dict = dict(all_counts)
         return counts_dict
@@ -828,9 +828,8 @@ class Alignment:
     def get_counts_from_parsed(self):
         # get counts of all characters from parsed alignment
         # return a list of tuples with taxon name and counts
-        self.char_count_records = sorted([(taxon, self.get_counts_from_seq(seq)) \
+        return sorted([(taxon, self.get_counts_from_seq(seq)) \
          for taxon, seq in self.parsed_aln.items()])
-        return self.char_count_records
 
     def get_counts_from_seq(self, seq):
         # get all alphabet chars count for individual sequence
@@ -898,8 +897,8 @@ class DNAAlignment(Alignment):
         # get AC and GC contents for all sequences
         # AT content is the first element of AT, GC content tuple
         # returned by get_atgc_from_seq()
-        self.get_atgc_from_parsed()
-        at_content = round(sum(atgc[0] for taxon, atgc in self.atgc_records) \
+        atgc_records = self.get_atgc_from_parsed()
+        at_content = round(sum(atgc[0] for taxon, atgc in atgc_records) \
          / self.get_taxa_no(), 3)
         gc_content = round(1 - float(at_content), 3)
         
@@ -907,15 +906,14 @@ class DNAAlignment(Alignment):
         return atgc_content
 
     def get_list_from_atgc(self):
-        records = (atgc for taxon, atgc in self.atgc_records)
+        records = (atgc for taxon, atgc in self.get_atgc_from_parsed())
         return records
 
     def get_atgc_from_parsed(self):
         # get AT and GC contents from parsed alignment dictionary
         # return a list of tuples with taxon name, AT content, and GC content
-        self.atgc_records = sorted([(taxon, self.get_atgc_from_seq(seq)) \
+        return sorted([(taxon, self.get_atgc_from_seq(seq)) \
          for taxon, seq in self.parsed_aln.items()])
-        return self.atgc_records
         
     def get_atgc_from_seq(self, seq):
         # get AT and GC contents from individual sequences
@@ -1208,7 +1206,6 @@ class MetaAlignment():
         return "".join(protein)
 
     def translate_dict(self, source_dict):
-        #print(self.codes.get(str(1)))
         translation_table = self.codes.get(self.genetic_code)
         translated_dict = {}
         for taxon, seq in sorted(source_dict.items()):
@@ -1402,7 +1399,13 @@ class MetaAlignment():
             header = aa_header + freq_header
         elif self.data_type == "dna":
             header = dna_header + freq_header
-        summaries =  [alignment.get_taxa_summary() for alignment in alignments]
+
+        # use multiprocessing if more than one core specified
+        if int(self.cores) == 1:
+            summaries = [alignment.get_taxa_summary() for alignment in alignments]            
+        elif int(self.cores) > 1:
+            pool = mp.Pool(int(self.cores))
+            summaries = pool.map(self.summarize_alignments_taxa, alignments)
            
         return header, summaries
 
@@ -1850,7 +1853,7 @@ class MetaAlignment():
         elif action == "remove":
             aln_no = self.write_reduced(file_format, extension)
             if aln_no:
-	            print("Wrote " + str(aln_no) + " " + str(file_format) + " files with reduced taxon set")
+                print("Wrote " + str(aln_no) + " " + str(file_format) + " files with reduced taxon set")
 
         elif action == "translate":
             if self.data_type == "aa":
