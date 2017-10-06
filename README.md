@@ -35,6 +35,7 @@ The AMAS commands are:
   split       Split alignment according to a partitions file
   summary     Write alignment summary
   remove      Remove taxa from alignment
+  translate   Translate DNA alignment into protein alignment
 
 Use AMAS <command> -h for help with arguments of the command of interest
 
