@@ -36,6 +36,14 @@ import argparse, multiprocessing as mp, re, sys
 from random import sample
 from os import path, remove
 from collections import defaultdict, Counter
+from itertools import compress
+
+def proportion(x):
+    # needed to prevent input of invalid floats in trim mode
+    x = float(x)
+    if x < 0.0 or x > 1.0:
+        raise argparse.ArgumentTypeError("%r not in range [0.0, 1.0]"%(x,))
+    return x
 
 class ParsedArgs:
 
@@ -51,6 +59,7 @@ The AMAS commands are:
   summary     Write alignment summary
   remove      Remove taxa from alignment
   translate   Translate DNA alignment into protein alignment
+  trim        Remove columns from alignment
 
 Use AMAS <command> -h for help with arguments of the command of interest
 '''
@@ -117,6 +126,47 @@ Use AMAS <command> -h for help with arguments of the command of interest
             choices = ["aa", "dna"],
             help = "Type of data"
         )
+
+    def trim(self):
+        # convert command
+
+        parser = argparse.ArgumentParser(
+            description="Trim alignment by occupancy. Optionally removes sites that are not parsimony informative. \n CAUTION: when running on amino acids stop codons marked with * will be treated as missing data!",
+        )
+        parser.add_argument(
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            default = "fasta",
+            help = "File format for the output alignment. Default: fasta"
+        )
+        parser.add_argument(
+            "-o",
+            "--trim-out",
+            dest = "trim_out",
+            help = "File name for the trimmed alignment when providing a single file as input."
+        )
+        parser.add_argument(
+            "-t",
+            "--trim-fraction",
+            type = proportion, 
+            dest = "trim_fraction",
+            default = 0.6,
+            help = "Columns in the alignments with occupancy lower than this value will be removed. Default: 0.6"
+        )
+        parser.add_argument(
+            "-p",
+            "--retain-only-parsimony-sites",
+            dest = "parsimony_check",
+            action = "store_true",
+            default = False,
+            help = "Only write parsimony informative columns in trimmed alignment Default: write all columns"
+        )
+        # add shared arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
 
     def summary(self):
        # summary command
@@ -739,7 +789,29 @@ class Alignment:
              new_site = [char for char in site if char not in self.missing_ambiguous_chars]
              add_to_no_mis_amb(new_site)
          return no_missing_ambiguous_sites
-        
+
+    def replace_missing(self, column):
+        return ["-" if x in self.missing_chars else x for x in self.get_column(column)]
+
+    def get_trim_selection(self, trim_fraction, parsimony_check):
+        # this checks each column of alignment for minimum occupancy
+        self.matrix = self.matrix_creator()
+        trim_vector = []
+        for column in range(self.get_alignment_length()):
+            site = self.replace_missing(column)
+            occ = (len(site) - site.count("-")) / len(site)
+            if parsimony_check:
+                unique_chars = set(site)
+                try:
+                    unique_chars.remove("-")
+                except KeyError: 
+                    pass # this occurs if we have no missing data
+                pattern = [base for base in unique_chars if site.count(base) >= 2]
+                trim_vector.append(len(pattern) >= 2 and occ >= trim_fraction)
+            else:
+                trim_vector.append(occ >= trim_fraction)
+        return trim_vector
+   
     def get_variable(self):
         # if all elements of a site without missing or ambiguous characters 
         # are not the same, consider it variable
@@ -961,6 +1033,10 @@ class MetaAlignment():
         if self.command == "translate":
             self.reading_frame = kwargs.get("reading_frame")
             self.genetic_code = kwargs.get("genetic_code")
+        if self.command == "trim":
+            self.trim_fraction = kwargs.get("trim_fraction")
+            self.trim_out = kwargs.get("trim_out")
+            self.parsimony_check = kwargs.get("parsimony_check", False)
 
         self.alignment_objects = self.get_alignment_objects()
         self.parsed_alignments = self.get_parsed_alignments()
@@ -1217,7 +1293,6 @@ class MetaAlignment():
         return translated_dict
 
     def get_translated(self, translation_table, reading_frame):
-
         if int(self.cores) == 1:
             translated_alignments = [self.translate_dict(alignment) for alignment in self.parsed_alignments]            
         elif int(self.cores) > 1:
@@ -1225,6 +1300,24 @@ class MetaAlignment():
             translated_alignments = pool.map(self.translate_dict, self.parsed_alignments)
 
         return translated_alignments
+
+    def trim_dict(self, alignment):
+        trim_vector = alignment.get_trim_selection(self.trim_fraction, self.parsimony_check)
+        aln_dict = alignment.parsed_aln
+        for key in aln_dict:
+            aln_dict[key] = ''.join(list(compress(aln_dict[key], trim_vector)))
+
+        return aln_dict
+
+    def get_trimmed(self, trim_fraction, parsimony_check):
+        if int(self.cores) == 1:
+            trimmed_alignments = [self.trim_dict(alignment) for alignment in self.alignment_objects]            
+        elif int(self.cores) > 1:
+            pool = mp.Pool(int(self.cores))
+            trimmed_alignments = pool.map(self.trim_dict, self.alignment_objects)
+
+        return trimmed_alignments
+
         
     def remove_unknown_chars(self, seq):
         # remove unknown characters from sequence
@@ -1818,6 +1911,17 @@ class MetaAlignment():
         self.file_overwrite_error(out_file_name)   
         self.write_formatted_file(file_format, out_file_name, alignment)
 
+    def write_trimmed(self, index, alignment, file_format, extension):
+        # write trimmed alignments
+        if self.trim_out: 
+            out_file_name = self.trim_out
+        else:
+            prefix = "trimmed_"
+            file_name = self.get_alignment_name(index, extension)
+            out_file_name = prefix + file_name
+        self.file_overwrite_error(out_file_name)   
+        self.write_formatted_file(file_format, out_file_name, alignment)
+
     def write_out(self, action, file_format):
         # write other output files depending on command (action) 
         extension = self.get_extension(file_format)
@@ -1865,6 +1969,14 @@ class MetaAlignment():
              for i, alignment in enumerate(translated_alignment_dicts)]
             print("Translated " + str(length) + " files to amino acid sequences")
 
+        elif action == "trim": # self.trim_fraction, self.parsimony_check
+            trimmed_alignment_dicts = self.get_trimmed(self.trim_fraction, self.parsimony_check)
+            length = len(self.alignment_objects)
+            [self.write_trimmed(i, alignment, file_format, extension) \
+             for i, alignment in enumerate(trimmed_alignment_dicts)]
+            print("Trimmed", str(length), "file(s) to have", self.trim_fraction, "minimum occupancy per alignment column") 
+
+
 def main():
     
     # initialize parsed arguments and meta alignment objects
@@ -1889,6 +2001,10 @@ def main():
         meta_aln.write_out("remove", kwargs["out_format"])
     if meta_aln.command == "translate":
         meta_aln.write_out("translate", kwargs["out_format"])
+    if meta_aln.command == "trim":
+        meta_aln.write_out("trim", kwargs["out_format"])
+
+        # meta_aln.write_out("translate", kwargs["out_format"])
   
 def run():
 
