@@ -781,14 +781,12 @@ class Alignment:
 
     def get_sites_no_missing_ambiguous(self):
         # get each site without missing or ambiguous characters
-         no_missing_ambiguous_sites = []
-         add_to_no_mis_amb = no_missing_ambiguous_sites.append
-
-         for column in range(self.get_alignment_length()):
-             site = self.get_column(column)
-             new_site = [char for char in site if char not in self.missing_ambiguous_chars]
-             add_to_no_mis_amb(new_site)
+         no_missing_ambiguous_sites = [self.get_site_no_missing_ambiguous(column) for column in range(self.get_alignment_length())]
          return no_missing_ambiguous_sites
+
+    def get_site_no_missing_ambiguous(self, column):
+        site = self.get_column(column)
+        return [char for char in site if char not in self.missing_ambiguous_chars]
 
     def replace_missing(self, column):
         return ["-" if x in self.missing_chars else x for x in self.get_column(column)]
