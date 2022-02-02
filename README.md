@@ -115,6 +115,18 @@ Begin sets;
     charset 28S = 1201-1800;
 End;
 ```
+Partitions can also be written by codon positions using the `-n` or `--codons` flag, either for alignments containing first and second or all three positions. In the above example, supplying `-n 123` would result in:
+```
+AA_pos1 = 1-605\3
+AA_pos2 = 2-605\3
+AA_pos3 = 3-605\3
+AK_pos1 = 606-1200\3
+AK_pos2 = 607-1200\3
+AK_pos3 = 608-1200\3
+28S_pos1 = 1201-1800\3
+28S_pos2 = 1202-1800\3
+28S_pos3 = 1203-1800\3
+``` 
 ### Getting alignment statistics
 This is an example of how you can summarize two protein fasta alignments by running:
 ```
