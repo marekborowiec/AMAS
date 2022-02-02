@@ -227,7 +227,15 @@ Use AMAS <command> -h for help with arguments of the command of interest
             choices = ["nexus", "raxml", "unspecified"],
             default = "unspecified",
             help = "Format of the partitions file. Default: 'unspecified'"
-        ) 
+        )
+        parser.add_argument(
+            "-n",
+            "--codons",
+            dest = "codons",
+            choices = ["none", "12", "123"],
+            default = "none",
+            help = "Use codon partitioning for 1st and 2nd or all three positions. Default: Don't use"
+        )  
         # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
@@ -1763,16 +1771,28 @@ class MetaAlignment():
         alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
         return sorted(a_list, key = alphanum_key)
 
-    def print_unspecified_partitions(self):
+    def print_unspecified_partitions(self, codons):
         # print partitions for concatenated alignment
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
-        for key in part_list:
-            part_string += key + " = " + str(part_dict[key]) + "\n"
+        if codons == "none":
+            for key in part_list:
+                part_string += key + " = " + str(part_dict[key]) + "\n"
+        elif codons == "12":
+            for key in part_list:
+                start, end = str(part_dict[key]).split("-")
+                part_string += key + "_pos1" + " = " + start + "-" + end + "\\2" + "\n"
+                part_string += key + "_pos2" + " = " + str(int(start) + 1) + "-" + end + "\\2" + "\n"
+        elif codons == "123":
+            for key in part_list:
+                start, end = str(part_dict[key]).split("-")
+                part_string += key + "_pos1" + " = " + start + "-" + end + "\\3" + "\n"
+                part_string += key + "_pos2" + " = " + str(int(start) + 1) + "-" + end + "\\3" + "\n"
+                part_string += key + "_pos3" + " = " + str(int(start) + 2) + "-" + end + "\\3" + "\n"
         return part_string
 
-    def print_nexus_partitions(self):
+    def print_nexus_partitions(self, codons):
         # print partitions for concatenated alignment
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
@@ -1780,34 +1800,70 @@ class MetaAlignment():
         # write beginning of nexus sets
         part_string += "#NEXUS\n\n"
         part_string += "Begin sets;\n"
-        for key in part_list:
-            part_string += "\tcharset " + key + " = " + str(part_dict[key]) + ";\n"
+        if codons == "none":
+            for key in part_list:
+                part_string += "\tcharset " + key + " = " + str(part_dict[key]) + ";\n"
+        elif codons == "12":
+            for key in part_list:
+                start, end = str(part_dict[key]).split("-")
+                part_string += "\tcharset " + key + "_pos1" + " = " + start + "-" + end + "\\2" + ";\n"
+                part_string += "\tcharset " + key + "_pos2" + " = " + str(int(start) + 1) + "-" + end + "\\2" + ";\n"
+        elif codons == "123":
+            for key in part_list:
+                start, end = str(part_dict[key]).split("-")
+                part_string += "\tcharset " + key + "_pos1" + " = " + start + "-" + end + "\\3" + ";\n"
+                part_string += "\tcharset " + key + "_pos2" + " = " + str(int(start) + 1) + "-" + end + "\\3" + ";\n"
+                part_string += "\tcharset " + key + "_pos3" + " = " + str(int(start) + 2) + "-" + end + "\\3" + ";\n"
         part_string += "End;"
         return part_string
 
-    def print_raxml_partitions(self, data_type):
+    def print_raxml_partitions(self, data_type, codons):
         # print partitions for concatenated alignment
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
         if data_type == "dna":
-            for key in part_list:
-                part_string += "DNA, " + key + " = " + str(part_dict[key]) + "\n"
+            if codons == "none":
+                for key in part_list:
+                    part_string += "DNA, " + key + " = " + str(part_dict[key]) + "\n"
+            elif codons == "12":
+                for key in part_list:
+                    start, end = str(part_dict[key]).split("-")
+                    part_string += "DNA, " + key + "_pos1" + " = " + start + "-" + end + "\\2" + "\n"
+                    part_string += "DNA, " + key + "_pos2" + " = " + str(int(start) + 1) + "-" + end + "\\2" + "\n"
+            elif codons == "123":
+                for key in part_list:
+                    start, end = str(part_dict[key]).split("-")
+                    part_string += "DNA, " + key + "_pos1" + " = " + start + "-" + end + "\\3" + "\n"
+                    part_string += "DNA, " + key + "_pos2" + " = " + str(int(start) + 1) + "-" + end + "\\3" + "\n"
+                    part_string += "DNA, " + key + "_pos3" + " = " + str(int(start) + 2) + "-" + end + "\\3" + "\n"
         if data_type == "aa":
-            for key in part_list:
-                part_string += "WAG, " + key + " = " + str(part_dict[key]) + "\n"
+            if codons == "none":
+                for key in part_list:
+                    part_string += "WAG, " + key + " = " + str(part_dict[key]) + "\n"
+            elif codons == "12":
+                for key in part_list:
+                    start, end = str(part_dict[key]).split("-")
+                    part_string += "WAG, " + key + "_pos1" + " = " + start + "-" + end + "\\2" + "\n"
+                    part_string += "WAG, " + key + "_pos2" + " = " + str(int(start) + 1) + "-" + end + "\\2" + "\n"
+            elif codons == "123":
+                for key in part_list:
+                    start, end = str(part_dict[key]).split("-")
+                    part_string += "WAG, " + key + "_pos1" + " = " + start + "-" + end + "\\3" + "\n"
+                    part_string += "WAG, " + key + "_pos2" + " = " + str(int(start) + 1) + "-" + end + "\\3" + "\n"
+                    part_string += "WAG, " + key + "_pos3" + " = " + str(int(start) + 2) + "-" + end + "\\3" + "\n"
         return part_string
 
-    def write_partitions(self, file_name, part_format):
+    def write_partitions(self, file_name, part_format, codons):
         # write partitions file for concatenated alignment
         self.file_overwrite_error(file_name)        
         part_file = open(file_name, "w")
         if part_format == "nexus":
-            part_file.write(self.print_nexus_partitions())
+            part_file.write(self.print_nexus_partitions(codons))
         if part_format == "raxml":
-            part_file.write(self.print_raxml_partitions(self.data_type))
+            part_file.write(self.print_raxml_partitions(self.data_type, codons))
         if part_format == "unspecified":
-            part_file.write(self.print_unspecified_partitions())
+            part_file.write(self.print_unspecified_partitions(codons))
         print("Wrote partitions for the concatenated file to '" + file_name + "'")
 
     def get_extension(self, file_format):
@@ -1990,7 +2046,7 @@ def main():
         meta_aln.write_out("convert", kwargs["out_format"])
     if meta_aln.command == "concat":
         meta_aln.write_out("concat", kwargs["out_format"])
-        meta_aln.write_partitions(kwargs["concat_part"], kwargs["part_format"])
+        meta_aln.write_partitions(kwargs["concat_part"], kwargs["part_format"], kwargs["codons"])
     if meta_aln.command == "replicate":
         meta_aln.write_out("replicate", kwargs["out_format"])
     if meta_aln.command == "split":
