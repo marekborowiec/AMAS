@@ -1524,6 +1524,7 @@ class MetaAlignment():
         new_summ = ['\t'.join(summary) for summary in summary_out[1]]
         summary_file.write(header + '\n')
         summary_file.write('\n'.join(new_summ))
+        summary_file.write('\n')
         summary_file.close()
         print("Wrote summaries to file '" + file_name + "'")
 
@@ -1539,6 +1540,7 @@ class MetaAlignment():
             new_summ = ['\t'.join(row) for row in summ]
             summary_file.write(header + '\n')
             summary_file.write('\n'.join(new_summ))
+            summary_file.write('\n')
             summary_file.close()
        
     def get_replicate(self, no_replicates, no_loci):
