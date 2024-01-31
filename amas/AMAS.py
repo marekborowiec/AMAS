@@ -715,8 +715,21 @@ class FileParser:
 
     def partitions_parse(self):
         # parse partitions file using regex
-        matches = re.finditer(r"^(\s+)?([^ =]+)[ =]+([\\0-9, -]+)", self.in_file_lines, re.MULTILINE)
-
+        matches = re.finditer(
+            r"""^[ \t]*                           # Match start of line w/ zero-or-more whitespaces and/or tabs
+                (
+                 (?P<nexus>charset[ ]+)           # Case 1: IQ-TREE best_scheme.nex partition directive; partition name
+                 |                                # OR
+                 (?P<raxml>[A-Za-z0-9_+]+,[ \t]+) # Case 2: RAxML/RAxML-NG model(+other pars); partition name
+                )?                                # zero-or-one matches
+                (?P<partition_name>[A-Za-z0-9_]+) # partition name (Case 3: just the partition name)
+                [ ]*=[ ]*                         # zero-or-more whitespace; equals sign; zero-or-more whitespace
+                (?P<numbers>[\\0-9, -]+)          # position ranges w/ strides (from original regex)
+                (?P<nexus_term>[ ]*[;])?          # zero-or-more whitespace; zero-or-one ';' terminator (nexus)
+            """,
+            self.in_file_lines,
+            re.MULTILINE | re.VERBOSE
+        )
         # initiate list to store dictionaries with lists
         # of slice positions as values
         partitions = []
@@ -728,8 +741,10 @@ class FileParser:
             list_of_dicts = []
             add_to_list_of_dicts = list_of_dicts.append
             # get parition name and numbers from parsed partition strings
-            partition_name = match.group(2)
-            numbers = match.group(3)
+            partition_name = match.group('partition_name')
+            numbers = match.group('numbers')
+            # remove any whitespace(s) padding '-'
+            numbers = re.sub(r"[ ]*-[ ]*", "-", numbers)
             # find all numbers that will be used to parse positions
             positions = re.findall(r"([^ ,]+)", numbers)
 
@@ -741,6 +756,7 @@ class FileParser:
 
                 if "-" in position:
                     m = re.search(r"([0-9]+)-([0-9]+)", position)
+                    #print("Match found for position: %s" % position)
                     pos_dict["start"] = int(m.group(1)) - 1
                     pos_dict["stop"] = int(m.group(2))
                 else:
@@ -748,6 +764,17 @@ class FileParser:
                     pos_dict["stop"] = int(position)
 
                 if "\\" in position:
+                    # `["stride"] = 1` -> when not partitioned by codon position (single site cycles).
+                    # `["stride"] = 3` -> when partitioned by codon position (3-site cycles).
+                    # Not directly connected to stride values in the partition file (not read).
+                    # Instead, script assumes number of increments per interval(range) is
+                    # consistent with the associated stride values, e.g. for the partition file:
+                    #       ...`1-N\2`
+                    #       ...`2-N\2`
+                    #       ...`(N+1)-M\2`
+                    #       ...`(N+2)-M\2`
+                    # while `["stride"] = 3` designates 3rd codon positions in the alignment, and the
+                    # absence of an interval `3-N` in the partition file means these aren't processed.
                     pos_dict["stride"] = 3
                 elif "\\" not in position:
                     pos_dict["stride"] = 1
@@ -756,7 +783,7 @@ class FileParser:
 
             dict_of_dicts[partition_name] = list_of_dicts
             add_to_partitions(dict_of_dicts)
-
+        #print(partitions)
         return partitions
 
 
