@@ -56,22 +56,17 @@ class ParsedArgs:
             usage='''AMAS <command> [<args>]
 
 The AMAS commands are:
-  concat            Concatenate input alignments
-  convert           Convert to other file format
-  replicate         Create replicate data sets for phylogenetic jackknife
-  split             Split alignment according to a partitions file
-  summary           Write alignment summary
-  remove            Remove taxa from alignment
-  translate         Translate DNA alignment into protein alignment
-  trim              Remove columns from alignment
+  concat            Concatenate input alignments.
+  convert           Convert to other file format.
+  replicate         Create replicate data sets for phylogenetic jackknife.
+  split             Split alignment according to a partitions file.
+  summary           Write alignment summary.
+  remove            Remove taxa from alignment.
+  translate         Translate DNA alignment into protein alignment.
+  trim              Remove columns from alignment.
+  metapartitions    Runs `split`, then concatenates the output.
 
-  metapartitions    Runs `split`, then concatenates the output
-                    Use case: conversion of a supermatrix associated with a fragmented
-                    metapartition structure, e.g. following partition optimization with
-                    PartitionFinder (Lanfear et al. 2016) or a deriviative, into a new
-                    supermatrix of contiguous (meta)partitions, as required by various
-                    bioinformatic utilities. Also use this to collate (meta)partitions
-                    based on codon-positions.
+
 
 Use AMAS <command> -h for help with arguments of the command of interest
 '''
@@ -140,7 +135,6 @@ Use AMAS <command> -h for help with arguments of the command of interest
         )
 
     def trim(self):
-        # convert command
 
         parser = argparse.ArgumentParser(
             formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -346,7 +340,17 @@ Use AMAS <command> -h for help with arguments of the command of interest
         parser = argparse.ArgumentParser(
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description='''Split alignment according to a partition file, then concatenate the output.'''
-            '''\nUse this for collating fragmented metapartitions into contigous blocks'''
+            '''\nUse case:\n'''
+            '''    Optimization of concatenated alignment partitions with, e.g. PartitionFinder\n'''
+            '''    (Lanfear et al. 2016, or implementations thereof) can result in metapartition\n'''
+            '''    definitions with discontinuous ranges, which cannot be parsed by some bioinformatic\n'''
+            '''    utilities. However, by running `split` on the original superalignment, followed\n'''
+            '''    by `concat` on the resulting metapartition alignments, a new superalignment of\n'''
+            '''    contiguous (meta)partitions and its corresponding partition file can be generated\n'''
+            '''    with the same properties as the original, faciliating analyses with these utilities\n\n'''
+            '''    The `metapartitions` command combines both steps into one command, and can also\n'''
+            '''    be used to collate codon-positions across each partition, or an entire alignment,\n'''
+            '''    depending on the partition file.\n'''
         )
         parser.add_argument(
             "-p",
