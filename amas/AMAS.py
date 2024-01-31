@@ -719,6 +719,7 @@ class FileParser:
 
     def partitions_parse(self):
         # parse partitions file using regex
+        # now more permissive: handles PartionFinder/RAxML/IQ-TREE best_scheme.nex format partition files
         matches = re.finditer(
             r"""^[ \t]*                           # Match start of line w/ zero-or-more whitespaces and/or tabs
                 (
@@ -1163,9 +1164,6 @@ class MetaAlignment():
             self.split = kwargs.get("split_by")
             self.remove_empty = kwargs.get("remove_empty", False)
             self.no_prefix = True
-            self.metapartition_files = None
-            self.metapartition_alignment_objects = None
-            self.parsed_metapartition_alignments = None
 
         if self.command == "remove":
             self.species_to_remove = kwargs.get("taxa_to_remove")
@@ -1175,6 +1173,7 @@ class MetaAlignment():
         if self.command == "translate":
             self.reading_frame = kwargs.get("reading_frame")
             self.genetic_code = kwargs.get("genetic_code")
+
         if self.command == "trim":
             self.trim_fraction = kwargs.get("trim_fraction")
             self.trim_out = kwargs.get("trim_out")
