@@ -242,6 +242,14 @@ Use AMAS <command> -h for help with arguments of the command of interest
             default = "none",
             help = "Use codon partitioning for 1st and 2nd or all three positions. Default: Don't use"
         )
+        parser.add_argument(
+            "-z",
+            "--no-prefix",
+            dest = "no_prefix",
+            action = "store_true",
+            default = False,
+            help = "Disables the prefixing of partition names with `p<N>_`. Default: Prefix with `p<N>_`"
+        )
         # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
@@ -1042,6 +1050,9 @@ class MetaAlignment():
         self.cores = kwargs.get("cores")
         self.by_taxon_summary = kwargs.get("by_taxon_summary")
 
+        if self.command == "concat":
+            self.no_prefix = kwargs.get("no_prefix", False)
+
         if self.command == "replicate":
             self.no_replicates = kwargs.get("replicate_args")[0]
             self.no_loci = kwargs.get("replicate_args")[1]
@@ -1604,10 +1615,15 @@ class MetaAlignment():
             # get alignment length from a random taxon
             partition_length = len(alignment[list(alignment.keys())[0]])
             # get base name of each alignment for use when writing partitions file
-            # NOTE: the base name here is whatever comes before fist perion in the file name
+            # NOTE: the base name here is whatever comes before fist period in the file name
             alignment_name = self.alignment_objects[partition_counter - 1].get_name().split('.')[0]
-            # add a prefix to the partition names
-            partition_name = "p" + str(partition_counter) + "_" + alignment_name
+
+            if self.no_prefix:
+                # don't prefix partition names
+                partition_name = alignment_name
+            else:
+                # prefix partition names
+                partition_name = "p" + str(partition_counter) + "_" + alignment_name
 
             start = position_counter
             position_counter += partition_length
