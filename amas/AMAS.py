@@ -56,14 +56,22 @@ class ParsedArgs:
             usage='''AMAS <command> [<args>]
 
 The AMAS commands are:
-  concat      Concatenate input alignments
-  convert     Convert to other file format
-  replicate   Create replicate data sets for phylogenetic jackknife
-  split       Split alignment according to a partitions file
-  summary     Write alignment summary
-  remove      Remove taxa from alignment
-  translate   Translate DNA alignment into protein alignment
-  trim        Remove columns from alignment
+  concat            Concatenate input alignments
+  convert           Convert to other file format
+  replicate         Create replicate data sets for phylogenetic jackknife
+  split             Split alignment according to a partitions file
+  summary           Write alignment summary
+  remove            Remove taxa from alignment
+  translate         Translate DNA alignment into protein alignment
+  trim              Remove columns from alignment
+
+  metapartitions    Runs `split`, then concatenates the output
+                    Use case: conversion of a supermatrix associated with a fragmented
+                    metapartition structure, e.g. following partition optimization with
+                    PartitionFinder (Lanfear et al. 2016) or a deriviative, into a new
+                    supermatrix of contiguous (meta)partitions, as required by various
+                    bioinformatic utilities. Also use this to collate (meta)partitions
+                    based on codon-positions.
 
 Use AMAS <command> -h for help with arguments of the command of interest
 '''
@@ -327,6 +335,63 @@ Use AMAS <command> -h for help with arguments of the command of interest
             choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
             default = "fasta",
             help = "File format for the output alignment. Default: fasta"
+        )
+        # add shared arguments
+        self.add_common_args(parser)
+        args = parser.parse_args(sys.argv[2:])
+        return args
+
+    def metapartitions(self):
+        # metapartitions command
+        parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            description='''Split alignment according to a partition file, then concatenate the output.'''
+            '''\nUse this for collating fragmented metapartitions into contigous blocks'''
+        )
+        parser.add_argument(
+            "-p",
+            "--concat-part",
+            dest = "concat_part",
+            default = "metapartitions.txt",
+            help = "Partition file(name) for the final concatenated alignment of metapartitions. Default: 'metapartitions.txt'"
+        )
+        parser.add_argument(
+            "-t",
+            "--concat-out",
+            dest = "concat_out",
+            default = "concatenated-meta.out",
+            help = "File name for the concatenated alignment of metapartitions. Default: 'concatenated-meta.out'"
+        )
+        parser.add_argument(
+            "-u",
+            "--out-format",
+            dest = "out_format",
+            choices = ["fasta", "phylip", "nexus", "phylip-int", "nexus-int"],
+            default = "fasta",
+            help = "File format for the output alignments (split and concatenated). Default: fasta"
+        )
+        parser.add_argument(
+            "-y",
+            "--part-format",
+            dest = "part_format",
+            choices = ["nexus", "raxml", "unspecified"],
+            default = "unspecified",
+            help = "Partitions file format for the final concatenated alignment of metapartitions. Default: 'unspecified'"
+        )
+        parser.add_argument(
+            "-l",
+            "--split-by",
+            dest = "split_by",
+            help = "Partition file(name) to be used for splitting the initial concatenated alignment.",
+            required = True
+        )
+        parser.add_argument(
+            "-j",
+            "--remove-empty",
+            dest = "remove_empty",
+            action = "store_true",
+            default = False,
+            help = "Remove taxa with sequences composed of only undetermined characters? Default: Don't remove"
         )
         # add shared arguments
         self.add_common_args(parser)
@@ -1046,6 +1111,7 @@ class MetaAlignment():
         self.data_type = kwargs.get("data_type")
         self.command = kwargs.get("command")
         self.concat_out = kwargs.get("concat_out", "concatenated.out")
+        self.using_metapartitions = False
         self.check_align = kwargs.get("check_align", False)
         self.cores = kwargs.get("cores")
         self.by_taxon_summary = kwargs.get("by_taxon_summary")
@@ -1060,6 +1126,15 @@ class MetaAlignment():
         if self.command == "split":
             self.split = kwargs.get("split_by")
             self.remove_empty = kwargs.get("remove_empty", False)
+
+        if self.command == "metapartitions":
+            self.using_metapartitions = True
+            self.split = kwargs.get("split_by")
+            self.remove_empty = kwargs.get("remove_empty", False)
+            self.no_prefix = True
+            self.metapartition_files = None
+            self.metapartition_alignment_objects = None
+            self.parsed_metapartition_alignments = None
 
         if self.command == "remove":
             self.species_to_remove = kwargs.get("taxa_to_remove")
@@ -1813,6 +1888,12 @@ class MetaAlignment():
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
+
+        for key in part_list:
+            # remove '-meta' from the end of the key if the flag is set
+            if self.using_metapartitions and key.endswith('-meta'):
+                key = key[:-5]
+
         if codons == "none":
             for key in part_list:
                 part_string += key + " = " + str(part_dict[key]) + "\n"
@@ -1834,6 +1915,12 @@ class MetaAlignment():
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
+
+        for key in part_list:
+            # remove '-meta' from the end of the key if the flag is set
+            if self.using_metapartitions and key.endswith('-meta'):
+                key = key[:-5]
+
         # write beginning of nexus sets
         part_string += "#NEXUS\n\n"
         part_string += "BEGIN SETS;\n"
@@ -1859,6 +1946,12 @@ class MetaAlignment():
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
+
+        for key in part_list:
+            # remove '-meta' from the end of the key if the flag is set
+            if self.using_metapartitions and key.endswith('-meta'):
+                key = key[:-5]
+
         if data_type == "dna":
             if codons == "none":
                 for key in part_list:
@@ -1918,6 +2011,21 @@ class MetaAlignment():
 
         return extension
 
+    def get_metapartition_extension(self, file_format):
+        # get proper metapartition_extension string
+        if file_format == "phylip":
+            metapartition_extension = "-meta.phy"
+        elif file_format == "phylip-int":
+            metapartition_extension = "-meta.int-phy"
+        elif file_format == "fasta":
+            metapartition_extension = "-meta.fas"
+        elif file_format == "nexus":
+            metapartition_extension = "-meta.nex"
+        elif file_format == "nexus-int":
+            metapartition_extension = "-meta.int-nex"
+
+        return metapartition_extension
+
     def file_overwrite_error(self, file_name):
         # print warning when overwriting a file
         if path.exists(file_name):
@@ -1969,18 +2077,20 @@ class MetaAlignment():
         self.file_overwrite_error(file_name)
         self.write_formatted_file(file_format, file_name, alignment)
 
-    def write_split(self, index, item, file_format, extension):
+    def write_split(self, item, file_format, extension):
         # write split alignments from partitions file
         # bad practice with the dicts; figure out better solution
         try:
-            file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
+            #file_name = str(self.in_files[0].split('.')[0]) + "_" + list(item.keys())[0] + extension
+            file_name = list(item.keys())[0] + extension
             alignment = list(item.values())[0]
             self.file_overwrite_error(file_name)
             self.write_formatted_file(file_format, file_name, alignment)
+            yield file_name
         except ValueError:
             print("WARNING: There was no data to write for file '" + file_name + "'. Perhaps a partition composed of missing data only?")
             remove(file_name)
-            raise ValueError
+            raise
 
     def write_reduced(self, file_format, extension):
         # write alignment with taxa removed into a file
@@ -2011,6 +2121,32 @@ class MetaAlignment():
         self.file_overwrite_error(out_file_name)
         self.write_formatted_file(file_format, out_file_name, alignment)
 
+    def write_metapartitions(self, file_format):
+        # write metapartitions - combines split and concat
+        metapartition_extension = self.get_metapartition_extension(file_format)
+        print("write_out elif action == metapartitions")
+        list_of_alignments = self.get_partitioned(self.split)
+        length = len(list_of_alignments)
+        err_indx = 0
+
+        new_in_files = []
+        for item in list_of_alignments:
+            try:
+                for new_file_name in self.write_split(item, file_format, metapartition_extension):
+                    new_in_files.append(new_file_name)
+            except ValueError:
+                err_indx += 1
+
+        print("Wrote " + str(length - err_indx) + " " + str(file_format) + " metapartition files from partitions provided")
+
+        # now set inputs to be the collated metapartition alignment files
+        self.in_files = new_in_files
+        self.alignment_objects = self.get_alignment_objects()
+        self.parsed_alignments = self.get_parsed_alignments()
+
+        # concat metapartition alignment files
+        self.write_concat(file_format)
+
     def write_out(self, action, file_format):
         # write other output files depending on command (action)
         extension = self.get_extension(file_format)
@@ -2032,16 +2168,23 @@ class MetaAlignment():
              + str(self.no_loci) + " alignments")
 
         elif action == "split":
+            print("write_out elif action == split")
             list_of_alignments = self.get_partitioned(self.split)
             length = len(list_of_alignments)
             err_indx = 0
-            for i, item in enumerate(list_of_alignments):
+            #for item in enumerate(list_of_alignments):
+            for item in list_of_alignments:
                 try:
-                    self.write_split(i, item, file_format, extension)
+                    for _ in self.write_split(item, file_format, extension):
+                        pass
                 except ValueError:
                     err_indx += 1
                     pass
+
             print("Wrote " + str(length - err_indx) + " " + str(file_format) + " files from partitions provided")
+
+        elif action == "metapartitions":
+            self.write_metapartitions(file_format)
 
         elif action == "remove":
             aln_no = self.write_reduced(file_format, extension)
@@ -2093,6 +2236,10 @@ def main():
     if meta_aln.command == "trim":
         meta_aln.write_out("trim", kwargs["out_format"])
 
+    if meta_aln.command == "metapartitions":
+        meta_aln.write_out("metapartitions", kwargs["out_format"])
+        meta_aln.write_partitions(kwargs["concat_part"], kwargs["part_format"], "none")
+
         # meta_aln.write_out("translate", kwargs["out_format"])
 
 def run():
@@ -2104,5 +2251,4 @@ def run():
     return config_dict
 
 if __name__ == '__main__':
-
-        main()
+    main()
