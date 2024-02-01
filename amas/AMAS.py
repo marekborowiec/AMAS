@@ -1216,6 +1216,7 @@ class MetaAlignment():
 
         if self.command == "remove":
             self.species_to_remove = kwargs.get("taxa_to_remove")
+            self.species_to_remove_set = set(self.species_to_remove)
             self.reduced_file_prefix = kwargs.get("out_prefix")
             self.check_taxa = kwargs.get("check_taxa", False)
 
@@ -1527,19 +1528,21 @@ class MetaAlignment():
 
         return parsed_partitions
 
-    def get_alignment_object_by_alphabet(self, alignment):
+    def get_alignment_object_by_alphabet(self, in_file):
         # parse according to the given alphabet
+        # changed `alignment` to `in_file` to associate with `in_file` outside MetaAlignment)
         if self.data_type == "aa":
-            aln = AminoAcidAlignment(alignment, self.in_format, self.data_type)
+            aln = AminoAcidAlignment(in_file, self.in_format, self.data_type)
         elif self.data_type == "dna":
-            aln = DNAAlignment(alignment, self.in_format, self.data_type)
+            aln = DNAAlignment(in_file, self.in_format, self.data_type)
         return aln
 
     def get_alignment_objects(self):
         # get alignment objects on which statistics can be computed
         # use multiprocessing if more than one core specified
         if int(self.cores) == 1:
-            alignments = [self.get_alignment_object_by_alphabet(alignment) for alignment in self.in_files]
+            # changed `alignment` to `in_file` to associate with `in_file` outside MetaAlignment)
+            alignments = [self.get_alignment_object_by_alphabet(in_file) for in_file in self.in_files]
         elif int(self.cores) > 1:
             pool = mp.Pool(int(self.cores))
             alignments = pool.map(self.get_alignment_object_by_alphabet, self.in_files)
@@ -1805,26 +1808,22 @@ class MetaAlignment():
 
         return concatenated, partitions
 
-    def remove_from_alignment(self, alignment, species_to_remove, index):
+    def remove_from_alignment(self, alignment, species_to_remove_set, index):
         # remove taxa from alignment
         aln_name = self.get_alignment_name_no_ext(index)
-        missing_taxa = [taxon for taxon in species_to_remove if taxon not in alignment]
+        missing_taxa = [taxon for taxon in species_to_remove_set if taxon not in alignment]
         if missing_taxa:
             missing_taxa_str = ', '.join(missing_taxa)
             print("WARNING: '" + missing_taxa_str + "' not found in '" + aln_name + \
-             "'.\nEnsure taxon names do not conatins any quotes or whitespace characters (use underscores for word separation).")
-        #for taxon in species_to_remove:
-        #    if taxon not in alignment.keys():
-        #        print("WARNING: Taxon '" + taxon + "' not found in '" + aln_name + "'.\nIf you expected it to be there, make sure to replace all taxon name spaces with underscores and that you are not using quotes.")
-        species_to_remove_set = set(species_to_remove)
-        new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove}
+             "'.\nIf you expected it to be there, make sure to replace all taxon name spaces with underscores and that you are not using quotes.")
+        new_alignment = {species: seq for species, seq in alignment.items() if species not in species_to_remove_set}
 
         return aln_name, new_alignment
 
-    def remove_taxa(self, species_to_remove):
+    def remove_taxa(self, species_to_remove_set):
         new_alns = {}
         for index, alignment in enumerate(self.parsed_alignments):
-            aln_name, aln_dict = self.remove_from_alignment(alignment, species_to_remove, index)
+            aln_name, aln_dict = self.remove_from_alignment(alignment, species_to_remove_set, index)
             # check if alignment is not empty:
             if aln_dict:
                 new_alns[aln_name] = aln_dict
@@ -2176,7 +2175,7 @@ class MetaAlignment():
     def write_reduced(self, file_format, extension):
         # write alignment with taxa removed into a file
         prefix =  self.reduced_file_prefix
-        alns = self.remove_taxa(self.species_to_remove)
+        alns = self.remove_taxa(self.species_to_remove_set)
         for file_name, aln_dict in alns.items():
             out_file_name = prefix + file_name + extension
             self.file_overwrite_error(out_file_name)
