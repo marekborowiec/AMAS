@@ -204,6 +204,7 @@ Use AMAS <command> -h for help with arguments of the command of interest
     def concat(self):
         # concat command
         parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawTextHelpFormatter,
             description="Concatenate input alignments"
         )
         parser.add_argument(
@@ -245,12 +246,25 @@ Use AMAS <command> -h for help with arguments of the command of interest
             help = "Use codon partitioning for 1st and 2nd or all three positions. Default: Don't use"
         )
         parser.add_argument(
+            "-q",
+            "--aln-label",
+            dest = "aln_label",
+            default = None,
+            help = '''Prefix string to the partition counter when printing alignment names to partition file, e.g.'''
+            '''\n                       -q|--aln-label <string>:  <string>_p001_Alignment_name = 1-1200 ...'''
+            '''\n                                Default (None):           p001_Alignment_name = 1-1200 ...'''
+            '''\n -z|--short-aln-name + -q|--aln-label <string>:  <string>_p001 = 1-1200 ...'''
+        )
+        parser.add_argument(
             "-z",
-            "--no-prefix",
-            dest = "no_prefix",
+            "--short-aln-name",
+            dest = "short_aln_name",
             action = "store_true",
             default = False,
-            help = "Disables the prefixing of partition names with `p<N>_`. Default: Prefix with `p<N>_`"
+            help = '''Omits the original alignment names when printing partition file, e.g.'''
+            '''\n                           -z|--short-aln-name:           p001 = 1-1200 ...'''
+            '''\n                               Default (False):           p001_Alignment_name = 1-1200 ...'''
+            '''\n -q|--aln-label <string> + -z|--short-aln-name:  <string>_p001 = 1-1200 ...'''
         )
         # add shared arguments
         self.add_common_args(parser)
@@ -338,9 +352,9 @@ Use AMAS <command> -h for help with arguments of the command of interest
     def metapartitions(self):
         # metapartitions command
         parser = argparse.ArgumentParser(
-            formatter_class=argparse.RawDescriptionHelpFormatter,
+            formatter_class=argparse.RawTextHelpFormatter,
             description='''Split alignment according to a partition file, then concatenate the output.'''
-            '''\nUse case:\n'''
+            '''\n\nUse case:\n'''
             '''    Optimization of concatenated alignment partitions with, e.g. PartitionFinder\n'''
             '''    (Lanfear et al. 2016, or implementations thereof) can result in metapartition\n'''
             '''    definitions with discontinuous ranges, which cannot be parsed by some bioinformatic\n'''
@@ -397,6 +411,27 @@ Use AMAS <command> -h for help with arguments of the command of interest
             default = False,
             help = "Remove taxa with sequences composed of only undetermined characters? Default: Don't remove"
         )
+        parser.add_argument(
+            "-q",
+            "--aln-label",
+            dest = "aln_label",
+            default = None,
+            help = '''Prefix string to the partition counter when printing alignment names to partition file, e.g.'''
+            '''\n                       -q|--aln-label <string>:  <string>_p001_Alignment_name = 1-1200 ...'''
+            '''\n                                Default (None):           p001_Alignment_name = 1-1200 ...'''
+            '''\n -z|--short-aln-name + -q|--aln-label <string>:  <string>_p001 = 1-1200 ...'''
+        )
+        parser.add_argument(
+            "-z",
+            "--short-aln-name",
+            dest = "short_aln_name",
+            action = "store_true",
+            default = False,
+            help = '''Omits the original alignment names when printing partition file, e.g.'''
+            '''\n                           -z|--short-aln-name:           p001 = 1-1200 ...'''
+            '''\n                               Default (False):           p001_Alignment_name = 1-1200 ...'''
+            '''\n -q|--aln-label <string> + -z|--short-aln-name:  <string>_p001 = 1-1200 ...'''
+        )
         # add shared arguments
         self.add_common_args(parser)
         args = parser.parse_args(sys.argv[2:])
@@ -415,15 +450,15 @@ Use AMAS <command> -h for help with arguments of the command of interest
             dest = "genetic_code",
             choices = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 21, 22, 23, 24, 25, 26],
             default = 1,
-            help = '''NCBI genetic code to use (Default: 1):'''
+            help = '''\nNCBI genetic code to use (Default: 1):'''
 '''
-  1. The Standard Code
-  2. The Vertebrate Mitochondrial Code
-  3. The Yeast Mitochondrial Code
-  4. The Mold, Protozoan, and Coelenterate Mitochondrial Code and the Mycoplasma/Spiroplasma Code
-  5. The Invertebrate Mitochondrial Code
-  6. The Ciliate, Dasycladacean and Hexamita Nuclear Code
-  9. The Echinoderm and Flatworm Mitochondrial Code
+   1. The Standard Code
+   2. The Vertebrate Mitochondrial Code
+   3. The Yeast Mitochondrial Code
+   4. The Mold, Protozoan, and Coelenterate Mitochondrial Code and the Mycoplasma/Spiroplasma Code
+   5. The Invertebrate Mitochondrial Code
+   6. The Ciliate, Dasycladacean and Hexamita Nuclear Code
+   9. The Echinoderm and Flatworm Mitochondrial Code
   10. The Euplotid Nuclear Code
   11. The Bacterial, Archaeal and Plant Plastid Code
   12. The Alternative Yeast Nuclear Code
@@ -435,7 +470,7 @@ Use AMAS <command> -h for help with arguments of the command of interest
   23. Thraustochytrium Mitochondrial Code
   24. Pterobranchia Mitochondrial Code
   25. Candidate Division SR1 and Gracilibacteria Code
-  26. Pachysolen tannophilus Nuclear Code
+  26. Pachysolen tannophilus Nuclear Code\n
 '''
         )
         parser.add_argument(
@@ -771,15 +806,14 @@ class FileParser:
                 if "\\" in position:
                     # `["stride"] = 1` -> when not partitioned by codon position (single site cycles).
                     # `["stride"] = 3` -> when partitioned by codon position (3-site cycles).
-                    # Not directly connected to stride values in the partition file (not read).
-                    # Instead, script assumes number of increments per interval(range) is
-                    # consistent with the associated stride values, e.g. for the partition file:
+                    # ["stride"] =/= the stride values in the partition file (which aren't read); instead, the script assumes the
+                    # number of increments per interval matches the associated stride values, e.g. when `["stride"] = 3` designates
+                    # the 1st, 2nd and 3rd codon positions in the alignment, the absence of an interval `3-N` in the partition file:
                     #       ...`1-N\2`
                     #       ...`2-N\2`
                     #       ...`(N+1)-M\2`
                     #       ...`(N+2)-M\2`
-                    # while `["stride"] = 3` designates 3rd codon positions in the alignment, and the
-                    # absence of an interval `3-N` in the partition file means these aren't processed.
+                    # means that the alignment's 3rd codon positions aren't processed.
                     pos_dict["stride"] = 3
                 elif "\\" not in position:
                     pos_dict["stride"] = 1
