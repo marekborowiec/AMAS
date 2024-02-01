@@ -1188,9 +1188,11 @@ class MetaAlignment():
         self.check_align = kwargs.get("check_align", False)
         self.cores = kwargs.get("cores")
         self.by_taxon_summary = kwargs.get("by_taxon_summary")
+        self.short_aln_name = False
 
         if self.command == "concat":
-            self.no_prefix = kwargs.get("no_prefix", False)
+            self.aln_label = kwargs.get("aln_label", None)
+            self.short_aln_name = kwargs.get("short_aln_name", False)
 
         if self.command == "replicate":
             self.no_replicates = kwargs.get("replicate_args")[0]
@@ -1204,7 +1206,13 @@ class MetaAlignment():
             self.using_metapartitions = True
             self.split = kwargs.get("split_by")
             self.remove_empty = kwargs.get("remove_empty", False)
-            self.no_prefix = True
+            self.short_aln_name = kwargs.get("short_aln_name", False)
+
+            self.aln_label = kwargs.get("aln_label")
+            if self.aln_label is not None and isinstance(self.aln_label, str):
+                self.aln_label = self.aln_label + "_"
+            else:
+                self.aln_label = ""
 
         if self.command == "remove":
             self.species_to_remove = kwargs.get("taxa_to_remove")
@@ -1225,13 +1233,13 @@ class MetaAlignment():
 
         # The code list:
         self.codes_list = """
-        1. The Standard Code
-        2. The Vertebrate Mitochondrial Code
-        3. The Yeast Mitochondrial Code
-        4. The Mold, Protozoan, and Coelenterate Mitochondrial Code and the Mycoplasma/Spiroplasma Code
-        5. The Invertebrate Mitochondrial Code
-        6. The Ciliate, Dasycladacean and Hexamita Nuclear Code
-        9. The Echinoderm and Flatworm Mitochondrial Code
+         1. The Standard Code
+         2. The Vertebrate Mitochondrial Code
+         3. The Yeast Mitochondrial Code
+         4. The Mold, Protozoan, and Coelenterate Mitochondrial Code and the Mycoplasma/Spiroplasma Code
+         5. The Invertebrate Mitochondrial Code
+         6. The Ciliate, Dasycladacean and Hexamita Nuclear Code
+         9. The Echinoderm and Flatworm Mitochondrial Code
         10. The Euplotid Nuclear Code
         11. The Bacterial, Archaeal and Plant Plastid Code
         12. The Alternative Yeast Nuclear Code
@@ -1756,6 +1764,9 @@ class MetaAlignment():
         # get dict for alignment name and partition
         partitions = {}
 
+        partition_num = len(alignments)
+        digits_to_pad = len(str(partition_num))
+
         for alignment in alignments:
 
             # get alignment length from a random taxon
@@ -1764,12 +1775,13 @@ class MetaAlignment():
             # NOTE: the base name here is whatever comes before fist period in the file name
             alignment_name = self.alignment_objects[partition_counter - 1].get_name().split('.')[0]
 
-            if self.no_prefix:
-                # don't prefix partition names
-                partition_name = alignment_name
+            if self.short_aln_name:
+                # omit original alignment names from the printed partition file
+                partition_name = self.aln_label + "p" + str(partition_counter).zfill(digits_to_pad)
             else:
-                # prefix partition names
-                partition_name = "p" + str(partition_counter) + "_" + alignment_name
+                # keep original alignment names in the printed partition file
+                partition_name = self.aln_label + "p" + str(partition_counter).zfill(digits_to_pad) + "_" + alignment_name
+
 
             start = position_counter
             position_counter += partition_length
@@ -1960,11 +1972,6 @@ class MetaAlignment():
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
 
-        for key in part_list:
-            # remove '-meta' from the end of the key if the flag is set
-            if self.using_metapartitions and key.endswith('-meta'):
-                key = key[:-5]
-
         if codons == "none":
             for key in part_list:
                 part_string += key + " = " + str(part_dict[key]) + "\n"
@@ -1986,11 +1993,6 @@ class MetaAlignment():
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
-
-        for key in part_list:
-            # remove '-meta' from the end of the key if the flag is set
-            if self.using_metapartitions and key.endswith('-meta'):
-                key = key[:-5]
 
         # write beginning of nexus sets
         part_string += "#NEXUS\n\n"
@@ -2017,11 +2019,6 @@ class MetaAlignment():
         part_string = ""
         part_dict = self.get_concatenated(self.parsed_alignments)[1]
         part_list = self.natural_sort(part_dict.keys())
-
-        for key in part_list:
-            # remove '-meta' from the end of the key if the flag is set
-            if self.using_metapartitions and key.endswith('-meta'):
-                key = key[:-5]
 
         if data_type == "dna":
             if codons == "none":
@@ -2055,6 +2052,15 @@ class MetaAlignment():
                     part_string += "WAG, " + key + "_pos3" + " = " + str(int(start) + 2) + "-" + end + "\\3" + "\n"
         return part_string
 
+    def replace_string_in_file(self, file_name, old_string, new_string):
+        # global string replacement in file
+        with open(file_name, "r", encoding="utf-8") as file:
+            file_content = file.read()
+        # write modified content back to file
+        modified_content = file_content.replace(old_string, new_string)
+        with open(file_name, "w", encoding="utf-8") as file:
+            file.write(modified_content)
+
     def write_partitions(self, file_name, part_format, codons):
         # write partitions file for concatenated alignment
         self.file_overwrite_error(file_name)
@@ -2065,6 +2071,10 @@ class MetaAlignment():
                 concat_part.write(self.print_raxml_partitions(self.data_type, codons))
             elif part_format == "unspecified":
                 concat_part.write(self.print_unspecified_partitions(codons))
+
+            if self.using_metapartitions:
+                self.replace_string_in_file(file_name, '-meta =', ' =')
+
         print("Wrote partitions for the concatenated file to '" + file_name + "'")
 
     def get_extension(self, file_format):
@@ -2194,8 +2204,8 @@ class MetaAlignment():
 
     def write_metapartitions(self, file_format):
         # write metapartitions - combines split and concat
-        metapartition_extension = self.get_metapartition_extension(file_format)
         print("write_out elif action == metapartitions")
+        metapartition_extension = self.get_metapartition_extension(file_format)
         list_of_alignments = self.get_partitioned(self.split)
         length = len(list_of_alignments)
         err_indx = 0
