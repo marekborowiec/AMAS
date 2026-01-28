@@ -36,6 +36,7 @@ The AMAS commands are:
   summary     Write alignment summary
   remove      Remove taxa from alignment
   translate   Translate DNA alignment into protein alignment
+  trim        Remove columns from alignment
 
 Use AMAS <command> -h for help with arguments of the command of interest
 
